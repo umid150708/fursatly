@@ -1,0 +1,434 @@
+export type Locale = 'uz' | 'en' | 'ru';
+
+export const translations = {
+  en: {
+    // Hero
+    heroTitle: 'Unlock Your Future',
+    heroSubtitle: 'Discover the best scholarships, competitions and programs tailored for your success.',
+    activeEvents: 'Active Opportunities',
+
+    // Search & Filters
+    searchPlaceholder: 'Search opportunities...',
+    filterTitle: 'Filter',
+    all: 'All',
+    location: 'Location',
+    language: 'Language',
+    age: 'Age Range',
+    minAge: 'min',
+    maxAge: 'max',
+    fundingCoverage: 'Funding Coverage',
+    fundingAny: 'Any',
+    fundingFull: 'Full',
+    fundingPartial: 'Partial',
+    deadline: 'Deadline',
+    deadlineAny: 'Any time',
+    deadlineWeek: 'This week',
+    deadlineMonth: 'This month',
+    deadline3Months: '3 months',
+    resetAll: 'Reset All',
+
+    // Cards
+    moreInfo: 'More info',
+    fullyFunded: 'Fully Funded',
+    partial: 'Partial',
+
+    // Category view
+    viewAll: 'View All',
+    closeCategory: 'Close Category',
+
+    // Loading / empty
+    loading: 'Finding opportunities...',
+    noEvents: 'No opportunities found',
+    clearFilters: 'Clear all filters',
+
+    // Categories
+    catAll: '✨ All',
+    catScholarships: 'Scholarships',
+    catCompetitions: 'Competitions',
+    catSummerPrograms: 'Summer Programs',
+    catResearch: 'Research',
+    catVolunteer: 'Volunteer',
+    catSTEM: 'STEM',
+    catInternships: 'Internships',
+    catWorkshops: 'Workshops',
+
+    // Footer
+    footerDesc: 'Connecting young people across Central Asia with scholarships, competitions, and opportunities.',
+    footerPlatform: 'Platform',
+    footerBrowse: 'Browse Opportunities',
+    footerLegal: 'Legal',
+    footerPrivacy: 'Privacy Policy',
+    footerTerms: 'Terms of Use',
+    footerCookies: 'Cookie Policy',
+    footerAbout: 'About Us',
+    footerRights: 'All rights reserved.',
+    footerTagline: 'Built for the youth of Central Asia',
+
+    // Event detail page
+    backToOpportunities: 'Back to Opportunities',
+    overview: 'Overview',
+    keyDetails: 'Key Details',
+    keyBenefits: 'Key Benefits & Features',
+    eligibility: 'Eligibility & Requirements',
+    prepResources: 'Preparation Resources',
+    extraInfo: 'Extra Info & Related Resources',
+    officialWebsite: 'Official Website',
+    applyHere: 'Apply Here',
+    locationLabel: 'Location',
+    deadlineLabel: 'Deadline',
+    ageGroup: 'Age Group',
+    languageLabel: 'Language',
+    years: 'years',
+    researchPending: 'AI research is being generated for this opportunity...',
+    eventNotFound: 'Event Not Found',
+    goHome: 'Go Back Home',
+    rolling: 'Rolling',
+    quickDetails: 'Quick Details',
+
+    // Language values (from DB)
+    langEnglish: 'English',
+    langUzbek: 'Uzbek',
+    langRussian: 'Russian',
+    langMultiple: 'Multiple',
+
+    // Category labels (from DB source field)
+    srcScholarships:   'Scholarships',
+    srcCompetitions:   'Competitions',
+    srcSummerPrograms: 'Summer Programs',
+    srcResearch:       'Research',
+    srcVolunteer:      'Volunteer',
+    srcSTEM:           'STEM',
+    srcInternships:    'Internships',
+    srcWorkshops:      'Workshops',
+    srcFellowship:     'Fellowship',
+    srcOther:          'Other',
+
+    // Stats bar
+    statOpportunities: 'Opportunities',
+    statCountries: 'Countries',
+    statStudents: 'Students Helped',
+    statLanguages: 'Languages',
+
+    // Closing soon
+    closingSoon: '🔥 Closing Soon',
+    daysLeft: 'd left',
+
+    // Why Fursatly
+    whyFursatly: 'Why Fursatly?',
+    feat1Title: 'Verified Listings',
+    feat1Desc: 'Every opportunity is hand-picked and verified before going live.',
+    feat2Title: 'Smart Filters',
+    feat2Desc: 'Filter by age, language, location, deadline and funding type.',
+    feat3Title: 'AI-Enriched',
+    feat3Desc: 'Deep AI research on every listing — eligibility, tips and resources.',
+    feat4Title: '3 Languages',
+    feat4Desc: 'All content in English, Uzbek and Russian — fully translated.',
+
+    // Telegram CTA
+    ctaTitle: 'Never Miss a Deadline',
+    ctaDesc: 'Join our Telegram community and get instant alerts when new opportunities drop.',
+    ctaButton: 'Join @fursatly on Telegram',
+
+    // Misc
+    unknown: 'Unknown',
+    online: 'Online',
+  },
+
+  uz: {
+    // Hero
+    heroTitle: 'Kelajagingizni Oching',
+    heroSubtitle: 'Muvaffaqiyatingiz uchun eng yaxshi grantlar, musobaqalar va dasturlarni toping.',
+    activeEvents: 'Faol imkoniyatlar',
+
+    // Search & Filters
+    searchPlaceholder: 'Imkoniyatlarni qidirish...',
+    filterTitle: 'Filter',
+    all: 'Barchasi',
+    location: 'Joylashuv',
+    language: 'Til',
+    age: 'Yosh oralig\'i',
+    minAge: 'min',
+    maxAge: 'max',
+    fundingCoverage: 'Moliyalashtirish',
+    fundingAny: 'Istalgan',
+    fundingFull: 'To\'liq',
+    fundingPartial: 'Qisman',
+    deadline: 'Muddat',
+    deadlineAny: 'Istalgan vaqt',
+    deadlineWeek: 'Bu hafta',
+    deadlineMonth: 'Bu oy',
+    deadline3Months: '3 oy',
+    resetAll: 'Tozalash',
+
+    // Cards
+    moreInfo: 'Batafsil',
+    fullyFunded: 'To\'liq moliyalashtirilgan',
+    partial: 'Qisman',
+
+    // Category view
+    viewAll: 'Barchasini ko\'rish',
+    closeCategory: 'Yopish',
+
+    // Loading / empty
+    loading: 'Imkoniyatlar qidirilmoqda...',
+    noEvents: 'Imkoniyatlar topilmadi',
+    clearFilters: 'Barcha filtrlarni tozalash',
+
+    // Categories
+    catAll: '✨ Barchasi',
+    catScholarships: 'Grantlar',
+    catCompetitions: 'Musobaqalar',
+    catSummerPrograms: 'Yozgi dasturlar',
+    catResearch: 'Tadqiqot',
+    catVolunteer: 'Volontyorlik',
+    catSTEM: 'STEM',
+    catInternships: 'Stajirovka',
+    catWorkshops: 'Seminarlar',
+
+    // Footer
+    footerDesc: 'O\'zbekiston va Markaziy Osiyo yoshlari uchun eng yaxshi imkoniyatlarni to\'playmiz.',
+    footerPlatform: 'Platforma',
+    footerBrowse: 'Imkoniyatlarni ko\'rish',
+    footerLegal: 'Huquqiy',
+    footerPrivacy: 'Maxfiylik siyosati',
+    footerTerms: 'Foydalanish shartlari',
+    footerCookies: 'Cookie siyosati',
+    footerAbout: 'Biz haqimizda',
+    footerRights: 'Barcha huquqlar himoyalangan.',
+    footerTagline: 'O\'zbekiston yoshlari uchun tayyorlandi',
+
+    // Event detail page
+    backToOpportunities: 'Imkoniyatlarga qaytish',
+    overview: 'Umumiy ma\'lumot',
+    keyDetails: 'Asosiy tafsilotlar',
+    keyBenefits: 'Asosiy afzalliklar',
+    eligibility: 'Talablar va shartlar',
+    prepResources: 'Tayyorlanish resurslari',
+    extraInfo: 'Qo\'shimcha ma\'lumot',
+    officialWebsite: 'Rasmiy vebsayt',
+    applyHere: 'Ariza topshirish',
+    locationLabel: 'Joylashuv',
+    deadlineLabel: 'Muddat',
+    ageGroup: 'Yosh guruhi',
+    languageLabel: 'Til',
+    years: 'yosh',
+    researchPending: 'Imkoniyat uchun AI tadqiqot tayyorlanmoqda...',
+    eventNotFound: 'Imkoniyat topilmadi',
+    goHome: 'Bosh sahifaga qaytish',
+    rolling: 'Doimiy',
+    quickDetails: 'Tezkor ma\'lumotlar',
+
+    // Language values (from DB)
+    langEnglish: 'Inglizcha',
+    langUzbek: 'O\'zbek',
+    langRussian: 'Ruscha',
+    langMultiple: 'Bir nechta',
+
+    // Category labels (from DB source field)
+    srcScholarships:   'Grantlar',
+    srcCompetitions:   'Musobaqalar',
+    srcSummerPrograms: 'Yozgi dasturlar',
+    srcResearch:       'Tadqiqot',
+    srcVolunteer:      'Volontyorlik',
+    srcSTEM:           'STEM',
+    srcInternships:    'Stajirovka',
+    srcWorkshops:      'Seminarlar',
+    srcFellowship:     'Stipendiya',
+    srcOther:          'Boshqa',
+
+    // Stats bar
+    statOpportunities: 'Imkoniyatlar',
+    statCountries: 'Davlatlar',
+    statStudents: 'Talabalar',
+    statLanguages: 'Tillar',
+
+    // Closing soon
+    closingSoon: '🔥 Muddat tugayapti',
+    daysLeft: 'kun',
+
+    // Why Fursatly
+    whyFursatly: 'Nima uchun Fursatly?',
+    feat1Title: 'Tekshirilgan',
+    feat1Desc: 'Har bir imkoniyat e\'lon qilinishdan oldin qo\'lda tekshiriladi.',
+    feat2Title: 'Aqlli filtrlar',
+    feat2Desc: 'Yosh, til, mamlakat, muddat va moliyalashtirish bo\'yicha filtrlash.',
+    feat3Title: 'AI tadqiqot',
+    feat3Desc: 'Har bir e\'lon uchun chuqur AI tadqiqoti — talablar, maslahatlar, resurslar.',
+    feat4Title: '3 ta til',
+    feat4Desc: 'Barcha kontent ingliz, o\'zbek va rus tillarida to\'liq tarjima qilingan.',
+
+    // Telegram CTA
+    ctaTitle: 'Muddatni o\'tkazib yubormang',
+    ctaDesc: 'Telegram kanalimizga qo\'shiling va yangi imkoniyatlar haqida darhol xabar oling.',
+    ctaButton: 'Telegram\'da qo\'shilish',
+
+    // Misc
+    unknown: 'Noma\'lum',
+    online: 'Onlayn',
+  },
+
+  ru: {
+    // Hero
+    heroTitle: 'Откройте своё будущее',
+    heroSubtitle: 'Найдите лучшие стипендии, конкурсы и программы для вашего успеха.',
+    activeEvents: 'Актуальные возможности',
+
+    // Search & Filters
+    searchPlaceholder: 'Поиск возможностей...',
+    filterTitle: 'Фильтр',
+    all: 'Все',
+    location: 'Местоположение',
+    language: 'Язык',
+    age: 'Возраст',
+    minAge: 'мин',
+    maxAge: 'макс',
+    fundingCoverage: 'Финансирование',
+    fundingAny: 'Любое',
+    fundingFull: 'Полное',
+    fundingPartial: 'Частичное',
+    deadline: 'Срок подачи',
+    deadlineAny: 'Любое время',
+    deadlineWeek: 'Эта неделя',
+    deadlineMonth: 'Этот месяц',
+    deadline3Months: '3 месяца',
+    resetAll: 'Сбросить всё',
+
+    // Cards
+    moreInfo: 'Подробнее',
+    fullyFunded: 'Полное финансирование',
+    partial: 'Частичное',
+
+    // Category view
+    viewAll: 'Смотреть все',
+    closeCategory: 'Закрыть',
+
+    // Loading / empty
+    loading: 'Поиск возможностей...',
+    noEvents: 'Возможности не найдены',
+    clearFilters: 'Сбросить фильтры',
+
+    // Categories
+    catAll: '✨ Все',
+    catScholarships: 'Стипендии',
+    catCompetitions: 'Конкурсы',
+    catSummerPrograms: 'Летние программы',
+    catResearch: 'Исследования',
+    catVolunteer: 'Волонтёрство',
+    catSTEM: 'STEM',
+    catInternships: 'Стажировки',
+    catWorkshops: 'Семинары',
+
+    // Footer
+    footerDesc: 'Соединяем молодёжь Центральной Азии со стипендиями, конкурсами и возможностями.',
+    footerPlatform: 'Платформа',
+    footerBrowse: 'Все возможности',
+    footerLegal: 'Правовая информация',
+    footerPrivacy: 'Политика конфиденциальности',
+    footerTerms: 'Условия использования',
+    footerCookies: 'Политика Cookie',
+    footerAbout: 'О нас',
+    footerRights: 'Все права защищены.',
+    footerTagline: 'Создано для молодёжи Центральной Азии',
+
+    // Event detail page
+    backToOpportunities: 'Назад к возможностям',
+    overview: 'Обзор',
+    keyDetails: 'Ключевые детали',
+    keyBenefits: 'Ключевые преимущества',
+    eligibility: 'Требования и условия',
+    prepResources: 'Ресурсы для подготовки',
+    extraInfo: 'Дополнительная информация',
+    officialWebsite: 'Официальный сайт',
+    applyHere: 'Подать заявку',
+    locationLabel: 'Местоположение',
+    deadlineLabel: 'Срок подачи',
+    ageGroup: 'Возрастная группа',
+    languageLabel: 'Язык',
+    years: 'лет',
+    researchPending: 'AI-исследование для этой возможности генерируется...',
+    eventNotFound: 'Возможность не найдена',
+    goHome: 'На главную',
+    rolling: 'Постоянный приём',
+    quickDetails: 'Краткая информация',
+
+    // Language values (from DB)
+    langEnglish: 'Английский',
+    langUzbek: 'Узбекский',
+    langRussian: 'Русский',
+    langMultiple: 'Несколько',
+
+    // Category labels (from DB source field)
+    srcScholarships:   'Стипендии',
+    srcCompetitions:   'Конкурсы',
+    srcSummerPrograms: 'Летние программы',
+    srcResearch:       'Исследования',
+    srcVolunteer:      'Волонтёрство',
+    srcSTEM:           'STEM',
+    srcInternships:    'Стажировки',
+    srcWorkshops:      'Семинары',
+    srcFellowship:     'Стипендиат',
+    srcOther:          'Другое',
+
+    // Stats bar
+    statOpportunities: 'Возможности',
+    statCountries: 'Страны',
+    statStudents: 'Студентов',
+    statLanguages: 'Языка',
+
+    // Closing soon
+    closingSoon: '🔥 Скоро закрытие',
+    daysLeft: 'дн.',
+
+    // Why Fursatly
+    whyFursatly: 'Почему Fursatly?',
+    feat1Title: 'Проверенные',
+    feat1Desc: 'Каждая возможность проверяется вручную перед публикацией.',
+    feat2Title: 'Умные фильтры',
+    feat2Desc: 'Фильтрация по возрасту, языку, стране, дедлайну и финансированию.',
+    feat3Title: 'AI-анализ',
+    feat3Desc: 'Глубокий AI-анализ каждого объявления — требования, советы, ресурсы.',
+    feat4Title: '3 языка',
+    feat4Desc: 'Весь контент на английском, узбекском и русском языках.',
+
+    // Telegram CTA
+    ctaTitle: 'Не пропустите дедлайн',
+    ctaDesc: 'Присоединяйтесь к нашему Telegram и получайте мгновенные уведомления.',
+    ctaButton: 'Присоединиться в Telegram',
+
+    // Misc
+    unknown: 'Неизвестно',
+    online: 'Онлайн',
+  },
+};
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+
+/** Translate a DB source/category value to the current locale */
+export function translateSource(source: string, t: typeof translations.en): string {
+  const map: Record<string, keyof typeof translations.en> = {
+    'Scholarships':   'srcScholarships',
+    'Competitions':   'srcCompetitions',
+    'Summer Programs':'srcSummerPrograms',
+    'Research':       'srcResearch',
+    'Volunteer':      'srcVolunteer',
+    'STEM':           'srcSTEM',
+    'Internships':    'srcInternships',
+    'Workshops':      'srcWorkshops',
+    'Fellowship':     'srcFellowship',
+    'Other':          'srcOther',
+  };
+  const key = map[source];
+  return key ? (t[key] as string) : source;
+}
+
+/** Translate a DB language value to the current locale */
+export function translateLanguage(lang: string, t: typeof translations.en): string {
+  const map: Record<string, keyof typeof translations.en> = {
+    'English':  'langEnglish',
+    'Uzbek':    'langUzbek',
+    'Russian':  'langRussian',
+    'Multiple': 'langMultiple',
+  };
+  const key = map[lang];
+  return key ? (t[key] as string) : lang;
+}
