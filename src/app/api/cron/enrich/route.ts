@@ -22,7 +22,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { enrichEvent } from '@/pipeline/enrich';
 
-const MAX_PER_CYCLE = 3;
+const MAX_PER_CYCLE = 10;
 const MAX_ATTEMPTS  = 3;
 
 function db() {
