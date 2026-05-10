@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/scrape?secret=fursatly123",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/enrich?secret=fursatly123",
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/cron/cleanup?secret=fursatly123",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}
