@@ -175,41 +175,99 @@ export default function EventDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-12">
-            {/* Typography-driven hero — no stock photo. Category-tinted accent block,
-                badge, multilingual title, and an organiser/origin byline. */}
-            <header className="relative rounded-[3rem] overflow-hidden border border-primary/10 bg-gradient-to-br from-primary/8 via-background to-background p-10 md:p-14 shadow-sm">
-              {/* Subtle decorative accent — pulls in the brand colour without competing with content */}
-              <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-accent/10 blur-3xl pointer-events-none" />
+            {/* Category-themed hero — bold color block, Uzbek-inspired pattern overlay,
+                deadline countdown, and emphasised stats. No stock photos. */}
+            {(() => {
+              const cat = (event.source || 'Other').toLowerCase();
+              const palette: Record<string, { from: string; to: string; ring: string; chip: string; tag: string; pat: string }> = {
+                scholarships:    { from: 'from-emerald-500',  to: 'to-teal-600',     ring: 'ring-emerald-400/30',  chip: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300', tag: 'bg-white/15 text-white',                            pat: '#10b981' },
+                competitions:    { from: 'from-amber-500',    to: 'to-orange-600',   ring: 'ring-amber-400/30',    chip: 'bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300',          tag: 'bg-white/15 text-white',                            pat: '#f59e0b' },
+                'summer programs': { from: 'from-pink-500',   to: 'to-rose-600',     ring: 'ring-pink-400/30',     chip: 'bg-pink-50 text-pink-700 dark:bg-pink-950/50 dark:text-pink-300',                tag: 'bg-white/15 text-white',                            pat: '#ec4899' },
+                research:        { from: 'from-blue-600',     to: 'to-indigo-700',   ring: 'ring-blue-400/30',     chip: 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300',                tag: 'bg-white/15 text-white',                            pat: '#2563eb' },
+                volunteer:       { from: 'from-orange-500',   to: 'to-red-600',      ring: 'ring-orange-400/30',   chip: 'bg-orange-50 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300',        tag: 'bg-white/15 text-white',                            pat: '#f97316' },
+                stem:            { from: 'from-violet-600',   to: 'to-fuchsia-700',  ring: 'ring-violet-400/30',   chip: 'bg-violet-50 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300',        tag: 'bg-white/15 text-white',                            pat: '#7c3aed' },
+                internships:     { from: 'from-slate-700',    to: 'to-slate-900',    ring: 'ring-slate-400/30',    chip: 'bg-slate-50 text-slate-700 dark:bg-slate-900 dark:text-slate-300',               tag: 'bg-white/15 text-white',                            pat: '#475569' },
+                workshops:       { from: 'from-cyan-500',     to: 'to-teal-600',     ring: 'ring-cyan-400/30',     chip: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300',                tag: 'bg-white/15 text-white',                            pat: '#06b6d4' },
+                other:           { from: 'from-primary',      to: 'to-primary/70',   ring: 'ring-primary/30',      chip: 'bg-primary/10 text-primary',                                                       tag: 'bg-white/15 text-white',                            pat: 'currentColor' },
+              };
+              const p = palette[cat] ?? palette.other;
 
-              <div className="relative">
-                <div className="flex flex-wrap items-center gap-3 mb-8">
-                  <Badge className="bg-primary text-primary-foreground px-5 py-1.5 text-sm font-bold tracking-wide uppercase rounded-full">
-                    {translateSource(event.source || 'Other', t)}
-                  </Badge>
-                  {event.location && (
-                    <span className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-                      <MapPin className="h-4 w-4" /> {event.location}
-                    </span>
-                  )}
-                  {event.language && (
-                    <span className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-                      <Languages className="h-4 w-4" /> {translateLanguage(event.language, t)}
-                    </span>
-                  )}
-                </div>
+              const daysLeft = event.deadline
+                ? Math.ceil((new Date(event.deadline).getTime() - Date.now()) / 86400_000)
+                : null;
+              const urgency = daysLeft != null && daysLeft <= 7;
 
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-headline leading-[1.05] tracking-tight text-foreground">
-                  {event.research_data?.translations?.[locale]?.title || event.title}
-                </h1>
+              return (
+                <header className={`relative rounded-[3rem] overflow-hidden shadow-xl ring-1 ${p.ring} bg-gradient-to-br ${p.from} ${p.to}`}>
+                  {/* Uzbek-inspired suzani dot pattern as decorative overlay */}
+                  <svg className="absolute inset-0 w-full h-full opacity-[0.08] pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <pattern id={`suzani-${event.id}`} x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+                        <circle cx="30" cy="30" r="2" fill="white" />
+                        <circle cx="0"  cy="0"  r="1.5" fill="white" />
+                        <circle cx="60" cy="0"  r="1.5" fill="white" />
+                        <circle cx="0"  cy="60" r="1.5" fill="white" />
+                        <circle cx="60" cy="60" r="1.5" fill="white" />
+                        <path d="M30 18 L34 26 L42 30 L34 34 L30 42 L26 34 L18 30 L26 26 Z" fill="white" opacity="0.4" />
+                      </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill={`url(#suzani-${event.id})`} />
+                  </svg>
 
-                {event.research_data?.organisation && (
-                  <p className="mt-6 text-lg md:text-xl text-muted-foreground font-medium">
-                    {t.organisedBy || 'Organised by'} <span className="text-foreground font-semibold">{event.research_data.organisation}</span>
-                  </p>
-                )}
-              </div>
-            </header>
+                  {/* Bright corner glows for depth */}
+                  <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-white/15 blur-3xl pointer-events-none" />
+                  <div className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full bg-black/15 blur-3xl pointer-events-none" />
+
+                  <div className="relative p-8 md:p-12 lg:p-14 text-white">
+                    {/* Top row: category badge + countdown */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 mb-10">
+                      <Badge className="bg-white text-foreground px-5 py-1.5 text-sm font-black tracking-wide uppercase rounded-full shadow-md hover:bg-white">
+                        {translateSource(event.source || 'Other', t)}
+                      </Badge>
+                      {daysLeft != null && daysLeft >= 0 && (
+                        <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold backdrop-blur-sm ${urgency ? 'bg-red-500 text-white animate-pulse' : 'bg-white/20 text-white'}`}>
+                          <Calendar className="h-4 w-4" />
+                          {daysLeft === 0 ? (t.deadlineToday || 'Closes today') :
+                           daysLeft === 1 ? (t.deadline1Day || '1 day left') :
+                           `${daysLeft} ${t.daysLeft || 'days left'}`}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Title — sized down from 7xl, kept readable */}
+                    <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold font-headline leading-[1.1] tracking-tight max-w-3xl">
+                      {event.research_data?.translations?.[locale]?.title || event.title}
+                    </h1>
+
+                    {/* Organiser byline */}
+                    {event.research_data?.organisation && (
+                      <p className="mt-5 text-base md:text-lg text-white/85 font-medium">
+                        {t.organisedBy || 'Organised by'} <span className="text-white font-semibold">{event.research_data.organisation}</span>
+                      </p>
+                    )}
+
+                    {/* Inline meta chips */}
+                    <div className="mt-8 flex flex-wrap gap-2">
+                      {event.location && (
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide ${p.tag} backdrop-blur-sm`}>
+                          <MapPin className="h-3.5 w-3.5" /> {event.location}
+                        </span>
+                      )}
+                      {event.language && (
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide ${p.tag} backdrop-blur-sm`}>
+                          <Languages className="h-3.5 w-3.5" /> {translateLanguage(event.language, t)}
+                        </span>
+                      )}
+                      {(event.age_min || event.age_max) && (
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide ${p.tag} backdrop-blur-sm`}>
+                          <User className="h-3.5 w-3.5" /> {event.age_min ?? '?'}–{event.age_max ?? '?'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </header>
+              );
+            })()}
 
             <div className="space-y-8">
               <h2 className="text-4xl font-bold font-headline border-b-4 border-primary/10 pb-4 inline-block">
