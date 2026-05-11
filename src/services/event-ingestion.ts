@@ -34,19 +34,44 @@ export async function ingestEventFromText(rawText: string): Promise<string | nul
     return null;
   }
 
-  // Hard link guard — even if AI says valid, reject if there is truly no way to contact/apply.
-  // Check both the raw post text and the extracted apply_url.
-  const applyUrlCheck = (extracted as any).apply_url?.trim() || '';
-  const hasActionableContact =
-    applyUrlCheck.length > 0 ||
+  // Hard link guard — every event MUST ship with a contact path.
+  // We require BOTH:
+  //  (a) the raw post contains at least one URL / email / t.me link / @handle / bare domain, AND
+  //  (b) the AI populated apply_url with one of those entries.
+  // If the AI failed to pick one but the post clearly has contacts, we recover the
+  // first URL/email/t.me/handle from the post text so we don't lose a good event.
+  const applyUrlFromAi = (extracted as any).apply_url?.trim() || '';
+  const rawHasContact =
     /https?:\/\/\S+/.test(rawText) ||
     /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/.test(rawText) ||
-    /@\w{3,}/.test(rawText) ||
-    /t\.me\/\w+/.test(rawText);
+    /(?:^|\s)t\.me\/[A-Za-z0-9_]{3,}/.test(rawText) ||
+    /(?:^|\s)@[A-Za-z0-9_]{3,}\b/.test(rawText) ||
+    /\b(?:www\.)?[a-z0-9][a-z0-9\-]+\.(?:com|org|net|edu|io|uz|ru|co|gov|info|app|ai)\b/i.test(rawText);
 
-  if (!hasActionableContact) {
-    console.log(`[Ingest] 🔗 Skipping "${extracted.title}" — no link, email, or contact info`);
+  if (!rawHasContact) {
+    console.log(`[Ingest] 🔗 Skipping "${extracted.title}" — no contact info in post`);
     return null;
+  }
+
+  // If the AI dropped the apply_url, recover the first plausible contact from raw text
+  if (!applyUrlFromAi) {
+    const urlMatch    = rawText.match(/https?:\/\/[^\s\)\]>"']+/);
+    const emailMatch  = rawText.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+    const tmeMatch    = rawText.match(/t\.me\/[A-Za-z0-9_]{3,}/);
+    const handleMatch = rawText.match(/(?:^|\s)@([A-Za-z0-9_]{3,})\b/);
+    const recovered =
+      urlMatch?.[0] ||
+      (emailMatch?.[0] ? `mailto:${emailMatch[0]}` : '') ||
+      (tmeMatch?.[0] ? `https://${tmeMatch[0]}` : '') ||
+      (handleMatch?.[1] ? `https://t.me/${handleMatch[1]}` : '');
+    if (recovered) {
+      (extracted as any).apply_url = recovered;
+      console.log(`[Ingest] 🩹 Recovered apply_url for "${extracted.title}": ${recovered}`);
+    } else {
+      // Should be unreachable given rawHasContact === true, but be safe
+      console.log(`[Ingest] 🔗 Skipping "${extracted.title}" — could not extract a contact`);
+      return null;
+    }
   }
 
   console.log(`[Ingest] ✅ Accepted: "${extracted.title}"`);

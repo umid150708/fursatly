@@ -29,7 +29,8 @@ export interface ExtractEventDetailsOutput {
 }
 
 /**
- * Pull every actionable URL / email out of raw post text — no Groq needed.
+ * Pull every actionable URL / email / handle out of raw post text — no Groq needed.
+ * Covers: http(s) links, emails, t.me/* links, @username handles, bare domains.
  */
 function extractContactInfo(text: string): string[] {
   const found = new Set<string>();
@@ -41,6 +42,18 @@ function extractContactInfo(text: string): string[] {
   // Email addresses
   const emails = text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g) ?? [];
   emails.forEach(e => found.add(e));
+
+  // Telegram channel/bot links (t.me/foo)
+  const tmeLinks = text.match(/(?:^|[\s(])t\.me\/[A-Za-z0-9_]{3,}/g) ?? [];
+  tmeLinks.forEach(t => found.add('https://' + t.trim()));
+
+  // Bare @usernames (Telegram/Instagram/etc) — must be 3+ chars and NOT preceded by a word char (so we don't grab the local part of an email)
+  const handles = text.match(/(?:^|[\s(,!.])@([A-Za-z0-9_]{3,})\b/g) ?? [];
+  handles.forEach(h => found.add('@' + h.trim().replace(/^[^@]*@/, '')));
+
+  // Bare domains like example.com or www.example.com (no protocol prefix)
+  const bareDomains = text.match(/(?:^|\s)((?:www\.)?[a-z0-9][a-z0-9\-]+\.(?:com|org|net|edu|io|uz|ru|co|gov|info|app|ai)(?:\/[^\s]*)?)/gi) ?? [];
+  bareDomains.forEach(d => found.add(d.trim()));
 
   return [...found];
 }
@@ -68,10 +81,15 @@ Schema:
 Rules:
 - is_valid_opportunity = false if ANY of these apply:
   • It is an ad, spam, self-promotion, or unrelated chat
-  • It is a local/offline-only event with NO online application link, NO website URL, NO email address, and NO social media handle to contact — users must be able to act on it remotely
+  • The post contains NO URL, NO email, NO t.me/ link, NO @handle, and NO bare domain — i.e. the "URLs / contacts found" list above is empty. A student must have a way to act on it remotely.
   • It is purely informational (e.g. "here is a list of deadlines") with no single apply-able opportunity
-- is_valid_opportunity = true ONLY if a student can apply, register, or contact the organiser via a URL, email, or social handle in the post
-- apply_url: copy the most relevant URL or email from the "URLs / contacts found" list — the one a student clicks to apply or learn more. If no list provided, return null.
+- is_valid_opportunity = true ONLY if the "URLs / contacts found" list above is non-empty AND the post describes a real opportunity (scholarship, competition, program, internship, etc.)
+- apply_url: REQUIRED whenever is_valid_opportunity is true. Pick the single best entry from the "URLs / contacts found" list:
+    1. Prefer an official program/application URL (https://...)
+    2. Else prefer an organiser email
+    3. Else prefer a t.me/ link
+    4. Else fall back to an @handle (prefix it with https://t.me/ if it looks like a Telegram channel)
+  If is_valid_opportunity is false, set apply_url to null.
 - title: use original if present, otherwise write a short factual title — NEVER marketing language
 - location: country or city if clearly stated, otherwise "International" or "Online"
 - deadline: ISO date (YYYY-MM-DD) ONLY if explicitly stated in the post — otherwise null
