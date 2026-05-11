@@ -32,7 +32,7 @@ export function useCollection<T = any>(
   table: string,     // kept in signature for backward compat, unused
 ): UseCollectionResult<T> {
   const [data, setData]       = useState<WithId<T>[] | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // start true so SSR shows spinner, not "no results"
   const [error, setError]     = useState<Error | null>(null);
 
   const fetchData = useCallback(async () => {

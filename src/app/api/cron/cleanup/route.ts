@@ -11,6 +11,10 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// Vercel Hobby max timeout (single DELETE query — runs in well under a second).
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
 function db() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -1,29 +1,31 @@
 /**
  * GET /api/cron/enrich
  *
- * Picks up un-enriched events and runs them through the AI pipeline.
- * Called by cron-job.org every 5 minutes.
+ * Picks up un-enriched events AND events missing Russian translations,
+ * then runs them through the AI pipeline.
+ * Called by cron-job.org every 10 minutes.
  *
- * Works with the CURRENT database schema — no migration required.
+ * IMPORTANT: Vercel Hobby plan has a 60-second hard timeout on serverless
+ * functions. We process a SMALL batch per call (2 events in parallel) so
+ * a single invocation finishes well under the limit. The 10-min cron drains
+ * the queue across many small invocations instead of one long one.
  *
- * Queue signal: is_active = false AND research_data IS NULL
- *   → these are newly ingested events waiting for enrichment
+ * Queue signal: is_active = false AND research_data IS NULL → fresh queue
+ * Also enriches: active events missing translations.ru → translation backfill
  *
- * After enrichment: is_active = true, research_data = { ...enriched data }
- *
- * Retry handling (without retry_count column):
- *   - Events that failed enrichment stay at is_active=false, research_data=NULL
- *   - They are picked up again on the next cycle automatically
- *   - To prevent infinite retries on truly broken events, we limit to 3 attempts
- *     by storing attempt count inside research_data: { _attempts: N }
+ * After enrichment: is_active = true, research_data = { ...enriched, translations }
  */
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { enrichEvent } from '@/pipeline/enrich';
 
-const MAX_PER_CYCLE = 10;
-const MAX_ATTEMPTS  = 3;
+// Vercel: extend the serverless timeout to the Hobby-plan max (60s).
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
+const BATCH_SIZE   = 2;   // events processed in parallel per invocation
+const MAX_ATTEMPTS = 3;
 
 function db() {
   return createClient(
@@ -46,71 +48,80 @@ export async function GET(request: Request) {
 
   const supabase = db();
 
-  // Queue: all inactive events (either never enriched or failed)
-  // Application-level check filters out events that exhausted retries
-  const { data: events, error } = await supabase
+  // Priority 1: events still in queue (never enriched)
+  const { data: queueEvents } = await supabase
     .from('events')
     .select('id, title, research_data')
     .eq('is_active', false)
     .order('created_at', { ascending: true })
-    .limit(MAX_PER_CYCLE * 3); // fetch extra to account for exhausted ones we'll skip
+    .limit(BATCH_SIZE * 3);
 
-  if (error) {
-    console.error('[Enrich] DB fetch error:', error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  // Priority 2: active events missing Russian translations (backfill)
+  const { data: activeMissingRu } = await supabase
+    .from('events')
+    .select('id, title, research_data')
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
+    .limit(50);
 
-  if (!events?.length) {
-    return NextResponse.json({ ok: true, enriched: 0, failed: 0, message: 'Queue empty' });
-  }
+  const needsTranslation = (activeMissingRu ?? [])
+    .filter(e => {
+      const rd: any = e.research_data;
+      return rd && !rd?.translations?.ru;
+    })
+    .slice(0, BATCH_SIZE);
 
-  const results: Array<{ id: string; title: string; status: string; error?: string }> = [];
-  let processed = 0;
+  // Pick up to BATCH_SIZE candidates, prioritizing the queue
+  const candidates: Array<{ id: string; title: string; research_data: any; kind: 'queue' | 'translate' }> = [];
 
-  for (const event of events) {
-    if (processed >= MAX_PER_CYCLE) break;
-
-    // Skip permanently-failed events (exhausted retries)
-    const rd = event.research_data as any;
+  for (const e of queueEvents ?? []) {
+    if (candidates.length >= BATCH_SIZE) break;
+    const rd: any = e.research_data;
     const attempts = rd?._attempts ?? 0;
-    const alreadyActive = rd && !rd._failed && !rd._skipped; // has real enriched data
-
-    if (alreadyActive) continue;   // was active before, skip (shouldn't be in queue)
-    if (attempts >= MAX_ATTEMPTS) {
-      console.log(`[Enrich] Skipping ${event.id} — exhausted ${MAX_ATTEMPTS} attempts`);
-      results.push({ id: event.id, title: event.title, status: 'exhausted' });
-      continue;
-    }
-
-    processed++;
-
-    try {
-      await enrichEvent(event.id);
-      results.push({ id: event.id, title: event.title, status: 'enriched' });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(`[Enrich] Failed ${event.id}:`, message);
-
-      // Record failure in research_data so we can track retry attempts
-      await supabase
-        .from('events')
-        .update({
-          research_data: {
-            _failed:   true,
-            _attempts: attempts + 1,
-            _error:    message,
-            _failedAt: new Date().toISOString(),
-          },
-        })
-        .eq('id', event.id);
-
-      results.push({ id: event.id, title: event.title, status: 'failed', error: message });
-    }
+    if (attempts >= MAX_ATTEMPTS) continue;
+    candidates.push({ ...e, kind: 'queue' });
+  }
+  for (const e of needsTranslation) {
+    if (candidates.length >= BATCH_SIZE) break;
+    candidates.push({ ...e, kind: 'translate' });
   }
 
-  const enriched = results.filter(r => r.status === 'enriched').length;
-  const failed   = results.filter(r => r.status === 'failed').length;
+  if (!candidates.length) {
+    return NextResponse.json({ ok: true, processed: 0, message: 'Nothing to do' });
+  }
 
-  console.log(`[Enrich] Cycle: ${enriched} enriched, ${failed} failed`);
-  return NextResponse.json({ ok: true, enriched, failed, events: results });
+  // Process in PARALLEL so the cron finishes inside Vercel's 60s window
+  const results = await Promise.allSettled(
+    candidates.map(async (event) => {
+      try {
+        await enrichEvent(event.id);
+        return { id: event.id, title: event.title, kind: event.kind, status: 'ok' };
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (event.kind === 'queue') {
+          const rd: any = event.research_data;
+          const attempts = (rd?._attempts ?? 0) + 1;
+          await supabase
+            .from('events')
+            .update({
+              research_data: {
+                _failed:   true,
+                _attempts: attempts,
+                _error:    message,
+                _failedAt: new Date().toISOString(),
+              },
+            })
+            .eq('id', event.id);
+        }
+        return { id: event.id, title: event.title, kind: event.kind, status: 'failed', error: message };
+      }
+    }),
+  );
+
+  const flat = results.map(r => r.status === 'fulfilled' ? r.value : { status: 'rejected' });
+  const ok     = flat.filter((r: any) => r.status === 'ok').length;
+  const failed = flat.filter((r: any) => r.status === 'failed' || r.status === 'rejected').length;
+
+  console.log(`[Enrich] ${ok} ok, ${failed} failed`);
+  return NextResponse.json({ ok: true, processed: ok, failed, results: flat });
 }
