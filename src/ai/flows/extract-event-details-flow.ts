@@ -79,11 +79,24 @@ Schema:
 }
 
 Rules:
-- is_valid_opportunity = false if ANY of these apply:
-  • It is an ad, spam, self-promotion, or unrelated chat
-  • The post contains NO URL, NO email, NO t.me/ link, NO @handle, and NO bare domain — i.e. the "URLs / contacts found" list above is empty. A student must have a way to act on it remotely.
-  • It is purely informational (e.g. "here is a list of deadlines") with no single apply-able opportunity
-- is_valid_opportunity = true ONLY if the "URLs / contacts found" list above is non-empty AND the post describes a real opportunity (scholarship, competition, program, internship, etc.)
+- is_valid_opportunity = TRUE ONLY when ALL of these hold:
+  (a) the "URLs / contacts found" list above is non-empty, AND
+  (b) the post describes ONE specific real opportunity — a named scholarship,
+      competition, summer program, internship, research program, fellowship,
+      grant, conference, workshop, or volunteer program — with its OWN
+      organiser, eligibility, and apply path described in this post itself.
+
+- is_valid_opportunity = FALSE in ANY of these cases (this is the rejection list — be strict):
+  • The post is a commercial ad or paid promotion (selling a course, a bot, a service, a product, "earn money", referral codes, signup bonuses, affiliate links, "10 000 so'm bonus", "to'lov qilinadi" for content/work, etc.).
+  • The post is recruiting people to another Telegram channel/group/bot for information ("kanalga qo'shiling", "join our channel for the list", "PDF olish uchun kanalga qo'shiling", "join the group to receive…", channel-invite links like t.me/+xxxxxxxx, t.me/joinchat/, bot links like t.me/SomethingBot). The opportunity content must be IN THIS POST — not behind a channel-join wall.
+  • The post is a self-promotion or membership pitch for the channel itself, a meetup, a paid mentorship program, content-creator gigs, freelance/side-hustle offers, or any "follow us / subscribe / join to learn more" hook.
+  • The post is purely informational — a list of deadlines, a roundup of multiple opportunities, news, motivational text, study tips, university rankings, "TOP-10" lists, exam tips — without a single specific opportunity described in this post that a student can apply to directly.
+  • The post is a job posting in a private company that is NOT a structured internship/fellowship for students.
+  • The opportunity name, organiser, or deadline is missing AND the post reads more like marketing than a real program description.
+
+- Hard test: if a student read ONLY this post, could they tell exactly which program to apply to, who runs it, and roughly how to apply? If not → false.
+
+- When uncertain between true and false, choose FALSE. Quality over quantity.
 - apply_url: REQUIRED whenever is_valid_opportunity is true. Pick the single best entry from the "URLs / contacts found" list:
     1. Prefer an official program/application URL (https://...)
     2. Else prefer an organiser email
