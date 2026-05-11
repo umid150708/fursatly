@@ -67,6 +67,9 @@ export const translations = {
     // Event detail page
     backToOpportunities: 'Back to Opportunities',
     organisedBy: 'Organised by',
+    daysLeft: 'days left',
+    deadlineToday: 'Closes today',
+    deadline1Day: '1 day left',
     overview: 'Overview',
     keyDetails: 'Key Details',
     keyBenefits: 'Key Benefits & Features',
@@ -201,6 +204,9 @@ export const translations = {
     // Event detail page
     backToOpportunities: 'Imkoniyatlarga qaytish',
     organisedBy: 'Tashkilotchi:',
+    daysLeft: 'kun qoldi',
+    deadlineToday: 'Bugun yopiladi',
+    deadline1Day: '1 kun qoldi',
     overview: 'Umumiy ma\'lumot',
     keyDetails: 'Asosiy tafsilotlar',
     keyBenefits: 'Asosiy afzalliklar',
@@ -335,6 +341,9 @@ export const translations = {
     // Event detail page
     backToOpportunities: 'Назад к возможностям',
     organisedBy: 'Организатор:',
+    daysLeft: 'дней осталось',
+    deadlineToday: 'Закрывается сегодня',
+    deadline1Day: 'остался 1 день',
     overview: 'Обзор',
     keyDetails: 'Ключевые детали',
     keyBenefits: 'Ключевые преимущества',
