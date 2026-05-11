@@ -66,6 +66,7 @@ export const translations = {
 
     // Event detail page
     backToOpportunities: 'Back to Opportunities',
+    organisedBy: 'Organised by',
     overview: 'Overview',
     keyDetails: 'Key Details',
     keyBenefits: 'Key Benefits & Features',
@@ -199,6 +200,7 @@ export const translations = {
 
     // Event detail page
     backToOpportunities: 'Imkoniyatlarga qaytish',
+    organisedBy: 'Tashkilotchi:',
     overview: 'Umumiy ma\'lumot',
     keyDetails: 'Asosiy tafsilotlar',
     keyBenefits: 'Asosiy afzalliklar',
@@ -332,6 +334,7 @@ export const translations = {
 
     // Event detail page
     backToOpportunities: 'Назад к возможностям',
+    organisedBy: 'Организатор:',
     overview: 'Обзор',
     keyDetails: 'Ключевые детали',
     keyBenefits: 'Ключевые преимущества',

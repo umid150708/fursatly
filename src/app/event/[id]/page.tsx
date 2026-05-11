@@ -24,7 +24,6 @@ import {
 } from 'lucide-react';
 import { AtrasHeader, UzbekMotif } from '@/components/UzbekMotif';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import Image from 'next/image';
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -176,23 +175,41 @@ export default function EventDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-12">
-            <div className="relative h-[500px] w-full rounded-[3rem] overflow-hidden shadow-2xl">
-              <Image 
-                src={`https://picsum.photos/seed/${event.id}/1200/800`}
-                alt={event.title}
-                fill
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-              <div className="absolute bottom-10 left-10 right-10">
-                <Badge className="mb-6 bg-primary text-white px-6 py-2 text-lg rounded-full">
-                  {translateSource(event.source || 'Other', t)}
-                </Badge>
-                <h1 className="text-5xl md:text-7xl font-bold text-white font-headline leading-tight">
+            {/* Typography-driven hero — no stock photo. Category-tinted accent block,
+                badge, multilingual title, and an organiser/origin byline. */}
+            <header className="relative rounded-[3rem] overflow-hidden border border-primary/10 bg-gradient-to-br from-primary/8 via-background to-background p-10 md:p-14 shadow-sm">
+              {/* Subtle decorative accent — pulls in the brand colour without competing with content */}
+              <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-accent/10 blur-3xl pointer-events-none" />
+
+              <div className="relative">
+                <div className="flex flex-wrap items-center gap-3 mb-8">
+                  <Badge className="bg-primary text-primary-foreground px-5 py-1.5 text-sm font-bold tracking-wide uppercase rounded-full">
+                    {translateSource(event.source || 'Other', t)}
+                  </Badge>
+                  {event.location && (
+                    <span className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+                      <MapPin className="h-4 w-4" /> {event.location}
+                    </span>
+                  )}
+                  {event.language && (
+                    <span className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+                      <Languages className="h-4 w-4" /> {translateLanguage(event.language, t)}
+                    </span>
+                  )}
+                </div>
+
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-headline leading-[1.05] tracking-tight text-foreground">
                   {event.research_data?.translations?.[locale]?.title || event.title}
                 </h1>
+
+                {event.research_data?.organisation && (
+                  <p className="mt-6 text-lg md:text-xl text-muted-foreground font-medium">
+                    {t.organisedBy || 'Organised by'} <span className="text-foreground font-semibold">{event.research_data.organisation}</span>
+                  </p>
+                )}
               </div>
-            </div>
+            </header>
 
             <div className="space-y-8">
               <h2 className="text-4xl font-bold font-headline border-b-4 border-primary/10 pb-4 inline-block">
