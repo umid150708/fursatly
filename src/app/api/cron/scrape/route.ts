@@ -16,10 +16,15 @@ import { NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
 import { ingestEventFromText } from '@/services/event-ingestion';
 
-const CHANNELS            = ['edugrandsuz', 'grantlar', 'Volunteensuz'];
-const MAX_PAGES           = 5;     // max pages per channel per run
+// Vercel Hobby has a 60s hard timeout on serverless functions.
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
+const ALL_CHANNELS        = ['edugrandsuz', 'grantlar', 'Volunteensuz'];
+const MAX_PAGES           = 2;     // 2 pages per channel — plenty for a 24h window
 const MIN_TEXT_LENGTH     = 80;    // ignore very short posts
-const CUTOFF_MS           = 25 * 60 * 60 * 1000; // 25 h (slight overlap to never miss a post)
+const CUTOFF_MS           = 25 * 60 * 60 * 1000; // 25 h overlap so we never miss a post
+const MAX_POSTS_PER_RUN   = 6;     // total across all channels — keeps AI cost inside the 60s window
 
 // ── HTML helpers ──────────────────────────────────────────────────────────────
 
@@ -93,7 +98,14 @@ export async function GET(request: Request) {
   const cutoff = new Date(Date.now() - CUTOFF_MS);
   const results: Array<{ channel: string; status: string; title?: string; error?: string }> = [];
 
-  for (const channel of CHANNELS) {
+  // Track total ingest count across channels so we don't exceed our budget.
+  let totalIngested = 0;
+
+  for (const channel of ALL_CHANNELS) {
+    if (totalIngested >= MAX_POSTS_PER_RUN) {
+      console.log(`[Scraper] Budget exhausted — skipping ${channel}`);
+      break;
+    }
     console.log(`[Scraper] Channel: ${channel}`);
 
     // ── Paginate until we've covered the last 24 h ──────────────────────────
@@ -132,13 +144,17 @@ export async function GET(request: Request) {
     console.log(`[Scraper] ${channel}: ${unique.length} unique posts from last 24 h`);
 
     // ── Ingest each post ────────────────────────────────────────────────────
+    // Stop ingesting once we hit the per-run budget; remaining posts get
+    // picked up on the next cron tick.
     for (const post of unique) {
+      if (totalIngested >= MAX_POSTS_PER_RUN) break;
       try {
         const eventId = await ingestEventFromText(post.text);
         results.push({
           channel,
           status: eventId ? 'inserted' : 'skipped',
         });
+        totalIngested++;
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error(`[Scraper] Ingest error on ${channel}:`, msg);

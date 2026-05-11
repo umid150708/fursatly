@@ -1,13 +1,16 @@
 /**
- * Groq client with 3-key rotation, strict rate-limit compliance, and OpenRouter fallback.
+ * Groq client with 5-key rotation, serverless-friendly rate-limit handling,
+ * and OpenRouter fallback.
  *
- * Rate limit rules (Groq free/dev tier):
- *   30 RPM per key, ~14 400 TPM per key.
- *   Safe target: 20 RPM per key → MIN_KEY_INTERVAL = 60 000 / 20 = 3 000 ms.
+ * Rate-limit rules (Groq free/dev tier): 30 RPM per key, ~14 400 TPM per key.
  *
- * On 429: wait 62 s (full per-minute window reset), then try the next key.
- * On ALL keys exhausted: wait 65 s, reset timestamps, retry the whole loop once.
- * Final fallback: OpenRouter if still exhausted after retry.
+ * Designed for Vercel's 60-second function timeout:
+ *   - On 429: rotate to next key IMMEDIATELY (no long sleep — that would
+ *     blow the timeout). Other keys are independent and likely still good.
+ *   - If ALL keys 429 in a single pass: fall straight to OpenRouter rather
+ *     than sleeping 60+ s waiting for the per-minute window to reset.
+ *   - Minimum 3 s spacing between calls to the SAME key (20 RPM target) is
+ *     still enforced — that's a short wait, fine inside the timeout.
  */
 
 const GROQ_KEYS = (
@@ -22,14 +25,13 @@ const GROQ_KEYS = (
 
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY ?? '';
 const GROQ_MODEL     = 'llama-3.3-70b-versatile';
-const FALLBACK_MODEL = 'google/gemma-4-31b-it:free';
+// Free, fast, known-good OpenRouter model — used when ALL Groq keys are 429
+const FALLBACK_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
 
 // ── Rate-limit enforcement ────────────────────────────────────────────────────
 // 20 RPM per key (67% of the 30 RPM hard limit — comfortable TPM headroom)
 const RPM_TARGET       = 20;
 const MIN_KEY_INTERVAL = Math.ceil(60_000 / RPM_TARGET); // 3 000 ms between calls to SAME key
-const BACKOFF_429_MS   = 62_000;                          // wait full 62 s when a key returns 429
-const FULL_RESET_MS    = 65_000;                          // wait when ALL keys are simultaneously exhausted
 
 // Per-key timestamp of last successful call dispatch
 const lastCallAt: number[] = GROQ_KEYS.map(() => 0);
@@ -40,20 +42,22 @@ let keyIdx = 0;
 function sleep(ms: number) { return new Promise<void>(r => setTimeout(r, ms)); }
 
 export async function callLLM(prompt: string, maxTokens = 800): Promise<string> {
-  // Outer retry: if ALL keys return 429, wait for the full per-minute window to reset, then retry once
-  for (let outerAttempt = 0; outerAttempt < 2; outerAttempt++) {
-    for (let attempt = 0; attempt < GROQ_KEYS.length; attempt++) {
-      const idx = keyIdx % GROQ_KEYS.length;
-      keyIdx++;
+  // Try each Groq key once. On 429, rotate immediately (no long sleep).
+  // Other Groq keys are independent — one being throttled doesn't affect the others.
+  for (let attempt = 0; attempt < GROQ_KEYS.length; attempt++) {
+    const idx = keyIdx % GROQ_KEYS.length;
+    keyIdx++;
 
-      // Enforce minimum interval for this key
-      const gap = MIN_KEY_INTERVAL - (Date.now() - lastCallAt[idx]);
-      if (gap > 0) await sleep(gap);
+    // Enforce minimum interval for this specific key (short wait, fits the budget)
+    const gap = MIN_KEY_INTERVAL - (Date.now() - lastCallAt[idx]);
+    if (gap > 0 && gap < 4_000) await sleep(gap);
 
-      lastCallAt[idx] = Date.now();
-      const key = GROQ_KEYS[idx];
+    lastCallAt[idx] = Date.now();
+    const key = GROQ_KEYS[idx];
 
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    let res: Response;
+    try {
+      res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -62,32 +66,30 @@ export async function callLLM(prompt: string, maxTokens = 800): Promise<string> 
           max_tokens: maxTokens,
           temperature: 0.2,
         }),
-        signal: AbortSignal.timeout(20_000),
+        signal: AbortSignal.timeout(15_000),
       });
-
-      if (res.status === 429) {
-        console.warn(`[Groq] Key ${idx} rate-limited — waiting ${BACKOFF_429_MS / 1000}s`);
-        await sleep(BACKOFF_429_MS);
-        continue;
-      }
-      if (!res.ok) throw new Error(`Groq HTTP ${res.status}: ${await res.text().then(t => t.slice(0, 120))}`);
-
-      const json = await res.json();
-      return json.choices[0].message.content as string;
+    } catch (err) {
+      console.warn(`[Groq] Key ${idx} network error, hopping:`, err instanceof Error ? err.message : err);
+      continue;
     }
 
-    // All keys rate-limited in this pass — wait for window reset then retry
-    if (outerAttempt === 0) {
-      console.warn(`[Groq] All keys exhausted — waiting ${FULL_RESET_MS / 1000}s for rate-limit reset`);
-      await sleep(FULL_RESET_MS);
-      for (let i = 0; i < GROQ_KEYS.length; i++) lastCallAt[i] = 0;
+    if (res.status === 429) {
+      console.warn(`[Groq] Key ${idx} rate-limited — hopping to next key`);
+      continue; // don't sleep — just rotate
     }
+    if (!res.ok) {
+      console.warn(`[Groq] Key ${idx} HTTP ${res.status} — hopping`);
+      continue;
+    }
+
+    const json = await res.json();
+    return json.choices[0].message.content as string;
   }
 
-  // All Groq keys rate-limited → OpenRouter fallback
-  if (!OPENROUTER_KEY) throw new Error('All Groq keys rate-limited after retry — no OpenRouter key configured');
+  // All Groq keys exhausted in this pass → OpenRouter fallback (no sleep)
+  if (!OPENROUTER_KEY) throw new Error('All Groq keys failed — no OpenRouter key configured');
 
-  console.warn('[Groq] All keys exhausted after retry — falling back to OpenRouter');
+  console.warn('[Groq] All keys exhausted — falling back to OpenRouter');
   const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -100,10 +102,10 @@ export async function callLLM(prompt: string, maxTokens = 800): Promise<string> 
       messages: [{ role: 'user', content: prompt }],
       max_tokens: maxTokens,
     }),
-    signal: AbortSignal.timeout(40_000),
+    signal: AbortSignal.timeout(20_000),
   });
 
-  if (!res.ok) throw new Error(`OpenRouter HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`OpenRouter HTTP ${res.status}: ${await res.text().then(t => t.slice(0, 120)).catch(() => '')}`);
   const json = await res.json();
   return json.choices[0].message.content as string;
 }
