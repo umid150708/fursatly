@@ -179,16 +179,18 @@ export default function EventDetail() {
                 deadline countdown, and emphasised stats. No stock photos. */}
             {(() => {
               const cat = (event.source || 'Other').toLowerCase();
-              const palette: Record<string, { from: string; to: string; ring: string; chip: string; tag: string; pat: string }> = {
-                scholarships:    { from: 'from-emerald-500',  to: 'to-teal-600',     ring: 'ring-emerald-400/30',  chip: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300', tag: 'bg-white/15 text-white',                            pat: '#10b981' },
-                competitions:    { from: 'from-amber-500',    to: 'to-orange-600',   ring: 'ring-amber-400/30',    chip: 'bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300',          tag: 'bg-white/15 text-white',                            pat: '#f59e0b' },
-                'summer programs': { from: 'from-pink-500',   to: 'to-rose-600',     ring: 'ring-pink-400/30',     chip: 'bg-pink-50 text-pink-700 dark:bg-pink-950/50 dark:text-pink-300',                tag: 'bg-white/15 text-white',                            pat: '#ec4899' },
-                research:        { from: 'from-blue-600',     to: 'to-indigo-700',   ring: 'ring-blue-400/30',     chip: 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300',                tag: 'bg-white/15 text-white',                            pat: '#2563eb' },
-                volunteer:       { from: 'from-orange-500',   to: 'to-red-600',      ring: 'ring-orange-400/30',   chip: 'bg-orange-50 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300',        tag: 'bg-white/15 text-white',                            pat: '#f97316' },
-                stem:            { from: 'from-violet-600',   to: 'to-fuchsia-700',  ring: 'ring-violet-400/30',   chip: 'bg-violet-50 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300',        tag: 'bg-white/15 text-white',                            pat: '#7c3aed' },
-                internships:     { from: 'from-slate-700',    to: 'to-slate-900',    ring: 'ring-slate-400/30',    chip: 'bg-slate-50 text-slate-700 dark:bg-slate-900 dark:text-slate-300',               tag: 'bg-white/15 text-white',                            pat: '#475569' },
-                workshops:       { from: 'from-cyan-500',     to: 'to-teal-600',     ring: 'ring-cyan-400/30',     chip: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300',                tag: 'bg-white/15 text-white',                            pat: '#06b6d4' },
-                other:           { from: 'from-primary',      to: 'to-primary/70',   ring: 'ring-primary/30',      chip: 'bg-primary/10 text-primary',                                                       tag: 'bg-white/15 text-white',                            pat: 'currentColor' },
+              // Editorial palette — deep, muted, news-publication weight. All Tailwind
+              // 800/900/950 shades so the page reads serious, not kid-friendly.
+              const palette: Record<string, { from: string; via: string; to: string; ring: string }> = {
+                scholarships:      { from: 'from-emerald-900', via: 'via-emerald-950',  to: 'to-slate-950',   ring: 'ring-emerald-700/20' },
+                competitions:      { from: 'from-amber-800',   via: 'via-stone-900',    to: 'to-zinc-950',    ring: 'ring-amber-700/20'   },
+                'summer programs': { from: 'from-rose-900',    via: 'via-rose-950',     to: 'to-stone-950',   ring: 'ring-rose-800/20'    },
+                research:          { from: 'from-blue-950',    via: 'via-slate-900',    to: 'to-slate-950',   ring: 'ring-blue-800/20'    },
+                volunteer:         { from: 'from-orange-900',  via: 'via-stone-900',    to: 'to-stone-950',   ring: 'ring-orange-800/20'  },
+                stem:              { from: 'from-indigo-950',  via: 'via-violet-950',   to: 'to-slate-950',   ring: 'ring-indigo-800/20'  },
+                internships:       { from: 'from-slate-800',   via: 'via-slate-900',    to: 'to-slate-950',   ring: 'ring-slate-700/20'   },
+                workshops:         { from: 'from-teal-900',    via: 'via-slate-900',    to: 'to-slate-950',   ring: 'ring-teal-800/20'    },
+                other:             { from: 'from-slate-800',   via: 'via-slate-900',    to: 'to-slate-950',   ring: 'ring-slate-700/20'   },
               };
               const p = palette[cat] ?? palette.other;
 
@@ -198,7 +200,7 @@ export default function EventDetail() {
               const urgency = daysLeft != null && daysLeft <= 7;
 
               return (
-                <header className={`relative rounded-[3rem] overflow-hidden shadow-xl ring-1 ${p.ring} bg-gradient-to-br ${p.from} ${p.to}`}>
+                <header className={`relative rounded-[2.5rem] overflow-hidden shadow-2xl ring-1 ${p.ring} bg-gradient-to-br ${p.from} ${p.via} ${p.to}`}>
                   {/* Uzbek-inspired suzani dot pattern as decorative overlay */}
                   <svg className="absolute inset-0 w-full h-full opacity-[0.08] pointer-events-none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
@@ -221,12 +223,12 @@ export default function EventDetail() {
                   <div className="relative p-8 md:p-12 lg:p-14 text-white">
                     {/* Top row: category badge + countdown */}
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-10">
-                      <Badge className="bg-white text-foreground px-5 py-1.5 text-sm font-black tracking-wide uppercase rounded-full shadow-md hover:bg-white">
+                      <Badge className="bg-white/10 text-white px-4 py-1.5 text-xs font-semibold tracking-[0.18em] uppercase rounded-full ring-1 ring-white/20 backdrop-blur-sm hover:bg-white/15">
                         {translateSource(event.source || 'Other', t)}
                       </Badge>
                       {daysLeft != null && daysLeft >= 0 && (
-                        <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold backdrop-blur-sm ${urgency ? 'bg-red-500 text-white animate-pulse' : 'bg-white/20 text-white'}`}>
-                          <Calendar className="h-4 w-4" />
+                        <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase backdrop-blur-sm ring-1 ${urgency ? 'bg-amber-200/15 text-amber-100 ring-amber-200/30' : 'bg-white/10 text-white/90 ring-white/15'}`}>
+                          <Calendar className="h-3.5 w-3.5" />
                           {daysLeft === 0 ? (t.deadlineToday || 'Closes today') :
                            daysLeft === 1 ? (t.deadline1Day || '1 day left') :
                            `${daysLeft} ${t.daysLeft || 'days left'}`}
@@ -246,20 +248,20 @@ export default function EventDetail() {
                       </p>
                     )}
 
-                    {/* Inline meta chips */}
-                    <div className="mt-8 flex flex-wrap gap-2">
+                    {/* Inline meta — minimal, separated by a thin divider above */}
+                    <div className="mt-10 pt-6 border-t border-white/10 flex flex-wrap gap-x-6 gap-y-2 text-xs font-medium uppercase tracking-[0.12em] text-white/70">
                       {event.location && (
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide ${p.tag} backdrop-blur-sm`}>
+                        <span className="inline-flex items-center gap-1.5">
                           <MapPin className="h-3.5 w-3.5" /> {event.location}
                         </span>
                       )}
                       {event.language && (
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide ${p.tag} backdrop-blur-sm`}>
+                        <span className="inline-flex items-center gap-1.5">
                           <Languages className="h-3.5 w-3.5" /> {translateLanguage(event.language, t)}
                         </span>
                       )}
                       {(event.age_min || event.age_max) && (
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide ${p.tag} backdrop-blur-sm`}>
+                        <span className="inline-flex items-center gap-1.5">
                           <User className="h-3.5 w-3.5" /> {event.age_min ?? '?'}–{event.age_max ?? '?'}
                         </span>
                       )}
