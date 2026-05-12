@@ -26,6 +26,20 @@ function db() {
 }
 
 export async function ingestEventFromText(rawText: string): Promise<string | null> {
+  // ── Step 0: Reject thin / placeholder posts before even calling the AI ──────
+  // The AI fabricates keyDetails ("this week") when the source has no concrete
+  // facts. Cheaper to reject the post outright than to enrich garbage.
+  // We strip URLs/whitespace and require >= 120 chars of real narrative.
+  const stripped = rawText
+    .replace(/https?:\/\/\S+/g, '')
+    .replace(/@\w+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (stripped.length < 120) {
+    console.log(`[Ingest] 🛑 Skipping post — too thin (${stripped.length} chars of real content)`);
+    return null;
+  }
+
   // ── Step 1: Extract via Groq ────────────────────────────────────────────────
   const extracted = await extractEventDetails({ text: rawText });
 
