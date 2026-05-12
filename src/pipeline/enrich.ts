@@ -127,8 +127,8 @@ async function findYouTubeVideo(
   category: string,
 ): Promise<VideoResource | null> {
   try {
-    // Step 1: Groq generates the best search query (short, no reasoning — use 8B)
-    const query = (await callLLM(youtubeQueryPrompt(title, category), 40, 'fast')).trim()
+    // Step 1: Groq generates the best search query
+    const query = (await callLLM(youtubeQueryPrompt(title, category), 40)).trim()
       .replace(/^["']|["']$/g, '');   // strip any surrounding quotes
 
     if (!query) return null;
@@ -244,8 +244,7 @@ export async function enrichEvent(eventId: string): Promise<void> {
   const existing = (event.research_data ?? {}) as Partial<ResearchData>;
 
   // ── Step 1: Research (throws on failure → caller handles retry) ────────────
-  // Uses 'smart' tier (70B) — needs knowledge recall, structured JSON, nuance
-  const raw      = await callLLM(researchPrompt(event.title, event.description ?? ''), 900, 'smart');
+  const raw      = await callLLM(researchPrompt(event.title, event.description ?? ''), 900);
   const research = parseJSON<ResearchData>(raw);
 
   research.confidence     = Math.max(0, Math.min(1, Number(research.confidence) || 0.5));
@@ -260,12 +259,9 @@ export async function enrichEvent(eventId: string): Promise<void> {
     competitionTips:     research.competitionTips,
   };
 
-  // Translation is shape-preserving, no reasoning — use 'fast' tier (8B).
-  // 8B model has ~140× the daily token quota of 70B, so translations don't
-  // eat into the research budget. Falls back to 70B via OpenRouter if needed.
   let uzTranslation: UzTranslation | undefined;
   try {
-    const uzRaw = await callLLM(translationPrompt(fieldsToTranslate, 'Uzbek (Latin script)'), 700, 'fast');
+    const uzRaw = await callLLM(translationPrompt(fieldsToTranslate, 'Uzbek (Latin script)'), 700);
     uzTranslation = parseJSON<UzTranslation>(uzRaw);
   } catch {
     // Translation failed — continue with English only
@@ -274,7 +270,7 @@ export async function enrichEvent(eventId: string): Promise<void> {
   // ── Step 2b: Translate to Russian (silent failure) ─────────────────────────
   let ruTranslation: RuTranslation | undefined;
   try {
-    const ruRaw = await callLLM(translationPrompt(fieldsToTranslate, 'Russian'), 700, 'fast');
+    const ruRaw = await callLLM(translationPrompt(fieldsToTranslate, 'Russian'), 700);
     ruTranslation = parseJSON<RuTranslation>(ruRaw);
   } catch {
     // Translation failed — continue without Russian
