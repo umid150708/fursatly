@@ -87,11 +87,11 @@ Return this exact shape:
 
 Rules:
 - eligibilityCriteria: ONLY requirements EXPLICITLY stated in the text. If none stated, return []. NEVER invent.
-- keyDetails: numbers, dates, money, durations. Never repeat the description.
-- competitionTips: actionable steps. Not "work hard". Not "be yourself".
-- confidence: 0.0–1.0 based on clarity of source
+- keyDetails: must be SUBSTANTIVE facts — a prize amount ("$3,000 prize"), a duration ("12-week summer program"), a stipend ("monthly $800 stipend"), a class size ("400 selected participants"), a specific date range. Each entry must be ≥ 4 words OR contain a number/currency/duration unit. NEVER write vague placeholders like "this week", "next year", "International", "fully-funded", "online" on their own. If the source has no concrete numbers/dates/quantities, return [] — empty is better than fabricated.
+- competitionTips: actionable steps a student can take BEFORE applying. Not "work hard". Not "be yourself". Not generic resume advice that applies to every opportunity. Each tip must be at least 6 words AND specific to THIS opportunity's domain. If the source gives you nothing program-specific, return [] — empty is better than filler.
+- confidence: 0.0–1.0 based on clarity of source. If source is < 100 chars of real content, max confidence is 0.3.
 - officialWebsite: the application/info URL. Check the description first — if it contains a 🔗 line, that IS the URL, copy it exactly. Otherwise use any URL in the description text. If none is present but you recognise the program, provide the correct official URL from your knowledge. Return null only if you genuinely cannot determine it.
-- Arrays may be empty [] if there is genuinely nothing to add`;
+- Arrays may be empty [] if there is genuinely nothing to add. EMPTY IS BETTER THAN FABRICATED.`;
 }
 
 function translationPrompt(fields: Record<string, unknown>, language: string): string {
