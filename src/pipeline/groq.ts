@@ -1,30 +1,25 @@
 /**
  * Groq client — 6-key rotation, tiered model routing, serverless-friendly
- * rate-limit handling, OpenRouter fallback.
+ * rate-limit handling. PURE GROQ, no OpenRouter or other fallback.
  *
- * Strategy
- * ────────
- * The wrong way: send every call to the strongest (and most quota-limited)
- * model on a single rotating pool. We exhaust 70B quota in a few hundred
- * calls/day, then everything stalls.
+ * Note: "Groq" is the inference provider; the models it runs are Meta's
+ * Llama family. So `llama-3.3-70b-versatile` and `llama-3.1-8b-instant`
+ * ARE Groq — that's what Groq sells.
  *
- * The right way (this file): route by task difficulty.
+ * Strategy: route by task difficulty.
  *   • 'smart' tier → llama-3.3-70b-versatile  (extraction, enrichment research)
- *     ~ 100K tokens/day per key. We have 6 keys = ~600K tokens/day.
- *   • 'fast'  tier → llama-3.1-8b-instant     (translations, cleanup decisions)
- *     ~ 14M tokens/day per key. We have 6 keys = ~84M tokens/day.
+ *     ~ 100K tokens/day per key. 6 keys = ~600K tokens/day total.
+ *   • 'fast'  tier → llama-3.1-8b-instant     (translations, short tasks)
+ *     ~ 14M tokens/day per key. 6 keys = ~84M tokens/day total.
  *
- * That's a ~140× capacity multiplier for the tasks that don't need 70B
- * reasoning — translation, classification, and short factual answers.
- * Each tier keeps its OWN round-robin index and its OWN per-key cooldowns,
- * so the two pools never compete for the same throughput budget.
+ * Each tier keeps its OWN round-robin index and per-key cooldowns so the
+ * two pools never compete for the same throughput.
  *
  * Serverless guarantees (Vercel's 60s cap):
- *   • On 429: rotate to next key IMMEDIATELY (no long sleep — that single
- *     sleep would itself blow the timeout). Other keys are independent.
- *   • If ALL keys 429 in a single pass: fall straight to OpenRouter.
- *   • Min 3s spacing between calls to the SAME key (20 RPM target) — short
- *     enough to fit inside the function budget.
+ *   • On 429: rotate to next key IMMEDIATELY (no long sleep).
+ *   • If ALL keys 429 in a single pass: THROW. The caller (cron) will
+ *     retry on the next tick (10 min later) when keys have likely cooled.
+ *   • Min 3s spacing between calls to the SAME key (20 RPM target).
  */
 
 const GROQ_KEYS = (
@@ -38,20 +33,12 @@ const GROQ_KEYS = (
   ].filter(Boolean) as string[]
 );
 
-const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY ?? '';
-
-// ── Tier → model mapping ─────────────────────────────────────────────────────
+// ── Tier → Groq model mapping ────────────────────────────────────────────────
 export type ModelTier = 'smart' | 'fast';
 
 const MODEL_BY_TIER: Record<ModelTier, string> = {
   smart: 'llama-3.3-70b-versatile',   // hard reasoning, JSON extraction, knowledge recall
   fast:  'llama-3.1-8b-instant',      // translation, short classifications, summaries
-};
-
-// OpenRouter fallback — also tiered so smart/fast each land somewhere reasonable.
-const FALLBACK_MODEL_BY_TIER: Record<ModelTier, string> = {
-  smart: 'meta-llama/llama-3.3-70b-instruct:free',
-  fast:  'meta-llama/llama-3.2-3b-instruct:free',
 };
 
 // ── Rate-limit enforcement ───────────────────────────────────────────────────
@@ -120,30 +107,10 @@ export async function callLLM(prompt: string, maxTokens = 800, tier: ModelTier =
     return json.choices[0].message.content as string;
   }
 
-  // All Groq keys exhausted in this pass → OpenRouter fallback (no sleep)
-  if (!OPENROUTER_KEY) throw new Error(`All Groq keys failed (tier=${tier}) — no OpenRouter key configured`);
-
-  const fallbackModel = FALLBACK_MODEL_BY_TIER[tier];
-  console.warn(`[Groq:${tier}] All keys exhausted — falling back to OpenRouter (${fallbackModel})`);
-
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization':  `Bearer ${OPENROUTER_KEY}`,
-      'Content-Type':   'application/json',
-      'HTTP-Referer':   'https://fursatly.uz',
-    },
-    body: JSON.stringify({
-      model: fallbackModel,
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: maxTokens,
-    }),
-    signal: AbortSignal.timeout(20_000),
-  });
-
-  if (!res.ok) throw new Error(`OpenRouter HTTP ${res.status}: ${await res.text().then(t => t.slice(0, 120)).catch(() => '')}`);
-  const json = await res.json();
-  return json.choices[0].message.content as string;
+  // All 6 Groq keys returned 429/error in this pass. Throw so the cron
+  // marks this attempt as failed and retries on the next 10-min tick,
+  // by which time the per-minute rate-limit window will have reset.
+  throw new Error(`All ${GROQ_KEYS.length} Groq keys failed (tier=${tier}) — will retry next cron tick`);
 }
 
 // Strips markdown fences then parses JSON.
