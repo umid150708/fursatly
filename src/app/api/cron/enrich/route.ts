@@ -36,10 +36,14 @@ function db() {
 }
 
 export async function GET(request: Request) {
-  const CRON_SECRET = process.env.CRON_SECRET ?? 'fursatly123';
-  const { searchParams } = new URL(request.url);
+  // Refuse to run if CRON_SECRET isn't configured — no insecure fallback.
+  const CRON_SECRET = process.env.CRON_SECRET;
+  if (!CRON_SECRET) {
+    return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 });
+  }
 
-  const isVercelCron    = request.headers.get('authorization') === `Bearer ${process.env.CRON_SECRET}`;
+  const { searchParams } = new URL(request.url);
+  const isVercelCron    = request.headers.get('authorization') === `Bearer ${CRON_SECRET}`;
   const isManualTrigger = searchParams.get('secret') === CRON_SECRET;
 
   if (!isVercelCron && !isManualTrigger) {

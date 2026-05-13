@@ -1,0 +1,80 @@
+# Fursatly
+
+AI-powered opportunity platform for Central Asian students — scholarships, competitions, summer programs, fellowships, internships. Built with Next.js 15 (App Router), Supabase, and Groq.
+
+🌐 Live: [fursatly.uz](https://fursatly.uz) (production)
+
+## What it does
+
+- **Scrapes** Uzbek Telegram channels every 10 min for new opportunities
+- **AI-filters** ads, channel-promos, and informational roundups
+- **Extracts** structured data (title, deadline, location, age range, apply URL)
+- **Enriches** each opportunity with eligibility, tips, and resources via Llama-3.3-70B on Groq
+- **Translates** every event to Uzbek + Russian automatically
+- **Deletes** events past their deadline daily
+- **Multilingual UI** — English, Uzbek (Latin), Russian
+
+## Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│  Telegram       │    │  Vercel          │    │  Supabase       │
+│  channels       │───▶│  /api/cron/*     │───▶│  events table   │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                              │
+                              ▼
+                       ┌──────────────────┐
+                       │  Groq            │
+                       │  Llama 3.3 70B   │
+                       └──────────────────┘
+```
+
+| Component | Tech |
+|---|---|
+| Frontend | Next.js 15, React 19, Tailwind, shadcn/ui |
+| Database | Supabase Postgres |
+| Hosting | Vercel (Hobby tier) |
+| AI | Groq — `llama-3.3-70b-versatile`, 6-key rotation |
+| Cron triggers | cron-job.org (every 10 min) + Vercel daily crons |
+
+## Cron schedule
+
+| Path | Frequency | What it does |
+|---|---|---|
+| `/api/cron/scrape` | Daily 02:00 UTC | Pulls last 24h of posts from 3 Telegram channels |
+| `/api/cron/enrich` | Every 10 min (cron-job.org) | Enriches 2 queued events + backfills missing translations |
+| `/api/cron/cleanup` | Daily 03:00 UTC | Hard-deletes events past their deadline |
+
+All cron routes require `?secret=<CRON_SECRET>` query param or `Authorization: Bearer <CRON_SECRET>` header.
+
+## Environment variables
+
+Set these in Vercel and locally in `.env.local`:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+
+GROQ_KEY_1=...
+GROQ_KEY_2=...
+GROQ_KEY_3=...
+GROQ_KEY_4=...
+GROQ_KEY_5=...
+GROQ_KEY_6=...
+
+CRON_SECRET=...
+```
+
+Never commit `.env.local` — it's gitignored.
+
+## Local development
+
+```bash
+npm install
+npm run dev        # http://localhost:9002
+```
+
+## Deploy
+
+Push to `main` → Vercel rebuilds automatically. Zero-downtime atomic swap. Rollback any time from the Vercel dashboard.
