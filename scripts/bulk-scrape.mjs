@@ -408,7 +408,7 @@ async function main() {
 
   if (!DRY_RUN && stats.inserted > 0) {
     console.log(`\n⏳ ${stats.inserted} events are now queued for AI enrichment.`);
-    console.log(`   Hit /api/cron/enrich?secret=fursatly123 to process them,`);
+    console.log(`   Hit /api/cron/enrich?secret=<CRON_SECRET> to process them,`);
     console.log(`   or check progress at /api/admin/progress`);
   }
 }

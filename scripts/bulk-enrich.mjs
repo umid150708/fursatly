@@ -427,7 +427,7 @@ async function main() {
        .forEach(l => console.log(`  • ${l.title}: ${l.result}`));
   }
 
-  console.log(`\n🌐 Check progress: /api/admin/progress?secret=fursatly123\n`);
+  console.log(`\n🌐 Check progress: /api/admin/progress?secret=<CRON_SECRET>\n`);
 }
 
 main().catch(e => { console.error('\n💥 Fatal:', e); process.exit(1); });

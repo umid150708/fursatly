@@ -36,7 +36,7 @@ function loadEnv() {
 }
 
 const ENV = loadEnv();
-const GROQ_KEYS    = Object.entries(ENV).filter(([k]) => /^GROQ_KEY_d+$/.test(k)).sort(([a],[b]) => a.localeCompare(b)).map(([,v]) => v).filter(Boolean);
+const GROQ_KEYS    = Object.entries(ENV).filter(([k]) => /^GROQ_KEY_\d+$/.test(k)).sort(([a],[b]) => a.localeCompare(b)).map(([,v]) => v).filter(Boolean);
 const SUPABASE_URL = ENV.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = ENV.SUPABASE_SERVICE_ROLE_KEY;
 
