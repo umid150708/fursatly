@@ -276,19 +276,12 @@ export default function EventDetail() {
                 {t.overview}
               </h2>
               <p className="text-2xl text-muted-foreground leading-relaxed whitespace-pre-wrap font-medium">
-                {(locale !== 'en' ? event.research_data?.translations?.[locale]?.extendedDescription : null) || event.description}
+                {research?.extendedDescription || event.description}
               </p>
             </div>
 
             {research ? (
               <div className="space-y-16">
-
-                {/* Extended description — only if enrichment added something new */}
-                {research.extendedDescription && (
-                  <p className="text-xl text-muted-foreground leading-relaxed italic border-l-4 border-primary/30 pl-6">
-                    {research.extendedDescription}
-                  </p>
-                )}
 
                 {/* Key Details */}
                 {research.keyDetails?.length > 0 && (
@@ -401,13 +394,7 @@ export default function EventDetail() {
                   </div>
                 </div>
               </div>
-            ) : (
-              <div className="p-12 rounded-[2.5rem] bg-muted/30 border-2 border-dashed border-primary/20 text-center">
-                <p className="text-xl italic opacity-60">
-                  {t.researchPending}
-                </p>
-              </div>
-            )}
+            ) : null}
           </div>
 
           {/* Sidebar Info */}
