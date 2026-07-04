@@ -114,8 +114,19 @@ export const translations = {
     statLanguages: 'Languages',
 
     // Closing soon
-    closingSoon: '🔥 Closing Soon',
-    daysLeft: 'd left',
+    closingSoon: 'Closing Soon',
+    dLeft: 'd',
+
+    // Homepage sections
+    heroKicker: 'For the students of Central Asia',
+    scroll: 'Scroll',
+    missionLead: 'Our mission',
+    missionTitle: "Opportunity shouldn't depend on where you were born.",
+    missionBody: 'Every year thousands of scholarships and programs go unclaimed — not for lack of talent, but because no one knew they existed. Fursatly finds them, researches them, and puts them in your language.',
+    valuesLead: 'Why Fursatly',
+    exploreLead: 'Live opportunities',
+    exploreTitle: 'Find your next opportunity',
+    backToTop: 'Back to top',
 
     // Why Fursatly
     whyFursatly: 'Why Fursatly?',
@@ -251,8 +262,19 @@ export const translations = {
     statLanguages: 'Tillar',
 
     // Closing soon
-    closingSoon: '🔥 Muddat tugayapti',
-    daysLeft: 'kun',
+    closingSoon: 'Muddat tugayapti',
+    dLeft: 'kun',
+
+    // Homepage sections
+    heroKicker: 'Markaziy Osiyo talabalari uchun',
+    scroll: 'Pastga',
+    missionLead: 'Bizning maqsad',
+    missionTitle: 'Imkoniyat siz qayerda tug\'ilganingizga bog\'liq bo\'lmasligi kerak.',
+    missionBody: 'Har yili minglab grantlar va dasturlar egasiz qoladi — iste\'dod yetishmagani uchun emas, balki ular haqida hech kim bilmagani uchun. Fursatly ularni topadi, o\'rganadi va sizning tilingizga o\'giradi.',
+    valuesLead: 'Nega Fursatly',
+    exploreLead: 'Faol imkoniyatlar',
+    exploreTitle: 'Keyingi imkoniyatingizni toping',
+    backToTop: 'Yuqoriga',
 
     // Why Fursatly
     whyFursatly: 'Nima uchun Fursatly?',
@@ -388,8 +410,19 @@ export const translations = {
     statLanguages: 'Языка',
 
     // Closing soon
-    closingSoon: '🔥 Скоро закрытие',
-    daysLeft: 'дн.',
+    closingSoon: 'Скоро закрытие',
+    dLeft: 'дн.',
+
+    // Homepage sections
+    heroKicker: 'Для студентов Центральной Азии',
+    scroll: 'Листайте',
+    missionLead: 'Наша миссия',
+    missionTitle: 'Возможности не должны зависеть от того, где ты родился.',
+    missionBody: 'Каждый год тысячи стипендий и программ остаются невостребованными — не из-за нехватки талантов, а потому что о них никто не узнал. Fursatly находит их, изучает и переводит на твой язык.',
+    valuesLead: 'Почему Fursatly',
+    exploreLead: 'Актуальные возможности',
+    exploreTitle: 'Найди свою возможность',
+    backToTop: 'Наверх',
 
     // Why Fursatly
     whyFursatly: 'Почему Fursatly?',
@@ -412,6 +445,9 @@ export const translations = {
     online: 'Онлайн',
   },
 };
+
+/** The full translation dictionary for one locale. */
+export type Dict = typeof translations.en;
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 

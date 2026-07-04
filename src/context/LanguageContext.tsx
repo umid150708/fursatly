@@ -33,23 +33,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   const t = translations[locale];
 
-  // Dynamically apply body theme classes after mounting to prevent hydration errors
-  useEffect(() => {
-    if (isMounted) {
-      const body = document.body;
-      if (locale === 'uz') {
-        body.classList.add('uzbek-theme');
-      } else {
-        body.classList.remove('uzbek-theme');
-      }
-    }
-  }, [locale, isMounted]);
-
   return (
     <LanguageContext.Provider value={{ locale, setLocale: handleSetLocale, t, isMounted }}>
-      <div className={`min-h-screen ${isMounted && locale === 'uz' ? 'uzbek-theme' : ''}`}>
-        {children}
-      </div>
+      {children}
     </LanguageContext.Provider>
   );
 }
