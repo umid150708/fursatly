@@ -28,13 +28,15 @@ export const metadata: Metadata = {
 };
 
 /* Decide the motion tier BEFORE first paint, so scroll-reveal targets are only
-   hidden on devices that will actually animate them (no FOUC on weak phones). */
+   hidden on devices that will actually animate them (no FOUC).
+   The lightweight motion (smooth-scroll, reveals, card rails) runs for everyone
+   EXCEPT people who opted out via OS "Reduce Motion" or Data Saver — the heavy
+   WebGL shader is gated separately (see MotionConfig). */
 const motionProbe = `(function(){try{
   var m=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var mem=navigator.deviceMemory||4, cores=navigator.hardwareConcurrency||4;
   var save=navigator.connection&&navigator.connection.saveData;
-  document.documentElement.dataset.motion=(!m&&mem>=4&&cores>=4&&!save)?'full':'reduced';
-}catch(e){document.documentElement.dataset.motion='reduced';}})();`;
+  document.documentElement.dataset.motion=(!m&&!save)?'full':'reduced';
+}catch(e){document.documentElement.dataset.motion='full';}})();`;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
