@@ -153,7 +153,7 @@ export function FloatingCards({ cards, onOpen }: { cards: FloatCard[]; onOpen: (
   }, [motion, cards.length]);
 
   return (
-    <div ref={ref} className="pointer-events-none absolute inset-0 z-[1] hidden lg:block">
+    <div ref={ref} className="pointer-events-none absolute inset-0 z-20 hidden lg:block">
       {cards.slice(0, SLOTS.length).map((c, i) => (
         <div
           key={i}
