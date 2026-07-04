@@ -1,10 +1,5 @@
-// Central barrel for the Supabase integration layer.
-// Mirrors the old src/firebase/index.ts exports so consumers only need to update import paths.
-
+// Supabase integration layer — public barrel.
 export { getSupabaseClient } from './client';
-export { SupabaseClientProvider } from './client-provider';
-export * from './provider';
-export * from './use-collection';
-export * from './use-doc';
-export * from './non-blocking-updates';
-export * from './non-blocking-login';
+export { SupabaseClientProvider, useDb } from './provider';
+export { useCollection } from './use-collection';
+export type { WithId, UseCollectionResult } from './use-collection';

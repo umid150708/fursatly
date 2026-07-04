@@ -14,29 +14,16 @@
  *   node scripts/bulk-translate.mjs dry      → dry run, no DB writes
  */
 
-import { readFileSync } from 'fs';
 import { createClient } from '@supabase/supabase-js';
+import { loadEnv, groqKeys } from './lib/env.mjs';
+import { GroqClient, parseJSON } from './lib/groq.mjs';
 
 // ── Config ─────────────────────────────────────────────────────────────────────
 const DRY_RUN = process.argv.includes('dry');
 
-// ── Load env ───────────────────────────────────────────────────────────────────
-function loadEnv() {
-  try {
-    const raw = readFileSync('/Users/user/Desktop/Fursatly/.env.local', 'utf8');
-    const env = {};
-    for (const line of raw.split('\n')) {
-      const m = line.match(/^([^#=]+)=(.*)$/);
-      if (m) env[m[1].trim()] = m[2].trim();
-    }
-    return env;
-  } catch {
-    console.error('Could not read .env.local'); process.exit(1);
-  }
-}
-
-const ENV = loadEnv();
-const GROQ_KEYS    = Object.entries(ENV).filter(([k]) => /^GROQ_KEY_\d+$/.test(k)).sort(([a],[b]) => a.localeCompare(b)).map(([,v]) => v).filter(Boolean);
+// ── Env + clients ──────────────────────────────────────────────────────────────
+const ENV          = loadEnv();
+const GROQ_KEYS    = groqKeys(ENV);
 const SUPABASE_URL = ENV.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = ENV.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -45,72 +32,8 @@ if (!SUPABASE_URL || !SUPABASE_KEY) { console.error('Missing Supabase env'); pro
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
 
-// ── Groq client — strict rate-limit compliance ────────────────────────────────
-//
-// Same rate-limit logic as bulk-enrich.mjs:
-// RPM_TARGET=20, MIN_KEY_INTERVAL=3000ms, BACKOFF_429_MS=62000ms, FULL_RESET_MS=65000ms
-
-const RPM_TARGET       = 20;
-const MIN_KEY_INTERVAL = Math.ceil(60_000 / RPM_TARGET); // 3 000 ms minimum between calls per key
-const BACKOFF_429_MS   = 62_000;
-const FULL_RESET_MS    = 65_000;
-
-let keyIdx = 0;
-const lastCallAt = GROQ_KEYS.map(() => 0);
-
-async function callGroq(prompt, maxTokens = 700) {
-  // Outer retry: if ALL keys return 429, wait for the full per-minute window to reset, then retry once
-  for (let outerAttempt = 0; outerAttempt < 2; outerAttempt++) {
-    for (let attempt = 0; attempt < GROQ_KEYS.length; attempt++) {
-      const idx = keyIdx % GROQ_KEYS.length;
-      keyIdx++;
-
-      // Enforce minimum interval for this specific key
-      const gap = MIN_KEY_INTERVAL - (Date.now() - lastCallAt[idx]);
-      if (gap > 0) await sleep(gap);
-      lastCallAt[idx] = Date.now();
-
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${GROQ_KEYS[idx]}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: maxTokens,
-          temperature: 0.2,
-        }),
-        signal: AbortSignal.timeout(25_000),
-      });
-
-      if (res.status === 429) {
-        const retryAfter = res.headers.get('retry-after');
-        const waitMs = retryAfter ? Math.max(parseInt(retryAfter, 10) * 1000 + 2_000, BACKOFF_429_MS) : BACKOFF_429_MS;
-        process.stdout.write(` [key${idx} 429 — waiting ${Math.round(waitMs/1000)}s]`);
-        await sleep(waitMs);
-        continue;
-      }
-      if (!res.ok) throw new Error(`Groq HTTP ${res.status}`);
-      const json = await res.json();
-      return json.choices[0].message.content;
-    }
-
-    // All keys were rate-limited in this pass — wait for the full window to reset, then retry once
-    if (outerAttempt === 0) {
-      process.stdout.write(` [all keys exhausted — waiting ${FULL_RESET_MS/1000}s for rate-limit reset]`);
-      await sleep(FULL_RESET_MS);
-      for (let i = 0; i < GROQ_KEYS.length; i++) lastCallAt[i] = 0;
-    }
-  }
-  throw new Error('All Groq keys rate-limited after two passes — run again after a minute');
-}
-
-function parseJSON(raw) {
-  const cleaned = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/, '').trim();
-  try { return JSON.parse(cleaned); } catch {}
-  const match = cleaned.match(/\{[\s\S]+\}/);
-  if (match) { try { return JSON.parse(match[0]); } catch {} }
-  throw new Error(`Unparseable JSON: ${raw.slice(0, 100)}`);
-}
+const groq     = new GroqClient(GROQ_KEYS);
+const callGroq = (prompt, maxTokens) => groq.call(prompt, maxTokens);
 
 // ── Prompts ────────────────────────────────────────────────────────────────────
 function translationPrompt(fields, language) {
