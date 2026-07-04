@@ -19,6 +19,7 @@ import {
 import { SiteNav } from '@/components/home/SiteNav';
 import { SiteFooter } from '@/components/home/SiteFooter';
 import { EventCard } from '@/components/home/EventCard';
+import { FloatingCards } from '@/components/home/FloatingCards';
 import { Reveal } from '@/components/motion/Reveal';
 import { SplitText } from '@/components/motion/SplitText';
 import { Marquee } from '@/components/motion/Marquee';
@@ -159,6 +160,22 @@ export default function Home() {
     return groups;
   }, [filteredEvents, activeCategory]);
 
+  // One featured post per category → the floating hero cards ("catalog difference").
+  const floatingCards = React.useMemo(() => {
+    if (!dbEvents) return [];
+    const seen = new Set<string>();
+    const out: { title: string; category: string; hue: string }[] = [];
+    for (const e of dbEvents) {
+      const cat = e.source || 'Other';
+      if (seen.has(cat)) continue;
+      seen.add(cat);
+      const title = (locale !== 'en' && e.research_data?.translations?.[locale]?.title) || e.title;
+      out.push({ title, category: translateSource(cat, t), hue: catHue(cat) });
+      if (out.length >= 6) break;
+    }
+    return out;
+  }, [dbEvents, locale, t]);
+
   const getDaysLeft = (deadline: string) =>
     now && deadline ? Math.ceil((new Date(deadline).getTime() - now.getTime()) / 86400_000) : null;
 
@@ -274,6 +291,7 @@ export default function Home() {
         {/* ── HERO ─────────────────────────────────────────────────────── */}
         <section className="grain relative flex min-h-screen items-center overflow-hidden">
           <HeroBackground />
+          <FloatingCards cards={floatingCards} />
           <div className="container relative z-10 pb-20 pt-28">
             <div className="mb-6 flex items-center gap-3">
               <span className="text-eyebrow text-accent">{t.heroKicker}</span>

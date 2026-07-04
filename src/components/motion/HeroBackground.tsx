@@ -13,12 +13,14 @@ export function HeroBackground() {
   const { webgl } = useMotion();
   const { isDark } = useTheme();
 
-  // Teal bloom — a touch brighter on dark so it reads over the ink background.
-  const accent: [number, number, number] = isDark ? [0.12, 0.55, 0.58] : [0.06, 0.43, 0.47];
+  // Bloom colour — cool chrome-cyan on dark, deep teal on light.
+  const accent: [number, number, number] = isDark ? [0.10, 0.64, 0.78] : [0.06, 0.43, 0.47];
 
   return (
     <div className="absolute inset-0 overflow-hidden">
       <GradientHero />
+      {/* vertical grid lines — night mode only */}
+      <div className="grid-lines absolute inset-0 hidden dark:block" aria-hidden />
       {webgl && (
         <div className="absolute inset-0 animate-[fadein_1.4s_ease-out]">
           <ShaderHero accent={accent} />
