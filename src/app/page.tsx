@@ -9,6 +9,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useDb } from '@/supabase';
 import { useCollection } from '@/supabase/use-collection';
 import { translateSource } from '@/lib/translations';
+import { catHue } from '@/lib/categoryColor';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -21,6 +22,8 @@ import { EventCard } from '@/components/home/EventCard';
 import { Reveal } from '@/components/motion/Reveal';
 import { SplitText } from '@/components/motion/SplitText';
 import { Marquee } from '@/components/motion/Marquee';
+import { ScrollRail } from '@/components/motion/ScrollRail';
+import { Parallax } from '@/components/motion/Parallax';
 import { HeroBackground } from '@/components/motion/HeroBackground';
 import { SuzaniRule } from '@/components/brand/SuzaniRule';
 
@@ -245,11 +248,22 @@ export default function Home() {
       {events.map((event, i) => (
         <Reveal key={event.id} className="h-full" delay={(i % 3) * 0.06}>
           <div className="h-full">
-            <EventCard event={event} t={t} locale={locale} now={now} onOpen={() => open(event.id)} />
+            <EventCard event={event} t={t} locale={locale} now={now} onOpen={() => open(event.id)} hue={catHue(event.source)} />
           </div>
         </Reveal>
       ))}
     </div>
+  );
+
+  // Horizontal scroll-driven rail — posts slide sideways as you scroll past.
+  const railCards = (events: any[], hue: string) => (
+    <ScrollRail>
+      {events.map((event) => (
+        <div key={event.id} className="w-[270px] shrink-0 sm:w-[310px] md:w-[350px]">
+          <EventCard event={event} t={t} locale={locale} now={now} onOpen={() => open(event.id)} hue={hue} />
+        </div>
+      ))}
+    </ScrollRail>
   );
 
   return (
@@ -338,7 +352,7 @@ export default function Home() {
           <Reveal delay={0.15}>
             <p className="mt-10 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">{t.missionBody}</p>
           </Reveal>
-          <SuzaniRule className="mt-16" />
+          <Parallax speed={28}><SuzaniRule className="mt-16" /></Parallax>
         </section>
 
         {/* ── VALUE PROPS ──────────────────────────────────────────────── */}
@@ -422,7 +436,10 @@ export default function Home() {
           ) : activeCategory ? (
             <div className="space-y-10">
               <div className="flex items-center justify-between border-b border-border pb-5">
-                <h3 className="font-display text-2xl font-semibold">{translateSource(activeCategory, t)}</h3>
+                <div className="flex items-center gap-4">
+                  <span className="h-7 w-1.5 rounded-full" style={{ background: `hsl(${catHue(activeCategory)})` }} />
+                  <h3 className="font-display text-2xl font-semibold md:text-3xl">{translateSource(activeCategory, t)}</h3>
+                </div>
                 <Button variant="ghost" size="sm" onClick={() => setActiveCategory(null)}>
                   <X className="mr-2 h-4 w-4" /> {t.closeCategory}
                 </Button>
@@ -430,23 +447,27 @@ export default function Home() {
               {gridCards(filteredEvents)}
             </div>
           ) : (
-            <div className="space-y-20">
+            <div className="space-y-24">
               {Object.entries(groupedEvents || {})
                 .sort(([a], [b]) => (a === 'Other' ? 1 : b === 'Other' ? -1 : 0))
-                .map(([cat, events]) => (
-                  <div key={cat} className="space-y-8">
-                    <div className="flex items-center justify-between border-b border-border pb-5">
-                      <div className="flex items-center gap-4">
-                        <h3 className="font-display text-2xl font-semibold md:text-3xl">{translateSource(cat, t)}</h3>
-                        <span className="text-eyebrow text-muted-foreground">{events.length}</span>
+                .map(([cat, events]) => {
+                  const hue = catHue(cat);
+                  return (
+                    <div key={cat} className="space-y-8">
+                      <div className="flex items-center justify-between border-b border-border pb-5">
+                        <div className="flex items-center gap-4">
+                          <span className="h-7 w-1.5 rounded-full" style={{ background: `hsl(${hue})` }} />
+                          <h3 className="font-display text-2xl font-semibold md:text-3xl">{translateSource(cat, t)}</h3>
+                          <span className="text-eyebrow font-semibold" style={{ color: `hsl(${hue})` }}>{events.length}</span>
+                        </div>
+                        <Button variant="ghost" size="sm" className="group" style={{ color: `hsl(${hue})` }} onClick={() => setActiveCategory(cat)}>
+                          {t.viewAll} <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </Button>
                       </div>
-                      <Button variant="ghost" size="sm" className="group text-accent" onClick={() => setActiveCategory(cat)}>
-                        {t.viewAll} <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                      </Button>
+                      {railCards(events.slice(0, 8), hue)}
                     </div>
-                    {gridCards(events.slice(0, 3))}
-                  </div>
-                ))}
+                  );
+                })}
             </div>
           )}
         </section>
