@@ -24,6 +24,7 @@ export default {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         urgent: 'hsl(var(--urgent))',
+        gold: 'hsl(var(--gold))',
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
