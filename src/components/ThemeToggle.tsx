@@ -25,7 +25,7 @@ export function ThemeToggle() {
     transition.ready.then(() => {
       document.documentElement.animate(
         { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${end}px at ${x}px ${y}px)`] },
-        { duration: 560, easing: 'cubic-bezier(0.16,1,0.3,1)', pseudoElement: '::view-transition-new(root)' },
+        { duration: 950, easing: 'cubic-bezier(0.16,1,0.3,1)', pseudoElement: '::view-transition-new(root)' },
       );
     });
   };
@@ -40,8 +40,8 @@ export function ThemeToggle() {
       className="h-10 w-10 rounded-xl border-border transition-colors hover:bg-secondary"
     >
       <span className="relative block h-4 w-4">
-        <Sun className={`absolute inset-0 h-4 w-4 text-gold transition-all duration-500 ${isDark ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'}`} />
-        <Moon className={`absolute inset-0 h-4 w-4 text-foreground transition-all duration-500 ${isDark ? 'rotate-90 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'}`} />
+        <Sun className={`absolute inset-0 h-4 w-4 text-gold transition-all duration-700 ${isDark ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'}`} />
+        <Moon className={`absolute inset-0 h-4 w-4 text-foreground transition-all duration-700 ${isDark ? 'rotate-90 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'}`} />
       </span>
     </Button>
   );
