@@ -68,6 +68,7 @@
   }
   html {
     background-color: hsl(var(--background)); /* pre-paint fallback behind SiteBackground */
+    overflow-x: clip; /* safety net: a stray wide child can never force horizontal scroll (clip keeps position:sticky working, unlike overflow:hidden) */
   }
   body {
     @apply text-foreground;

@@ -9,126 +9,164 @@ export interface FloatCard {
   hue: string; // bare HSL triple
 }
 
-// Scatter slots — kept to the top + right so they orbit the left-aligned headline.
+// Home anchors in the empty upper-right space (fractions of the hero box) — the
+// original scatter. Each card free-floats within a small orbit of its anchor
+// rather than sitting perfectly still.
 const SLOTS = [
-  { style: { top: '13%', right: '1%'  }, depth: 1.10, w: 228, delay: '0s'   },
-  { style: { top: '11%', right: '29%' }, depth: 0.70, w: 176, delay: '1.3s' },
-  { style: { top: '40%', right: '4%'  }, depth: 0.55, w: 238, delay: '0.5s' },
-  { style: { top: '33%', right: '23%' }, depth: 1.35, w: 168, delay: '1.0s' },
-  { style: { top: '66%', right: '3%'  }, depth: 1.00, w: 200, delay: '1.9s' },
-  { style: { top: '60%', right: '27%' }, depth: 0.85, w: 182, delay: '0.9s' },
+  { top: 0.13, right: 0.01, w: 228 },
+  { top: 0.11, right: 0.29, w: 176 },
+  { top: 0.40, right: 0.04, w: 238 },
+  { top: 0.33, right: 0.23, w: 168 },
+  { top: 0.66, right: 0.03, w: 200 },
+  { top: 0.60, right: 0.27, w: 182 },
 ] as const;
 
-const R = 300;          // cursor influence radius (px)
-const LERP = 0.12;      // smoothing
+const R = 260;   // cursor influence radius (px)
+const PAD = 12;  // keep cards this far inside the container edges
+
+const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(v, hi));
 
 /**
- * Category cards scattered around the hero that react to the cursor: a gentle
- * global drift, a magnetic pull + tilt when the cursor comes near, and a
- * scale-up when it lands over a card. Decorative (pointer-events-none), so the
- * hover is computed from cursor geometry rather than real pointer events; that
- * way the cards never block the hero. Desktop-only, reduced-motion safe.
+ * Category cards scattered in the empty hero space. Each one drifts freely on a
+ * slow, looping path around its home anchor (a bounded "float", not a roam of the
+ * whole screen), and reacts to the cursor — a magnetic pull + scale when it comes
+ * near, bigger when it lands on top. Decorative (pointer-events-none), desktop-only,
+ * static on the reduced-motion tier.
  */
 export function FloatingCards({ cards }: { cards: FloatCard[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const { motion } = useMotion();
 
   useEffect(() => {
-    if (!motion || !ref.current) return;
     const container = ref.current;
-    const items = Array.from(container.querySelectorAll<HTMLElement>('[data-depth]'));
+    if (!container) return;
+    const items = Array.from(container.querySelectorAll<HTMLElement>('[data-card]'));
+    if (!items.length) return;
 
-    // Smoothed + target transform state per card.
-    const st = items.map(() => ({ x: 0, y: 0, s: 1, r: 0 }));
-    let bases: { cx: number; cy: number; hw: number; hh: number }[] = [];
     const measure = () => {
-      bases = items.map((el) => ({
-        cx: el.offsetLeft + el.offsetWidth / 2,
-        cy: el.offsetTop + el.offsetHeight / 2,
-        hw: el.offsetWidth / 2,
-        hh: el.offsetHeight / 2,
-      }));
+      const r = container.getBoundingClientRect();
+      return { W: r.width, H: r.height };
     };
-    measure();
+    let { W, H } = measure();
 
-    let mx = -9999, my = -9999; // cursor, relative to the container
+    // Per-card drift params. The home anchor is clamped inward by the drift
+    // amplitude so the whole orbit stays on-screen (no clipping at the edges).
+    const st = items.map((el, i) => {
+      const s = SLOTS[i];
+      const w = el.offsetWidth, h = el.offsetHeight;
+      const ax = 40 + Math.random() * 24;   // horizontal orbit amplitude
+      const ay = 30 + Math.random() * 20;   // vertical orbit amplitude
+      const hx = clamp((1 - s.right) * W - w, PAD + ax, W - w - PAD - ax);
+      const hy = clamp(s.top * H,             PAD + ay, H - h - PAD - ay);
+      return {
+        w, h, hx, hy, ax, ay,
+        fx: 0.14 + Math.random() * 0.16,     // slow, unequal frequencies → non-repeating figure-8
+        fy: 0.11 + Math.random() * 0.15,
+        px: Math.random() * Math.PI * 2,
+        py: Math.random() * Math.PI * 2,
+        rotAmp: 2 + Math.random() * 3,
+        fr: 0.10 + Math.random() * 0.12,
+        pr: Math.random() * Math.PI * 2,
+        ox: 0, oy: 0, s: 1,
+      };
+    });
+
+    const place = (c: typeof st[number], el: HTMLElement) => {
+      el.style.transform = `translate3d(${c.hx}px, ${c.hy}px, 0)`;
+      el.style.opacity = '1';
+    };
+    st.forEach((c, i) => place(c, items[i]));
+
+    if (!motion) return; // reduced-motion: static at the home anchors, no drift
+
+    let mx = -9999, my = -9999;
     const onMove = (e: MouseEvent) => {
-      const rect = container.getBoundingClientRect();
-      mx = e.clientX - rect.left;
-      my = e.clientY - rect.top;
+      const r = container.getBoundingClientRect();
+      mx = e.clientX - r.left;
+      my = e.clientY - r.top;
     };
     const onLeave = () => { mx = -9999; my = -9999; };
+    const onResize = () => {
+      const m = measure(); W = m.W; H = m.H;
+      st.forEach((c, i) => {
+        // Re-measure: if this card's last measurement happened while the
+        // container was still `hidden` (below the lg breakpoint), offsetWidth/
+        // Height read 0 then and must not be trusted for the clamp below.
+        const el = items[i];
+        c.w = el.offsetWidth || c.w;
+        c.h = el.offsetHeight || c.h;
+        const s = SLOTS[i];
+        c.hx = clamp((1 - s.right) * W - c.w, PAD + c.ax, W - c.w - PAD - c.ax);
+        c.hy = clamp(s.top * H,               PAD + c.ay, H - c.h - PAD - c.ay);
+      });
+    };
 
     let raf = 0;
     const loop = () => {
-      const rect = container.getBoundingClientRect();
+      const t = performance.now() / 1000;
       const active = mx > -9998;
-      const gx = active ? mx / rect.width - 0.5 : 0;
-      const gy = active ? my / rect.height - 0.5 : 0;
-
       items.forEach((el, i) => {
-        const b = bases[i];
-        const depth = parseFloat(el.dataset.depth || '1');
-        // base: gentle global drift
-        let tx = gx * depth * -26;
-        let ty = gy * depth * -20;
-        let ts = 1, tr = 0, over = false;
+        const c = st[i];
+        // free-floating base position: a slow looping orbit around the home anchor
+        const bx = c.hx + c.ax * Math.sin(t * c.fx + c.px);
+        const by = c.hy + c.ay * Math.sin(t * c.fy + c.py);
+        const baseRot = c.rotAmp * Math.sin(t * c.fr + c.pr);
 
+        // cursor reaction — magnetic pull + scale, bigger when it lands on top
+        let tox = 0, toy = 0, ts = 1, over = false;
         if (active) {
-          const dx = mx - b.cx, dy = my - b.cy;
+          const cx = bx + c.w / 2, cy = by + c.h / 2;
+          const dx = mx - cx, dy = my - cy;
           const dist = Math.hypot(dx, dy);
           if (dist < R) {
-            const t = 1 - dist / R;           // 0..1 closeness
-            tx += dx * t * 0.20;              // magnetic pull toward cursor
-            ty += dy * t * 0.20;
-            tr += (dx / R) * t * 7;           // tilt as it reaches
-            ts += t * 0.05;
+            const k = 1 - dist / R;
+            tox = dx * k * 0.16; toy = dy * k * 0.16;
+            ts = 1 + k * 0.06;
+            over = Math.abs(dx) < c.w / 2 && Math.abs(dy) < c.h / 2;
+            if (over) ts = 1.15;
           }
-          over = Math.abs(dx) < b.hw && Math.abs(dy) < b.hh;
-          if (over) { ts = 1.18; tr *= 0.35; } // landed on top → bigger
         }
+        c.ox += (tox - c.ox) * 0.1;
+        c.oy += (toy - c.oy) * 0.1;
+        c.s += (ts - c.s) * 0.1;
 
-        const s = st[i];
-        s.x += (tx - s.x) * LERP;
-        s.y += (ty - s.y) * LERP;
-        s.s += (ts - s.s) * LERP;
-        s.r += (tr - s.r) * LERP;
-        el.style.transform = `translate3d(${s.x}px, ${s.y}px, 0) rotate(${s.r}deg) scale(${s.s})`;
+        el.style.transform = `translate3d(${bx + c.ox}px, ${by + c.oy}px, 0) rotate(${(over ? baseRot * 0.4 : baseRot).toFixed(2)}deg) scale(${c.s})`;
         el.style.zIndex = over ? '10' : '';
       });
-
       raf = requestAnimationFrame(loop);
     };
 
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseleave', onLeave);
-    window.addEventListener('resize', measure);
+    window.addEventListener('resize', onResize);
     raf = requestAnimationFrame(loop);
     return () => {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseleave', onLeave);
-      window.removeEventListener('resize', measure);
+      window.removeEventListener('resize', onResize);
       cancelAnimationFrame(raf);
     };
-    // Re-init when the cards actually arrive (dbEvents loads after mount).
+    // Re-seed when the number of cards changes (category switch / first load).
   }, [motion, cards.length]);
 
   return (
     <div ref={ref} className="pointer-events-none absolute inset-0 z-[1] hidden lg:block" aria-hidden>
-      {cards.slice(0, SLOTS.length).map((c, i) => {
-        const s = SLOTS[i];
-        return (
-          <div key={i} data-depth={s.depth} className="absolute will-change-transform" style={{ ...s.style, width: s.w }}>
-            <div
-              className="animate-float rounded-xl border bg-card/65 p-4 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-md transition-shadow"
-              style={{ borderColor: `hsl(${c.hue} / 0.35)`, animationDelay: s.delay }}
-            >
-              <span className="text-eyebrow font-semibold" style={{ color: `hsl(${c.hue})` }}>{c.category}</span>
-              <p className="mt-2 line-clamp-2 font-display text-sm font-semibold leading-snug">{c.title}</p>
-            </div>
+      {cards.slice(0, SLOTS.length).map((c, i) => (
+        <div
+          key={i}
+          data-card
+          className="absolute left-0 top-0 opacity-0 transition-opacity duration-700 will-change-transform"
+          style={{ width: SLOTS[i].w }}
+        >
+          <div
+            className="rounded-xl border bg-card/65 p-4 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-md"
+            style={{ borderColor: `hsl(${c.hue} / 0.35)` }}
+          >
+            <span className="text-eyebrow font-semibold" style={{ color: `hsl(${c.hue})` }}>{c.category}</span>
+            <p className="mt-2 line-clamp-2 font-display text-sm font-semibold leading-snug">{c.title}</p>
           </div>
-        );
-      })}
+        </div>
+      ))}
     </div>
   );
 }

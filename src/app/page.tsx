@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger,
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose,
 } from '@/components/ui/sheet';
 import { SiteNav } from '@/components/home/SiteNav';
 import { SiteFooter } from '@/components/home/SiteFooter';
@@ -64,6 +64,23 @@ function AnimatedCounter({ target, suffix = '', label }: { target: number; suffi
   );
 }
 
+/**
+ * Classify an event's free-text location into a coarse region bucket so the
+ * location filter actually matches the data (the DB has ~40 messy values like
+ * "International", "O'zbekiston", "USA (Online)"). Returns null for blank/unknown
+ * locations so they only surface under "All".
+ */
+const UZ_RE = /o['`´‘’ʻ]?zbek|uzbek|toshkent|tashkent|samarq|samarkand|buxor|bukhara|xorazm|khorezm|qashqa|surxon|farg'?ona|fergana|andijon|namangan|navoiy|jizzax|sirdaryo|nukus|qoraqal|karakalpak/;
+const ONLINE_RE = /online|onlayn|remote|masofa|virtual/;
+type LocBucket = 'uz' | 'online' | 'abroad';
+function locationBucket(loc?: string | null): LocBucket | null {
+  const s = (loc || '').trim().toLowerCase();
+  if (!s) return null;
+  if (UZ_RE.test(s)) return 'uz';       // local (incl. "O'zbekiston (Onlayn)")
+  if (ONLINE_RE.test(s)) return 'online';
+  return 'abroad';                       // International, USA, Germany, …
+}
+
 const TICKER_ITEMS = [
   '🎓 Scholarships', '🏆 Competitions', '☀️ Summer Programs', '🔬 Research', '🤝 Volunteer',
   '💻 STEM', '💼 Internships', '📚 Workshops', '🌍 Fellowships',
@@ -98,6 +115,9 @@ export default function Home() {
     { id: 'Workshops', labelKey: 'catWorkshops' },
   ] as const;
 
+  // Location + language are filtered client-side (see `filteredEvents`) — the DB
+  // stores messy free-text, so exact `.eq()` matching silently returned nothing.
+  // Only the category (source) is narrowed server-side.
   const eventsQueryFn = useCallback(() => {
     if (!supabase) return Promise.resolve({ data: null, error: null });
     let q = supabase
@@ -106,11 +126,9 @@ export default function Home() {
       .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(300);
-    if (filterLocation !== 'All') q = q.eq('location', filterLocation);
-    if (filterLanguage !== 'All') q = q.eq('language', filterLanguage);
     if (activeCategory) q = q.eq('source', activeCategory);
     return q;
-  }, [supabase, filterLocation, filterLanguage, activeCategory]);
+  }, [supabase, activeCategory]);
 
   const { data: dbEvents, isLoading } = useCollection(supabase, eventsQueryFn);
 
@@ -126,6 +144,8 @@ export default function Home() {
           if (dl > nowMs + win) return false;
         }
       }
+      const matchesLocation = filterLocation === 'All' || locationBucket(event.location) === filterLocation;
+      const matchesLanguage = filterLanguage === 'All' || (event.language || '').toLowerCase() === filterLanguage.toLowerCase();
       const hasAgeFilter = ageRange[0] > 0 || ageRange[1] < 100;
       const matchesAge = !hasAgeFilter || (
         (event.age_min >= ageRange[0] && event.age_min <= ageRange[1]) ||
@@ -136,9 +156,9 @@ export default function Home() {
       const desc = (event.description || '').toLowerCase();
       const matchesSearch = !searchTerm || title.includes(searchTerm.toLowerCase()) || desc.includes(searchTerm.toLowerCase());
       const matchesFunding = filterFunding === 'All' || (event.research_data as any)?.funding_type === filterFunding;
-      return matchesAge && matchesSearch && matchesFunding;
+      return matchesLocation && matchesLanguage && matchesAge && matchesSearch && matchesFunding;
     });
-  }, [dbEvents, ageRange, searchTerm, now, filterFunding, filterDeadline]);
+  }, [dbEvents, ageRange, searchTerm, now, filterFunding, filterDeadline, filterLocation, filterLanguage]);
 
   const closingSoonEvents = React.useMemo(() => {
     if (!dbEvents || !now) return [];
@@ -160,21 +180,23 @@ export default function Home() {
     return groups;
   }, [filteredEvents, activeCategory]);
 
-  // One featured post per category → the floating hero cards ("catalog difference").
+  // Floating hero cards. In "All" mode → one featured post per category (the
+  // "catalog difference"). With a category selected → several posts from THAT
+  // category, so the hero mirrors the current selection instead of a lone card.
   const floatingCards = React.useMemo(() => {
     if (!dbEvents) return [];
     const seen = new Set<string>();
     const out: { title: string; category: string; hue: string }[] = [];
     for (const e of dbEvents) {
       const cat = e.source || 'Other';
-      if (seen.has(cat)) continue;
+      if (!activeCategory && seen.has(cat)) continue; // dedupe per-category only in "All" mode
       seen.add(cat);
       const title = (locale !== 'en' && e.research_data?.translations?.[locale]?.title) || e.title;
       out.push({ title, category: translateSource(cat, t), hue: catHue(cat) });
       if (out.length >= 6) break;
     }
     return out;
-  }, [dbEvents, locale, t]);
+  }, [dbEvents, locale, t, activeCategory]);
 
   const getDaysLeft = (deadline: string) =>
     now && deadline ? Math.ceil((new Date(deadline).getTime() - now.getTime()) / 86400_000) : null;
@@ -206,57 +228,75 @@ export default function Home() {
       active ? 'border-foreground bg-foreground text-background' : 'border-border hover:border-foreground/40'
     }`;
 
+  // Filter-panel chip: filled-but-quiet when idle, teal-accent when selected.
+  // outline-none + focus-visible ring = brand-teal keyboard focus, no stray UA
+  // outline when the sheet auto-focuses the first chip on open.
+  const fchip = (active: boolean) =>
+    `flex h-11 items-center justify-center rounded-lg border px-3 text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
+      active
+        ? 'border-accent bg-accent/10 font-semibold text-accent'
+        : 'border-border bg-secondary/40 text-muted-foreground hover:border-foreground/25 hover:text-foreground'
+    }`;
+
+  const locationOptions = [
+    { id: 'All', label: t.all },
+    { id: 'uz', label: t.locUzbekistan },
+    { id: 'online', label: t.locOnline },
+    { id: 'abroad', label: t.locAbroad },
+  ];
+
+  const filterSection = (label: string, control: React.ReactNode) => (
+    <div className="space-y-3">
+      <label className="text-eyebrow block text-muted-foreground">{label}</label>
+      {control}
+    </div>
+  );
+
   const renderFilterPanel = () => (
-    <div className="space-y-9">
-      <div>
-        <label className="text-eyebrow mb-3 block text-muted-foreground">{t.location}</label>
-        <div className="grid grid-cols-4 gap-2">
-          {['All', 'UK', 'UZ', 'RU'].map((loc) => (
-            <button key={loc} className={chip(filterLocation === loc)} onClick={() => setFilterLocation(loc)}>
-              {loc === 'All' ? t.all : loc}
+    <div className="space-y-8">
+      {filterSection(t.location, (
+        <div className="grid grid-cols-2 gap-2">
+          {locationOptions.map((loc) => (
+            <button key={loc.id} className={fchip(filterLocation === loc.id)} onClick={() => setFilterLocation(loc.id)}>
+              {loc.label}
             </button>
           ))}
         </div>
-      </div>
-      <div>
-        <label className="text-eyebrow mb-3 block text-muted-foreground">{t.language}</label>
+      ))}
+      {filterSection(t.language, (
         <div className="grid grid-cols-4 gap-2">
           {['All', 'English', 'Uzbek', 'Russian'].map((lang) => (
-            <button key={lang} className={chip(filterLanguage === lang)} onClick={() => setFilterLanguage(lang)}>
+            <button key={lang} className={fchip(filterLanguage === lang)} onClick={() => setFilterLanguage(lang)}>
               {lang === 'All' ? t.all : lang === 'English' ? 'EN' : lang === 'Uzbek' ? 'UZ' : 'RU'}
             </button>
           ))}
         </div>
-      </div>
-      <div>
-        <label className="text-eyebrow mb-3 block text-muted-foreground">{t.fundingCoverage}</label>
+      ))}
+      {filterSection(t.fundingCoverage, (
         <div className="grid grid-cols-3 gap-2">
           {[{ id: 'All', l: t.fundingAny }, { id: 'Full', l: t.fundingFull }, { id: 'Partial', l: t.fundingPartial }].map((o) => (
-            <button key={o.id} className={chip(filterFunding === o.id)} onClick={() => setFilterFunding(o.id as any)}>{o.l}</button>
+            <button key={o.id} className={fchip(filterFunding === o.id)} onClick={() => setFilterFunding(o.id as any)}>{o.l}</button>
           ))}
         </div>
-      </div>
-      <div>
-        <label className="text-eyebrow mb-3 block text-muted-foreground">{t.deadline}</label>
+      ))}
+      {filterSection(t.deadline, (
         <div className="grid grid-cols-2 gap-2">
           {[{ id: 'All', l: t.deadlineAny }, { id: 'week', l: t.deadlineWeek }, { id: 'month', l: t.deadlineMonth }, { id: '3months', l: t.deadline3Months }].map((o) => (
-            <button key={o.id} className={chip(filterDeadline === o.id)} onClick={() => setFilterDeadline(o.id as any)}>{o.l}</button>
+            <button key={o.id} className={fchip(filterDeadline === o.id)} onClick={() => setFilterDeadline(o.id as any)}>{o.l}</button>
           ))}
         </div>
-      </div>
-      <div>
-        <label className="text-eyebrow mb-4 block text-muted-foreground">{t.age}</label>
+      ))}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <label className="text-eyebrow block text-muted-foreground">{t.age}</label>
+          <span className="rounded-md bg-secondary px-2 py-1 text-xs font-semibold tabular-nums">{ageRange[0]}–{ageRange[1]}</span>
+        </div>
         <Slider max={100} step={1} minStepsBetweenThumbs={1} value={ageRange} onValueChange={setAgeRange} />
-        <div className="mt-3 flex justify-between text-sm text-muted-foreground">
+        <div className="flex justify-between text-xs text-muted-foreground">
           <span>{ageRange[0]} {t.minAge}</span>
           <span>{ageRange[1]} {t.maxAge}</span>
         </div>
       </div>
-      {activeFilterCount > 0 && (
-        <Button variant="ghost" className="w-full" onClick={resetFilters}>
-          <X className="mr-2 h-4 w-4" /> {t.resetAll}
-        </Button>
-      )}
     </div>
   );
 
@@ -325,11 +365,24 @@ export default function Home() {
                       )}
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
-                    <SheetHeader className="mb-8">
-                      <SheetTitle className="font-display text-2xl">{t.filterTitle}</SheetTitle>
+                  <SheetContent side="right" className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-md">
+                    <SheetHeader className="space-y-1 border-b border-border px-6 py-5 text-left">
+                      <SheetTitle className="font-display text-xl">{t.filterTitle}</SheetTitle>
+                      <p className="text-sm text-muted-foreground">
+                        <span className="font-semibold tabular-nums text-foreground">{filteredEvents.length}</span> {t.resultsLabel}
+                      </p>
                     </SheetHeader>
-                    {renderFilterPanel()}
+                    <div className="flex-1 overflow-y-auto px-6 py-6">
+                      {renderFilterPanel()}
+                    </div>
+                    <div className="flex items-center gap-3 border-t border-border p-4">
+                      <Button variant="outline" className="flex-1" onClick={resetFilters} disabled={activeFilterCount === 0}>
+                        <X className="mr-2 h-4 w-4" /> {t.resetAll}
+                      </Button>
+                      <SheetClose asChild>
+                        <Button className="flex-1">{t.showResults}</Button>
+                      </SheetClose>
+                    </div>
                   </SheetContent>
                 </Sheet>
               </div>
@@ -453,13 +506,13 @@ export default function Home() {
             </div>
           ) : activeCategory ? (
             <div className="space-y-10">
-              <div className="flex items-center justify-between border-b border-border pb-5">
-                <div className="flex items-center gap-4">
-                  <span className="h-7 w-1.5 rounded-full" style={{ background: `hsl(${catHue(activeCategory)})` }} />
-                  <h3 className="font-display text-2xl font-semibold md:text-3xl">{translateSource(activeCategory, t)}</h3>
+              <div className="flex items-center justify-between gap-3 border-b border-border pb-5">
+                <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                  <span className="h-7 w-1.5 shrink-0 rounded-full" style={{ background: `hsl(${catHue(activeCategory)})` }} />
+                  <h3 className="truncate font-display text-xl font-semibold sm:text-2xl md:text-3xl">{translateSource(activeCategory, t)}</h3>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => setActiveCategory(null)}>
-                  <X className="mr-2 h-4 w-4" /> {t.closeCategory}
+                <Button variant="ghost" size="sm" className="shrink-0 px-2 sm:px-3" onClick={() => setActiveCategory(null)}>
+                  <X className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">{t.closeCategory}</span>
                 </Button>
               </div>
               {gridCards(filteredEvents)}
@@ -473,14 +526,14 @@ export default function Home() {
                   return (
                     <div key={cat} className="space-y-8">
                       <Parallax speed={14}>
-                        <div className="flex items-center justify-between border-b border-border pb-5">
-                          <div className="flex items-center gap-4">
-                            <span className="h-7 w-1.5 rounded-full" style={{ background: `hsl(${hue})` }} />
-                            <h3 className="font-display text-2xl font-semibold md:text-3xl">{translateSource(cat, t)}</h3>
-                            <span className="text-eyebrow font-semibold" style={{ color: `hsl(${hue})` }}>{events.length}</span>
+                        <div className="flex items-center justify-between gap-3 border-b border-border pb-5">
+                          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                            <span className="h-7 w-1.5 shrink-0 rounded-full" style={{ background: `hsl(${hue})` }} />
+                            <h3 className="truncate font-display text-xl font-semibold sm:text-2xl md:text-3xl">{translateSource(cat, t)}</h3>
+                            <span className="text-eyebrow shrink-0 font-semibold" style={{ color: `hsl(${hue})` }}>{events.length}</span>
                           </div>
-                          <Button variant="ghost" size="sm" className="group" style={{ color: `hsl(${hue})` }} onClick={() => setActiveCategory(cat)}>
-                            {t.viewAll} <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                          <Button variant="ghost" size="sm" className="group shrink-0 px-2 sm:px-3" style={{ color: `hsl(${hue})` }} onClick={() => setActiveCategory(cat)}>
+                            <span className="hidden sm:inline">{t.viewAll}</span> <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 sm:ml-2" />
                           </Button>
                         </div>
                       </Parallax>
