@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { SupabaseClientProvider } from '@/supabase';
 import { MotionConfigProvider } from '@/components/motion/MotionConfig';
 import { SmoothScrollProvider } from '@/components/motion/SmoothScrollProvider';
+import { SiteBackground } from '@/components/SiteBackground';
 
 const inter = Inter({
   subsets: ['latin', 'latin-ext', 'cyrillic'],
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script dangerouslySetInnerHTML={{ __html: motionProbe }} />
       </head>
       <body className="font-body antialiased min-h-screen">
+        <SiteBackground />
         <ThemeProvider>
           <SupabaseClientProvider>
             <LanguageProvider>
