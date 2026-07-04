@@ -170,11 +170,11 @@ export default function EventDetail() {
         </div>
       </nav>
 
-      <main className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-8 md:py-12">
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-16">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-12">
+          <div className="lg:col-span-2 space-y-10 md:space-y-12">
             {/* Category-themed hero — bold color block, Uzbek-inspired pattern overlay,
                 deadline countdown, and emphasised stats. No stock photos. */}
             {(() => {
@@ -200,7 +200,7 @@ export default function EventDetail() {
               const urgency = daysLeft != null && daysLeft <= 7;
 
               return (
-                <header className={`relative rounded-[2.5rem] overflow-hidden shadow-2xl ring-1 ${p.ring} bg-gradient-to-br ${p.from} ${p.via} ${p.to}`}>
+                <header className={`relative rounded-3xl md:rounded-[2.5rem] overflow-hidden shadow-2xl ring-1 ${p.ring} bg-gradient-to-br ${p.from} ${p.via} ${p.to}`}>
                   {/* Uzbek-inspired suzani dot pattern as decorative overlay */}
                   <svg className="absolute inset-0 w-full h-full opacity-[0.08] pointer-events-none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
@@ -220,9 +220,9 @@ export default function EventDetail() {
                   <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-white/15 blur-3xl pointer-events-none" />
                   <div className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full bg-black/15 blur-3xl pointer-events-none" />
 
-                  <div className="relative p-8 md:p-12 lg:p-14 text-white">
+                  <div className="relative p-6 sm:p-8 md:p-12 lg:p-14 text-white">
                     {/* Top row: category badge + countdown */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 mb-10">
+                    <div className="flex flex-wrap items-center justify-between gap-3 mb-8 md:mb-10">
                       <Badge className="bg-white/10 text-white px-4 py-1.5 text-xs font-semibold tracking-[0.18em] uppercase rounded-full ring-1 ring-white/20 backdrop-blur-sm hover:bg-white/15">
                         {translateSource(event.source || 'Other', t)}
                       </Badge>
@@ -249,7 +249,7 @@ export default function EventDetail() {
                     )}
 
                     {/* Inline meta — minimal, separated by a thin divider above */}
-                    <div className="mt-10 pt-6 border-t border-white/10 flex flex-wrap gap-x-6 gap-y-2 text-xs font-medium uppercase tracking-[0.12em] text-white/70">
+                    <div className="mt-8 md:mt-10 pt-6 border-t border-white/10 flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium uppercase tracking-[0.12em] text-white/70">
                       {event.location && (
                         <span className="inline-flex items-center gap-1.5">
                           <MapPin className="h-3.5 w-3.5" /> {event.location}
@@ -271,27 +271,27 @@ export default function EventDetail() {
               );
             })()}
 
-            <div className="space-y-8">
-              <h2 className="text-4xl font-bold font-headline border-b-4 border-primary/10 pb-4 inline-block">
+            <div className="space-y-6 md:space-y-8">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold font-headline border-b-2 md:border-b-4 border-primary/10 pb-3 md:pb-4 inline-block">
                 {t.overview}
               </h2>
-              <p className="text-2xl text-muted-foreground leading-relaxed whitespace-pre-wrap font-medium">
+              <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground leading-relaxed whitespace-pre-wrap font-medium">
                 {research?.extendedDescription || event.description}
               </p>
             </div>
 
             {research ? (
-              <div className="space-y-16">
+              <div className="space-y-10 md:space-y-16">
 
                 {/* Key Details */}
                 {research.keyDetails?.length > 0 && (
-                  <div className="bg-primary/5 rounded-[2.5rem] p-12 space-y-8 border-l-8 border-primary">
-                    <h3 className="text-3xl font-bold flex items-center gap-4">
-                      <CheckCircle2 className="h-8 w-8 text-primary" /> {t.keyDetails}
+                  <div className="bg-primary/5 rounded-2xl md:rounded-[2.5rem] p-6 sm:p-8 md:p-12 space-y-6 md:space-y-8 border-l-4 md:border-l-8 border-primary">
+                    <h3 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-3 md:gap-4">
+                      <CheckCircle2 className="h-6 w-6 md:h-8 md:w-8 text-primary" /> {t.keyDetails}
                     </h3>
                     <ul className="space-y-4">
                       {research.keyDetails.map((detail: any, idx: number) => (
-                        <li key={idx} className="flex gap-3 text-xl items-start">
+                        <li key={idx} className="flex gap-3 text-base md:text-lg lg:text-xl items-start">
                           <span className="text-primary font-bold mt-1">→</span>
                           {typeof detail === 'string' ? detail : detail?.text || ''}
                         </li>
@@ -301,13 +301,13 @@ export default function EventDetail() {
                 )}
 
                 {research.benefits?.length > 0 && (
-                <div className="bg-primary/5 rounded-[2.5rem] p-12 space-y-8 border-l-8 border-primary">
-                   <h3 className="text-3xl font-bold flex items-center gap-4">
-                     <CheckCircle2 className="h-8 w-8 text-primary" /> {t.keyBenefits}
+                <div className="bg-primary/5 rounded-2xl md:rounded-[2.5rem] p-6 sm:p-8 md:p-12 space-y-6 md:space-y-8 border-l-4 md:border-l-8 border-primary">
+                   <h3 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-3 md:gap-4">
+                     <CheckCircle2 className="h-6 w-6 md:h-8 md:w-8 text-primary" /> {t.keyBenefits}
                    </h3>
-                   <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                      {research.benefits.map((benefit: any, idx: number) => (
-                       <li key={idx} className="flex gap-3 text-xl items-start">
+                       <li key={idx} className="flex gap-3 text-base md:text-lg lg:text-xl items-start">
                          <span className="text-primary font-bold">•</span>
                          {typeof benefit === 'string' ? benefit : benefit?.value || benefit?.text || benefit?.detail || benefit?.description || benefit?.name || ''}
                        </li>
@@ -317,13 +317,13 @@ export default function EventDetail() {
                 )}
 
                 {research.eligibility?.length > 0 && (
-                <div className="bg-primary/5 rounded-[2.5rem] p-12 space-y-8 border-l-8 border-primary">
-                   <h3 className="text-3xl font-bold flex items-center gap-4">
-                     <User className="h-8 w-8 text-primary" /> {t.eligibility}
+                <div className="bg-primary/5 rounded-2xl md:rounded-[2.5rem] p-6 sm:p-8 md:p-12 space-y-6 md:space-y-8 border-l-4 md:border-l-8 border-primary">
+                   <h3 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-3 md:gap-4">
+                     <User className="h-6 w-6 md:h-8 md:w-8 text-primary" /> {t.eligibility}
                    </h3>
-                   <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                      {research.eligibility.map((item: any, idx: number) => (
-                       <li key={idx} className="flex gap-3 text-xl items-start">
+                       <li key={idx} className="flex gap-3 text-base md:text-lg lg:text-xl items-start">
                          <span className="text-primary font-bold">•</span>
                          {typeof item === 'string' ? item : item?.value || item?.text || item?.detail || item?.description || item?.name || ''}
                        </li>
@@ -332,12 +332,12 @@ export default function EventDetail() {
                 </div>
                 )}
 
-                <div className="space-y-8">
-                  <h3 className="text-3xl font-bold font-headline flex items-center gap-4">
-                    <BookOpen className="h-8 w-8 text-primary" /> 
+                <div className="space-y-6 md:space-y-8">
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-bold font-headline flex items-center gap-3 md:gap-4">
+                    <BookOpen className="h-6 w-6 md:h-8 md:w-8 text-primary" /> 
                     {['Scholarships', 'Research', 'STEM', 'Competitions'].includes(event.source) ? t.prepResources : t.extraInfo}
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                     {research.resources?.map((res: any, idx: number) => {
                       const isVideo = res.type === 'Video' ||
                         (res.url && (res.url.includes('youtube.com') || res.url.includes('youtu.be')));
@@ -387,7 +387,7 @@ export default function EventDetail() {
                             <Badge variant="outline">{res.type}</Badge>
                             <ExternalLink className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" />
                           </div>
-                          <h4 className="text-xl font-bold group-hover:text-primary transition-colors">{res.title}</h4>
+                          <h4 className="text-lg md:text-xl font-bold group-hover:text-primary transition-colors">{res.title}</h4>
                         </a>
                       );
                     })}
@@ -398,28 +398,28 @@ export default function EventDetail() {
           </div>
 
           {/* Sidebar Info */}
-          <div className="space-y-10">
-            <div className="bg-background rounded-[2.5rem] border-2 border-primary/10 p-10 shadow-2xl space-y-10 sticky top-32 z-10">
-               <h3 className="text-2xl font-black uppercase tracking-[0.2em] opacity-40">{t.quickDetails}</h3>
+          <div className="space-y-8 md:space-y-10">
+            <div className="bg-background rounded-2xl md:rounded-[2.5rem] border-2 border-primary/10 p-6 sm:p-8 md:p-10 shadow-2xl space-y-8 md:space-y-10 sticky top-24 z-10">
+               <h3 className="text-lg md:text-2xl font-black uppercase tracking-[0.2em] opacity-40">{t.quickDetails}</h3>
                
-               <div className="space-y-8">
-                 <div className="flex items-center gap-6">
-                   <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                     <MapPin className="h-8 w-8 text-primary" />
+               <div className="space-y-6 md:space-y-8">
+                 <div className="flex items-center gap-4 md:gap-6">
+                   <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                     <MapPin className="h-6 w-6 md:h-8 md:w-8 text-primary" />
                    </div>
                    <div>
                      <p className="text-sm font-black uppercase opacity-40">{t.locationLabel}</p>
-                     <p className="text-xl font-bold">{(event.location && !/\bnull\b|\bnone\b|\bundefined\b/i.test(event.location)) ? event.location : '—'}</p>
+                     <p className="text-lg md:text-xl font-bold">{(event.location && !/\bnull\b|\bnone\b|\bundefined\b/i.test(event.location)) ? event.location : '—'}</p>
                    </div>
                  </div>
 
-                 <div className="flex items-center gap-6">
-                   <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                     <Calendar className="h-8 w-8 text-primary" />
+                 <div className="flex items-center gap-4 md:gap-6">
+                   <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                     <Calendar className="h-6 w-6 md:h-8 md:w-8 text-primary" />
                    </div>
                    <div>
                      <p className="text-sm font-black uppercase opacity-40">{t.deadlineLabel}</p>
-                     <p className="text-xl font-bold">
+                     <p className="text-lg md:text-xl font-bold">
                        {event.deadline
                          ? `${new Date(event.deadline).getDate().toString().padStart(2, '0')}/${(new Date(event.deadline).getMonth() + 1).toString().padStart(2, '0')}/${new Date(event.deadline).getFullYear()}`
                          : t.rolling}
@@ -427,23 +427,23 @@ export default function EventDetail() {
                    </div>
                  </div>
 
-                 <div className="flex items-center gap-6">
-                   <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                     <User className="h-8 w-8 text-primary" />
+                 <div className="flex items-center gap-4 md:gap-6">
+                   <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                     <User className="h-6 w-6 md:h-8 md:w-8 text-primary" />
                    </div>
                    <div>
                      <p className="text-sm font-black uppercase opacity-40">{t.ageGroup}</p>
-                     <p className="text-xl font-bold">{event.age_min} – {event.age_max} {t.years}</p>
+                     <p className="text-lg md:text-xl font-bold">{event.age_min} – {event.age_max} {t.years}</p>
                    </div>
                  </div>
 
-                 <div className="flex items-center gap-6">
-                   <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                     <Languages className="h-8 w-8 text-primary" />
+                 <div className="flex items-center gap-4 md:gap-6">
+                   <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                     <Languages className="h-6 w-6 md:h-8 md:w-8 text-primary" />
                    </div>
                    <div>
                      <p className="text-sm font-black uppercase opacity-40">{t.languageLabel}</p>
-                     <p className="text-xl font-bold">{(event.language && !/\bnull\b|\bnone\b|\bundefined\b/i.test(event.language)) ? translateLanguage(event.language, t) : '—'}</p>
+                     <p className="text-lg md:text-xl font-bold">{(event.language && !/\bnull\b|\bnone\b|\bundefined\b/i.test(event.language)) ? translateLanguage(event.language, t) : '—'}</p>
                    </div>
                  </div>
                </div>

@@ -26,6 +26,11 @@ export const translations = {
     deadlineMonth: 'This month',
     deadline3Months: '3 months',
     resetAll: 'Reset All',
+    locUzbekistan: 'Uzbekistan',
+    locOnline: 'Online',
+    locAbroad: 'Abroad',
+    resultsLabel: 'results',
+    showResults: 'Show results',
 
     // Cards
     moreInfo: 'More info',
@@ -174,6 +179,11 @@ export const translations = {
     deadlineMonth: 'Bu oy',
     deadline3Months: '3 oy',
     resetAll: 'Tozalash',
+    locUzbekistan: 'O\'zbekiston',
+    locOnline: 'Onlayn',
+    locAbroad: 'Chet el',
+    resultsLabel: 'natija',
+    showResults: 'Natijalarni ko\'rish',
 
     // Cards
     moreInfo: 'Batafsil',
@@ -322,6 +332,11 @@ export const translations = {
     deadlineMonth: 'Этот месяц',
     deadline3Months: '3 месяца',
     resetAll: 'Сбросить всё',
+    locUzbekistan: 'Узбекистан',
+    locOnline: 'Онлайн',
+    locAbroad: 'За рубежом',
+    resultsLabel: 'результатов',
+    showResults: 'Показать',
 
     // Cards
     moreInfo: 'Подробнее',

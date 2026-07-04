@@ -21,8 +21,8 @@ export function LanguageSwitcher() {
 
   if (!isMounted) {
     return (
-      <Button variant="outline" size="sm" className="gap-2 h-10 px-4 rounded-xl">
-        <Globe className="h-4 w-4" /> ...
+      <Button variant="outline" size="sm" aria-label="Change language" className="h-10 gap-2 rounded-xl border-border px-3 sm:px-4">
+        <Globe className="h-4 w-4" /> <span className="hidden sm:inline">...</span>
       </Button>
     );
   }
@@ -35,13 +35,16 @@ export function LanguageSwitcher() {
         <Button
           variant="outline"
           size="sm"
-          className="gap-2 border-primary/20 hover:bg-primary/5 transition-all h-10 px-4 rounded-xl font-bold"
+          aria-label="Change language"
+          className="h-10 gap-2 rounded-xl border-border px-3 font-semibold transition-colors hover:bg-secondary sm:px-4"
         >
-          <Globe className="h-4 w-4 text-primary" />
-          {current.label}
+          <Globe className="h-4 w-4 text-accent" />
+          {/* Full label on ≥sm; compact language code on phones to keep the nav from overflowing. */}
+          <span className="hidden sm:inline">{current.label}</span>
+          <span className="sm:hidden">{current.id.toUpperCase()}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44 p-1.5 rounded-2xl border-primary/10 shadow-2xl">
+      <DropdownMenuContent align="end" className="w-44 rounded-xl border-border p-1.5 shadow-2xl">
         {options.map(opt => (
           <DropdownMenuItem
             key={opt.id}
