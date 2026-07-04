@@ -15,6 +15,8 @@
  *   • Min 3 s spacing between calls to the SAME key (20 RPM target).
  */
 
+import { gemini } from './gemini';
+
 const GROQ_MODEL       = 'llama-3.3-70b-versatile';
 const RPM_TARGET       = 20;                             // 67% of the 30 RPM hard limit
 const MIN_KEY_INTERVAL = Math.ceil(60_000 / RPM_TARGET); // 3 000 ms between calls to SAME key
@@ -82,9 +84,21 @@ export const groq = new GroqClient(
   ].filter(Boolean) as string[],
 );
 
-/** Convenience wrapper over the shared instance, preserved for existing call sites. */
-export function callLLM(prompt: string, maxTokens = 800): Promise<string> {
-  return groq.call(prompt, maxTokens);
+/**
+ * Primary LLM entry point for the whole pipeline. Tries Groq (6 keys); if every
+ * Groq key is throttled, falls back to Gemini (3 keys) so a cron tick degrades
+ * gracefully instead of failing. Throws only when BOTH providers are exhausted.
+ */
+export async function callLLM(prompt: string, maxTokens = 800): Promise<string> {
+  try {
+    return await groq.call(prompt, maxTokens);
+  } catch (err) {
+    if (gemini.available) {
+      console.warn('[LLM] Groq exhausted — falling back to Gemini');
+      return await gemini.call(prompt, maxTokens);
+    }
+    throw err;
+  }
 }
 
 /**
