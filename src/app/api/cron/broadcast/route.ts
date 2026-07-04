@@ -90,7 +90,12 @@ function buildPost(ev: any): string {
   const dEn = trim(rd.extendedDescription || '');
   if (dEn) L.push(escText(dEn));
   L.push('');
-  if (ev.location) L.push(`📍 ${escText(ev.location)}`);
+  // Meta line mirrors the website card (location · age · language).
+  const meta: string[] = [];
+  if (ev.location) meta.push(`📍 ${escText(ev.location)}`);
+  if (!(ev.age_min === 0 && ev.age_max === 100)) meta.push(`👤 ${ev.age_min}–${ev.age_max}`);
+  if (ev.language) meta.push(`🗣 ${escText(ev.language)}`);
+  if (meta.length) L.push(meta.join('  ·  '));
   L.push(`⏳ Muddat / Дедлайн / Deadline: <b>${fmtDate(ev.deadline)}</b>`);
   if (rd.funding_type === 'Full') L.push(`✅ To'liq moliyalashtirilgan / Полное финансирование / Fully funded`);
   L.push('');
@@ -134,7 +139,7 @@ export async function GET(request: Request) {
   const supabase = db();
   const { data: events } = await supabase
     .from('events')
-    .select('id,title,description,location,deadline,source,research_data,created_at')
+    .select('id,title,description,location,deadline,source,research_data,created_at,age_min,age_max,language')
     .eq('is_active', true)
     .order('created_at', { ascending: false })
     .limit(80);
