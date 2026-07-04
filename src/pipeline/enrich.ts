@@ -18,6 +18,8 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { callLLM, parseJSON } from './groq';
+// Plain-ESM helper shared with the local backfill script (typed via its JSDoc).
+import { resolveApplyLink } from './resolve-link.mjs';
 
 function db() {
   return createClient(
@@ -50,6 +52,9 @@ interface ResearchData {
   competitionTips:       string[];
   officialWebsite:       string | null;
   applyLabel:            string | null;
+  linkStatus?:           string;        // 'ok' | 'unverified' | 'dead' | 'contact' | 'none'
+  linkResolvedFrom?:     string | null; // aggregator URL we de-aggregated away from
+  linkCheckedAt?:        string;
   confidence:            number;
   funding_type:          string | null;
   translations?:         { uz?: UzTranslation; ru?: RuTranslation };
@@ -432,6 +437,26 @@ export async function enrichEvent(eventId: string): Promise<void> {
       research.preparationResources = videos;
       console.log(`[Enrich] YouTube: ${videos.length} videos for "${event.title}"`);
     }
+  }
+
+  // ── Step 5b: Resolve + validate the apply link (silent failure) ────────────
+  // De-aggregate reposter links (edugrants.uz / grantlar.uz → real program page)
+  // and confirm the final URL resolves. Never blocks activation — a bad link is
+  // an enhancement failure, so we keep the best available and record its status.
+  try {
+    const resolved = await resolveApplyLink(research.officialWebsite, {
+      title:   event.title,
+      callLLM,
+    });
+    research.officialWebsite  = resolved.url;
+    research.linkStatus       = resolved.status;
+    research.linkResolvedFrom = resolved.resolvedFrom;
+    research.linkCheckedAt    = new Date().toISOString();
+    if (resolved.resolvedFrom) {
+      console.log(`[Enrich] 🔀 De-aggregated link for "${event.title}": ${resolved.resolvedFrom} → ${resolved.url}`);
+    }
+  } catch {
+    // resolveApplyLink never throws, but guard anyway — links are optional.
   }
 
   // ── Step 6: Activate ───────────────────────────────────────────────────────
