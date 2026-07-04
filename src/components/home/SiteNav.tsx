@@ -46,7 +46,7 @@ export function SiteNav() {
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+      className={`fixed inset-x-0 top-0 z-50 transition-transform duration-500 ease-out ${
         hidden ? '-translate-y-full' : 'translate-y-0'
       }`}
     >
