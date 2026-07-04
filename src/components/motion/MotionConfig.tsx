@@ -22,7 +22,11 @@ export function MotionConfigProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     const full = document.documentElement.dataset.motion === 'full';
     const coarse = window.matchMedia('(pointer: coarse)').matches;
-    setTier({ motion: full, webgl: full && !coarse });
+    const mem = (navigator as any).deviceMemory || 4;
+    const cores = navigator.hardwareConcurrency || 4;
+    // Lightweight motion runs whenever the tier is full; the heavy WebGL shader
+    // stays gated to capable, fine-pointer (desktop-class) devices.
+    setTier({ motion: full, webgl: full && !coarse && mem >= 4 && cores >= 4 });
   }, []);
 
   return <MotionContext.Provider value={tier}>{children}</MotionContext.Provider>;

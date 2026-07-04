@@ -454,16 +454,18 @@ export default function Home() {
                   const hue = catHue(cat);
                   return (
                     <div key={cat} className="space-y-8">
-                      <div className="flex items-center justify-between border-b border-border pb-5">
-                        <div className="flex items-center gap-4">
-                          <span className="h-7 w-1.5 rounded-full" style={{ background: `hsl(${hue})` }} />
-                          <h3 className="font-display text-2xl font-semibold md:text-3xl">{translateSource(cat, t)}</h3>
-                          <span className="text-eyebrow font-semibold" style={{ color: `hsl(${hue})` }}>{events.length}</span>
+                      <Parallax speed={14}>
+                        <div className="flex items-center justify-between border-b border-border pb-5">
+                          <div className="flex items-center gap-4">
+                            <span className="h-7 w-1.5 rounded-full" style={{ background: `hsl(${hue})` }} />
+                            <h3 className="font-display text-2xl font-semibold md:text-3xl">{translateSource(cat, t)}</h3>
+                            <span className="text-eyebrow font-semibold" style={{ color: `hsl(${hue})` }}>{events.length}</span>
+                          </div>
+                          <Button variant="ghost" size="sm" className="group" style={{ color: `hsl(${hue})` }} onClick={() => setActiveCategory(cat)}>
+                            {t.viewAll} <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                          </Button>
                         </div>
-                        <Button variant="ghost" size="sm" className="group" style={{ color: `hsl(${hue})` }} onClick={() => setActiveCategory(cat)}>
-                          {t.viewAll} <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                        </Button>
-                      </div>
+                      </Parallax>
                       {railCards(events.slice(0, 8), hue)}
                     </div>
                   );
