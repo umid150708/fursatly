@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useMotion } from '@/components/motion/MotionConfig';
 
 export interface FloatCard {
+  id: string;
   title: string;
   category: string;
   hue: string; // bare HSL triple
@@ -30,10 +31,12 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(v, hi
  * Category cards scattered in the empty hero space. Each one drifts freely on a
  * slow, looping path around its home anchor (a bounded "float", not a roam of the
  * whole screen), and reacts to the cursor — a magnetic pull + scale when it comes
- * near, bigger when it lands on top. Decorative (pointer-events-none), desktop-only,
- * static on the reduced-motion tier.
+ * near, bigger when it lands on top. Real buttons: clicking one opens that event.
+ * The container stays pointer-events-none so empty gaps pass through to the hero;
+ * only the card buttons re-enable pointer events. Desktop-only, static on the
+ * reduced-motion tier.
  */
-export function FloatingCards({ cards }: { cards: FloatCard[] }) {
+export function FloatingCards({ cards, onOpen }: { cards: FloatCard[]; onOpen: (id: string) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const { motion } = useMotion();
 
@@ -150,7 +153,7 @@ export function FloatingCards({ cards }: { cards: FloatCard[] }) {
   }, [motion, cards.length]);
 
   return (
-    <div ref={ref} className="pointer-events-none absolute inset-0 z-[1] hidden lg:block" aria-hidden>
+    <div ref={ref} className="pointer-events-none absolute inset-0 z-[1] hidden lg:block">
       {cards.slice(0, SLOTS.length).map((c, i) => (
         <div
           key={i}
@@ -158,13 +161,16 @@ export function FloatingCards({ cards }: { cards: FloatCard[] }) {
           className="absolute left-0 top-0 opacity-0 transition-opacity duration-700 will-change-transform"
           style={{ width: SLOTS[i].w }}
         >
-          <div
-            className="rounded-xl border bg-card/65 p-4 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-md"
+          <button
+            type="button"
+            onClick={() => onOpen(c.id)}
+            aria-label={`${c.category}: ${c.title}`}
+            className="pointer-events-auto block w-full cursor-pointer rounded-xl border bg-card/65 p-4 text-left shadow-[0_24px_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-md outline-none transition-shadow hover:shadow-[0_28px_70px_-28px_rgba(0,0,0,0.7)] focus-visible:ring-2 focus-visible:ring-accent"
             style={{ borderColor: `hsl(${c.hue} / 0.35)` }}
           >
             <span className="text-eyebrow font-semibold" style={{ color: `hsl(${c.hue})` }}>{c.category}</span>
             <p className="mt-2 line-clamp-2 font-display text-sm font-semibold leading-snug">{c.title}</p>
-          </div>
+          </button>
         </div>
       ))}
     </div>

@@ -186,13 +186,13 @@ export default function Home() {
   const floatingCards = React.useMemo(() => {
     if (!dbEvents) return [];
     const seen = new Set<string>();
-    const out: { title: string; category: string; hue: string }[] = [];
+    const out: { id: string; title: string; category: string; hue: string }[] = [];
     for (const e of dbEvents) {
       const cat = e.source || 'Other';
       if (!activeCategory && seen.has(cat)) continue; // dedupe per-category only in "All" mode
       seen.add(cat);
       const title = (locale !== 'en' && e.research_data?.translations?.[locale]?.title) || e.title;
-      out.push({ title, category: translateSource(cat, t), hue: catHue(cat) });
+      out.push({ id: e.id, title, category: translateSource(cat, t), hue: catHue(cat) });
       if (out.length >= 6) break;
     }
     return out;
@@ -331,7 +331,7 @@ export default function Home() {
         {/* ── HERO ─────────────────────────────────────────────────────── */}
         <section className="grain relative flex min-h-screen items-center overflow-hidden">
           <HeroBackground />
-          <FloatingCards cards={floatingCards} />
+          <FloatingCards cards={floatingCards} onOpen={open} />
           <div className="container relative z-10 pb-20 pt-28">
             <div className="mb-6 flex items-center gap-3">
               <span className="text-eyebrow text-accent">{t.heroKicker}</span>
