@@ -19,8 +19,8 @@ export function HeroBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden">
       <GradientHero />
-      {/* vertical grid lines — night mode only */}
-      <div className="grid-lines absolute inset-0 hidden dark:block" aria-hidden />
+      {/* vertical grid lines */}
+      <div className="grid-lines absolute inset-0" aria-hidden />
       {webgl && (
         <div className="absolute inset-0 animate-[fadein_1.4s_ease-out]">
           <ShaderHero accent={accent} />
