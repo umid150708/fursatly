@@ -11,71 +11,22 @@
  *   node scripts/smart-cleanup.mjs dry      → dry run (no deletions)
  */
 
-import { readFileSync } from 'fs';
 import { createClient } from '@supabase/supabase-js';
+import { loadEnv, groqKeys } from './lib/env.mjs';
+import { GroqClient } from './lib/groq.mjs';
 
 const DRY_RUN = process.argv.includes('dry');
 
-// ── Load env ──────────────────────────────────────────────────────────────────
-const raw = readFileSync('/Users/user/Desktop/Fursatly/.env.local', 'utf8');
-const env = {};
-for (const line of raw.split('\n')) {
-  const m = line.match(/^([^#=]+)=(.*)$/);
-  if (m) env[m[1].trim()] = m[2].trim();
-}
-
-const GROQ_KEYS = Object.entries(env).filter(([k]) => /^GROQ_KEY_\d+$/.test(k)).sort(([a],[b]) => a.localeCompare(b)).map(([,v]) => v).filter(Boolean);
+// ── Env + clients ─────────────────────────────────────────────────────────────
+const env       = loadEnv();
+const GROQ_KEYS = groqKeys(env);
 const supabase  = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
 if (!GROQ_KEYS.length) { console.error('No GROQ_KEY_* found'); process.exit(1); }
 
-// ── Rate limiting (same as bulk-enrich) ──────────────────────────────────────
-const MIN_KEY_INTERVAL = Math.ceil(60_000 / 20); // 3 000 ms
-const BACKOFF_429_MS   = 62_000;
-const FULL_RESET_MS    = 65_000;
-let keyIdx = 0;
-const lastCallAt = GROQ_KEYS.map(() => 0);
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-async function callGroq(prompt, maxTokens = 60) {
-  for (let outer = 0; outer < 2; outer++) {
-    for (let attempt = 0; attempt < GROQ_KEYS.length; attempt++) {
-      const idx = keyIdx % GROQ_KEYS.length;
-      keyIdx++;
-      const gap = MIN_KEY_INTERVAL - (Date.now() - lastCallAt[idx]);
-      if (gap > 0) await sleep(gap);
-      lastCallAt[idx] = Date.now();
-
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${GROQ_KEYS[idx]}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: maxTokens,
-          temperature: 0,
-        }),
-        signal: AbortSignal.timeout(20_000),
-      });
-
-      if (res.status === 429) {
-        const ra = res.headers.get('retry-after');
-        const wait = ra ? Math.max(parseInt(ra) * 1000 + 2000, BACKOFF_429_MS) : BACKOFF_429_MS;
-        process.stdout.write(` [key${idx} 429 — waiting ${Math.round(wait/1000)}s]`);
-        await sleep(wait);
-        continue;
-      }
-      if (!res.ok) throw new Error(`Groq HTTP ${res.status}`);
-      return (await res.json()).choices[0].message.content.trim();
-    }
-    if (outer === 0) {
-      process.stdout.write(` [all keys exhausted — waiting ${FULL_RESET_MS/1000}s]`);
-      await sleep(FULL_RESET_MS);
-      for (let i = 0; i < GROQ_KEYS.length; i++) lastCallAt[i] = 0;
-    }
-  }
-  throw new Error('All Groq keys exhausted');
-}
+const groq     = new GroqClient(GROQ_KEYS);
+const callGroq = (prompt, maxTokens) => groq.call(prompt, maxTokens).then(s => s.trim());
+const sleep    = ms => new Promise(r => setTimeout(r, ms));
 
 // ── Link detection ────────────────────────────────────────────────────────────
 function hasLink(event) {

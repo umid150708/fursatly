@@ -148,7 +148,7 @@ export default function Home() {
     return q;
   }, [supabase, filterLocation, filterLanguage, activeCategory]);
 
-  const { data: dbEvents, isLoading } = useCollection(supabase, eventsQueryFn, 'events-realtime', 'events');
+  const { data: dbEvents, isLoading } = useCollection(supabase, eventsQueryFn);
 
   const filteredEvents = React.useMemo(() => {
     if (!dbEvents) return [];

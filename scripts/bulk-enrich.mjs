@@ -16,30 +16,18 @@
  *   node scripts/bulk-enrich.mjs dry      → dry run, no DB writes
  */
 
-import { readFileSync } from 'fs';
 import { createClient } from '@supabase/supabase-js';
+import { loadEnv, groqKeys } from './lib/env.mjs';
+import { GroqClient, parseJSON } from './lib/groq.mjs';
+import { findYouTubeVideos } from './lib/youtube.mjs';
 
 // ── Config ─────────────────────────────────────────────────────────────────────
 const DRY_RUN      = process.argv.includes('dry');
 const MAX_ATTEMPTS = 3;
 
-// ── Load env ───────────────────────────────────────────────────────────────────
-function loadEnv() {
-  try {
-    const raw = readFileSync('/Users/user/Desktop/Fursatly/.env.local', 'utf8');
-    const env = {};
-    for (const line of raw.split('\n')) {
-      const m = line.match(/^([^#=]+)=(.*)$/);
-      if (m) env[m[1].trim()] = m[2].trim();
-    }
-    return env;
-  } catch {
-    console.error('Could not read .env.local'); process.exit(1);
-  }
-}
-
-const ENV = loadEnv();
-const GROQ_KEYS    = Object.entries(ENV).filter(([k]) => /^GROQ_KEY_\d+$/.test(k)).sort(([a],[b]) => a.localeCompare(b)).map(([,v]) => v).filter(Boolean);
+// ── Env + clients ──────────────────────────────────────────────────────────────
+const ENV          = loadEnv();
+const GROQ_KEYS    = groqKeys(ENV);
 const SUPABASE_URL = ENV.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = ENV.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -48,76 +36,8 @@ if (!SUPABASE_URL || !SUPABASE_KEY) { console.error('Missing Supabase env'); pro
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
 
-// ── Groq client — strict rate-limit compliance ────────────────────────────────
-//
-// Groq free/dev tier: 30 RPM per key.
-// Safe target: 25 RPM per key → one call per key every 2 400 ms minimum.
-// On 429: wait 30 s (the per-minute window resets), then try next key.
-
-const RPM_TARGET       = 20;                              // conservative: 20 RPM per key (67% of 30 limit)
-const MIN_KEY_INTERVAL = Math.ceil(60_000 / RPM_TARGET); // 3 000 ms minimum between calls per key
-const BACKOFF_429_MS   = 62_000;                          // 62 s on rate-limit hit (full minute window reset)
-const FULL_RESET_MS    = 65_000;                          // wait when ALL keys are exhausted
-
-let keyIdx = 0;
-const lastCallAt = GROQ_KEYS.map(() => 0); // per-key last dispatch timestamp
-
-async function callGroq(prompt, maxTokens = 900) {
-  // Outer retry: if ALL keys return 429, wait for the full per-minute window to reset, then retry once
-  for (let outerAttempt = 0; outerAttempt < 2; outerAttempt++) {
-    let allRateLimited = true;
-
-    for (let attempt = 0; attempt < GROQ_KEYS.length; attempt++) {
-      const idx = keyIdx % GROQ_KEYS.length;
-      keyIdx++;
-
-      // Enforce minimum interval for this specific key
-      const gap = MIN_KEY_INTERVAL - (Date.now() - lastCallAt[idx]);
-      if (gap > 0) await sleep(gap);
-      lastCallAt[idx] = Date.now();
-
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${GROQ_KEYS[idx]}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: maxTokens,
-          temperature: 0.2,
-        }),
-        signal: AbortSignal.timeout(25_000),
-      });
-
-      if (res.status === 429) {
-        // Honour Groq's retry-after header if present; fall back to BACKOFF_429_MS
-        const retryAfter = res.headers.get('retry-after');
-        const waitMs = retryAfter ? Math.max(parseInt(retryAfter, 10) * 1000 + 2_000, BACKOFF_429_MS) : BACKOFF_429_MS;
-        process.stdout.write(` [key${idx} 429 — waiting ${Math.round(waitMs/1000)}s]`);
-        await sleep(waitMs);
-        continue;
-      }
-      if (!res.ok) throw new Error(`Groq HTTP ${res.status}`);
-      const json = await res.json();
-      return json.choices[0].message.content;  // success
-    }
-
-    // All keys were rate-limited in this pass — wait for the full window to reset, then retry once
-    if (outerAttempt === 0) {
-      process.stdout.write(` [all keys exhausted — waiting ${FULL_RESET_MS/1000}s for rate-limit reset]`);
-      await sleep(FULL_RESET_MS);
-      for (let i = 0; i < GROQ_KEYS.length; i++) lastCallAt[i] = 0;
-    }
-  }
-  throw new Error('All Groq keys rate-limited after two passes — run again after a minute');
-}
-
-function parseJSON(raw) {
-  const cleaned = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/, '').trim();
-  try { return JSON.parse(cleaned); } catch {}
-  const match = cleaned.match(/\{[\s\S]+\}/);
-  if (match) { try { return JSON.parse(match[0]); } catch {} }
-  throw new Error(`Unparseable JSON: ${raw.slice(0, 100)}`);
-}
+const groq     = new GroqClient(GROQ_KEYS);
+const callGroq = (prompt, maxTokens) => groq.call(prompt, maxTokens);
 
 // ── Prompts ────────────────────────────────────────────────────────────────────
 function researchPrompt(title, description) {
@@ -130,6 +50,7 @@ Description: ${(description ?? '').slice(0, 2000)}
 
 Return this exact shape:
 {
+  "is_opportunity": true,
   "extendedDescription": "2-3 sentences: what this opportunity is, who benefits, why it matters",
   "eligibilityCriteria": ["requirement 1", "requirement 2"],
   "keyDetails": ["concrete fact 1 (prize/duration/benefit)", "fact 2"],
@@ -140,6 +61,7 @@ Return this exact shape:
 }
 
 Rules:
+- is_opportunity: true ONLY if this is something a student actively applies to and receives a direct personal benefit from — scholarship, grant, internship, fellowship, exchange programme, competition with a prize, research programme, fully-funded trip. Set to false for: awards ceremonies where others nominate or vote for you, pure spectator events, info sessions, conferences without funding, nomination-only events, honorary recognitions. When in doubt, set false.
 - eligibilityCriteria: ONLY requirements EXPLICITLY stated. If none, return []. NEVER invent.
 - keyDetails: numbers, dates, money, durations. Never repeat the description.
 - competitionTips: actionable steps. Not "work hard". Not "be yourself".
@@ -186,7 +108,7 @@ function detectFunding(research) {
 }
 
 // ── Quality gate ───────────────────────────────────────────────────────────────
-function qualityGate(event) {
+function qualityGate(event, research) {
   if (!event.title || event.title.trim().length < 8)
     return { pass: false, reason: `Title too short: "${event.title}"` };
   if (event.deadline) {
@@ -194,57 +116,13 @@ function qualityGate(event) {
     if (!isNaN(dl.getTime()) && dl < new Date())
       return { pass: false, reason: `Deadline passed: ${event.deadline}` };
   }
+  if (research.is_opportunity === false)
+    return { pass: false, reason: `Not a genuine opportunity (awards ceremony / passive event): "${event.title}"` };
   return { pass: true, reason: '' };
 }
 
 // ── YouTube search ─────────────────────────────────────────────────────────────
-async function findYouTubeVideo(title, category) {
-  try {
-    // Ask Groq for the best search query (~30 tokens, very cheap)
-    const query = (await callGroq(
-      `A student wants to find a YouTube video to help them prepare for this opportunity:\n"${title}" (${category})\n\nWrite ONE concise YouTube search query (5-8 words) that would find the most useful how-to or advice video.\nReturn ONLY the search query — no quotes, no explanation.`,
-      40
-    )).trim().replace(/^["']|["']$/g, '');
-
-    if (!query) return null;
-
-    // Fetch YouTube search results page (no API key needed)
-    const res = await fetch(
-      `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}&hl=en`,
-      {
-        headers: {
-          'User-Agent':      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Accept-Language': 'en-US,en;q=0.9',
-        },
-        signal: AbortSignal.timeout(12_000),
-      }
-    );
-    if (!res.ok) return null;
-
-    const html = await res.text();
-
-    // YouTube embeds search results as ytInitialData JSON in the page
-    const match = html.match(/var ytInitialData\s*=\s*(\{.+?\});\s*<\/script>/s);
-    if (!match) return null;
-
-    const data     = JSON.parse(match[1]);
-    const contents = data?.contents?.twoColumnSearchResultsRenderer
-      ?.primaryContents?.sectionListRenderer?.contents?.[0]
-      ?.itemSectionRenderer?.contents;
-
-    if (!Array.isArray(contents)) return null;
-
-    for (const item of contents) {
-      const v = item?.videoRenderer;
-      if (v?.videoId && v?.title?.runs?.[0]?.text) {
-        return { url: `https://www.youtube.com/watch?v=${v.videoId}`, title: v.title.runs[0].text };
-      }
-    }
-    return null;
-  } catch {
-    return null;  // silent failure — YouTube is optional
-  }
-}
+// Multi-query finder lives in ./lib/youtube.mjs (shared with backfill-videos.mjs).
 
 // ── Enrich one event ───────────────────────────────────────────────────────────
 async function enrichEvent(event, stats) {
@@ -299,7 +177,7 @@ async function enrichEvent(event, stats) {
   research.funding_type = detectFunding(research);
 
   // Step 4: Quality gate
-  const { pass, reason } = qualityGate(event);
+  const { pass, reason } = qualityGate(event, research);
 
   if (DRY_RUN) {
     stats.wouldActivate++;
@@ -314,14 +192,18 @@ async function enrichEvent(event, stats) {
     return `skipped: ${reason}`;
   }
 
-  // Step 5: YouTube preparation video (silent failure, skipped if already present)
+  // Step 5: YouTube preparation videos (silent failure, skipped if already present)
   if (event.research_data?.preparationResources?.length) {
     research.preparationResources = event.research_data.preparationResources;
   } else {
-    const video = await findYouTubeVideo(event.title, event.source ?? 'Opportunity');
-    if (video) {
-      research.preparationResources = [video];
-      process.stdout.write(` [YT: ${video.title.slice(0, 40)}]`);
+    const videos = await findYouTubeVideos(callGroq, {
+      title:       event.title,
+      category:    event.source ?? 'Opportunity',
+      description: research.extendedDescription,
+    });
+    if (videos.length) {
+      research.preparationResources = videos;
+      process.stdout.write(` [YT: ${videos.length} videos]`);
     }
   }
 
