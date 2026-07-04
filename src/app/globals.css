@@ -66,13 +66,16 @@
   * {
     @apply border-border;
   }
+  html {
+    background-color: hsl(var(--background)); /* pre-paint fallback behind SiteBackground */
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background: transparent; /* the fixed SiteBackground provides the atmosphere */
     font-family: var(--font-body), system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    transition: background-color var(--dur-fast) var(--ease-out-expo),
-                color var(--dur-fast) var(--ease-out-expo);
+    transition: color var(--dur-fast) var(--ease-out-expo);
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display), var(--font-body), sans-serif;
@@ -183,6 +186,36 @@
 .grid-lines {
   background-image: repeating-linear-gradient(90deg, hsl(var(--border) / 0.55) 0 1px, transparent 1px 8vw);
 }
+
+/* ── Site-wide atmospheric background ──────────────────────────────────────
+   Topographic contour rings + soft accent glows over the base colour. Subtle
+   in light, more dramatic in dark. Readable — everything sits faintly on top. */
+.site-atmos {
+  background:
+    repeating-radial-gradient(circle at 80% 16%, transparent 0 47px, hsl(var(--foreground) / 0.025) 47px 48px),
+    repeating-radial-gradient(circle at 16% 84%, transparent 0 55px, hsl(var(--foreground) / 0.020) 55px 56px),
+    radial-gradient(46% 40% at 8% 4%,   hsl(var(--accent) / 0.10), transparent 60%),
+    radial-gradient(42% 38% at 92% 12%, hsl(var(--gold)   / 0.07), transparent 60%),
+    radial-gradient(60% 55% at 74% 92%, hsl(var(--accent) / 0.08), transparent 62%),
+    hsl(var(--background));
+}
+.dark .site-atmos {
+  background:
+    repeating-radial-gradient(circle at 80% 16%, transparent 0 47px, hsl(210 40% 80% / 0.05) 47px 48px),
+    repeating-radial-gradient(circle at 16% 84%, transparent 0 55px, hsl(210 40% 80% / 0.04) 55px 56px),
+    radial-gradient(48% 42% at 8% 4%,   hsl(var(--accent) / 0.16), transparent 60%),
+    radial-gradient(44% 40% at 92% 12%, hsl(var(--gold)   / 0.10), transparent 60%),
+    radial-gradient(64% 58% at 74% 92%, hsl(var(--accent) / 0.12), transparent 62%),
+    hsl(var(--background));
+}
+
+/* Fine film grain as a fixed overlay */
+.site-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+}
+.dark .site-grain { opacity: 0.06; }
 
 /* Gentle floating drift for the hero cards */
 @keyframes float {
