@@ -8,15 +8,22 @@ export default {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
+    container: {
+      center: true,
+      padding: { DEFAULT: '1.25rem', lg: '2rem', xl: '2.5rem' },
+      screens: { '2xl': '1440px' },
+    },
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
-        code: ['monospace'],
+        display:  ['var(--font-display)', 'system-ui', 'sans-serif'],
+        headline: ['var(--font-display)', 'system-ui', 'sans-serif'],
+        body:     ['var(--font-body)', 'system-ui', 'sans-serif'],
+        code:     ['monospace'],
       },
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
+        urgent: 'hsl(var(--urgent))',
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
