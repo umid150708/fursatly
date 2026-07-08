@@ -20,6 +20,7 @@ import { SiteNav } from '@/components/home/SiteNav';
 import { SiteFooter } from '@/components/home/SiteFooter';
 import { EventCard } from '@/components/home/EventCard';
 import { FloatingCards } from '@/components/home/FloatingCards';
+import { WhyFursatly } from '@/components/home/WhyFursatly';
 import { Reveal } from '@/components/motion/Reveal';
 import { SplitText } from '@/components/motion/SplitText';
 import { Marquee } from '@/components/motion/Marquee';
@@ -427,21 +428,7 @@ export default function Home() {
         </section>
 
         {/* ── VALUE PROPS ──────────────────────────────────────────────── */}
-        <section className="container py-20">
-          <Reveal><p className="text-eyebrow text-accent">{t.valuesLead}</p></Reveal>
-          <Reveal delay={0.05}><h2 className="text-display mt-4 font-display font-semibold">{t.whyFursatly}</h2></Reveal>
-          <div className="mt-14 grid gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-2 lg:grid-cols-4">
-            {feats.map((f, i) => (
-              <Reveal key={i} className="h-full" delay={i * 0.08}>
-                <div className="flex h-full flex-col bg-background p-8">
-                  <span className="text-eyebrow font-semibold text-accent">0{i + 1}</span>
-                  <h3 className="mt-6 font-display text-xl font-semibold">{f.title}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </section>
+        <WhyFursatly lead={t.valuesLead} title={t.whyFursatly} feats={feats} />
 
         {/* ── CLOSING SOON ─────────────────────────────────────────────── */}
         {closingSoonEvents.length > 0 && (
