@@ -135,6 +135,8 @@ export const translations = {
 
     // Why Fursatly
     whyFursatly: 'Why Fursatly?',
+    pipelineStart: 'Thousands of raw listings',
+    pipelineEnd: 'Ready for you',
     feat1Title: 'Verified Listings',
     feat1Desc: 'Every opportunity is hand-picked and verified before going live.',
     feat2Title: 'Smart Filters',
@@ -288,6 +290,8 @@ export const translations = {
 
     // Why Fursatly
     whyFursatly: 'Nima uchun Fursatly?',
+    pipelineStart: 'Minglab xom e\'lonlar',
+    pipelineEnd: 'Siz uchun tayyor',
     feat1Title: 'Tekshirilgan',
     feat1Desc: 'Har bir imkoniyat e\'lon qilinishdan oldin qo\'lda tekshiriladi.',
     feat2Title: 'Aqlli filtrlar',
@@ -441,6 +445,8 @@ export const translations = {
 
     // Why Fursatly
     whyFursatly: 'Почему Fursatly?',
+    pipelineStart: 'Тысячи сырых объявлений',
+    pipelineEnd: 'Готово для вас',
     feat1Title: 'Проверенные',
     feat1Desc: 'Каждая возможность проверяется вручную перед публикацией.',
     feat2Title: 'Умные фильтры',
