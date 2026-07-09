@@ -428,7 +428,7 @@ export default function Home() {
         </section>
 
         {/* ── VALUE PROPS ──────────────────────────────────────────────── */}
-        <WhyFursatly lead={t.valuesLead} title={t.whyFursatly} feats={feats} />
+        <WhyFursatly lead={t.valuesLead} title={t.whyFursatly} start={t.pipelineStart} end={t.pipelineEnd} stages={feats} />
 
         {/* ── CLOSING SOON ─────────────────────────────────────────────── */}
         {closingSoonEvents.length > 0 && (
