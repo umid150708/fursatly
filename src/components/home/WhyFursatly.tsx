@@ -25,18 +25,54 @@ function split2(s: string): string[] {
   return [words.slice(0, best).join(' '), words.slice(best).join(' ')];
 }
 
+// ── Diagram geometry (viewBox 1200 × 640, axis at y = 360) ──────────────────
+const AXIS = 360;
+const START = 420; // where the transformation begins — every ring passes through this point
+const SEGS: [number, number][] = [[420, 610], [610, 800], [800, 990], [990, 1168]];
+const NODES = [20, 198, 420, 610, 800, 990];
+
+// The reference's circle logic: each stage's circle is TANGENT to the shared
+// start point, its diameter spanning from START to that stage's end node — the
+// rings read as the expanding reach of the pipeline, one ring per stage.
+const RINGS = SEGS.map(([, end], i) => ({
+  cx: (START + end) / 2,
+  r: (end - START) / 2,
+  cls: ['text-foreground/30', 'text-foreground/25', 'text-foreground/20', 'text-foreground/15'][i],
+}));
+
+// Each stage's keywords live inside ITS ring band (between its circle and the
+// previous one), in the upper half — hand-placed like the reference drawing.
+const KW_POS: ((i: number) => { x: number; y: number; anchor: 'start' | 'middle' | 'end' })[] = [
+  (i) => ({ x: 515, y: 285 + i * 26, anchor: 'middle' }),        // stage 01 — inside the smallest ring
+  (i) => ({ x: 585 + i * 24, y: 190 + i * 34, anchor: 'start' }), // stage 02 — diagonal cascade in band 2
+  (i) => ({ x: 880, y: 180 + i * 28, anchor: 'middle' }),         // stage 03 — cluster in band 3 (2 merged lines)
+  () => ({ x: 1040, y: 130, anchor: 'middle' }),                  // stage 04 — edge label in the outer band
+];
+
+/** Stage keywords → the terse lines drawn for that stage (03 merges pairs, 04 joins all). */
+function kwLines(stage: Stage | undefined, idx: number): string[] {
+  const kw = stage?.keywords ?? [];
+  if (idx === 2) {
+    const half = Math.ceil(kw.length / 2);
+    return [kw.slice(0, half).join(' · '), kw.slice(half).join(' · ')].filter(Boolean);
+  }
+  if (idx === 3) return kw.length ? [kw.join(' · ')] : [];
+  return kw;
+}
+
 /**
  * "Why Fursatly" as a hand-composed process drawing, literal to the reference
- * (penguin-capital.co.jp "Creating Value"): a horizontal axis with square node
- * markers, an origin circle holding the raw-input label, concentric rings that
- * CONTAIN the stage keywords (terse words, not sentences — a diagonal cascade,
- * a two-line cluster, an edge label), bracket segments under the axis naming the
- * four stages, one long diagonal hairline, and a big display terminus.
+ * (penguin-capital.co.jp "Creating Value") — including its circle logic: all
+ * rings are tangent at the transformation-start node, one ring per stage, each
+ * stage's keywords contained in its own ring band. The whole thing self-draws
+ * as a left→right narrative: origin → axis → per stage (ring blooms from the
+ * shared point → its keywords → its bracket) → diagonal → terminus, with a
+ * subtle scroll-scrubbed parallax on the ring system.
  *
- * Desktop is a single SVG (viewBox 1200×640) so the composition scales as one
- * drawing and can never overflow; every stroke self-draws via pathLength +
- * dashoffset on one GSAP timeline. Mobile folds into the vertical timeline.
- * Motion-gated like Reveal: static with no JS on the reduced-motion tier.
+ * One SVG (viewBox 1200×640) so the composition scales as a drawing and can
+ * never overflow; rings intentionally clip at the frame edges like the
+ * reference. Mobile folds into the vertical timeline. Motion-gated like
+ * Reveal: static with no JS on the reduced-motion tier.
  */
 export function WhyFursatly({
   lead,
@@ -79,18 +115,34 @@ export function WhyFursatly({
         });
 
         if (desktop) {
-          tl.fromTo(q('axis'), draw, drawn(1.1))
-            .fromTo(q('oc'), draw, drawn(0.8), '<0.15')
-            .fromTo(q('otext'), { opacity: 0 }, { opacity: 1, duration: 0.5 }, '-=0.4')
-            .fromTo(q('via'), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.5 }, '-=0.3')
-            .fromTo(q('sq'), { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, stagger: 0.07, ease: 'back.out(2)' }, '-=0.6')
-            .fromTo(q('ring'), draw, { ...drawn(1.6), stagger: 0.15 }, '-=0.5')
-            .fromTo(q('diag'), draw, drawn(0.9), '-=1.0')
-            .fromTo(q('vline'), { opacity: 0 }, { opacity: 1, duration: 0.4 }, '-=0.8')
-            .fromTo(q('bline'), draw, { ...drawn(0.6), stagger: 0.1 }, '<')
-            .fromTo(q('blabel'), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 }, '<0.1')
-            .fromTo(q('kw'), { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.45, stagger: 0.06 }, '-=0.6')
-            .fromTo(q('end'), { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.7 }, '-=0.3');
+          // Act 1 — the intake: origin circle, axis beam, connector, nodes.
+          tl.fromTo(q('oc'), draw, drawn(0.9))
+            .fromTo(q('otext'), { opacity: 0 }, { opacity: 1, duration: 0.5 }, '-=0.5')
+            .fromTo(q('beam'), draw, drawn(1.3), '-=0.4')
+            .fromTo(q('axis'), draw, drawn(1.3), '<')
+            .fromTo(q('via'), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.5 }, '-=0.8')
+            .fromTo(q('sq'), { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, stagger: 0.07, ease: 'back.out(2)' }, '-=0.6');
+
+          // Act 2 — the four stages, left→right: each ring blooms out of the
+          // shared tangent point, then its keywords surface, then its bracket.
+          for (let i = 0; i < 4; i++) {
+            tl.fromTo(q(`ring-${i}`), draw, drawn(1.0), i === 0 ? '-=0.25' : '-=0.55')
+              .fromTo(q(`kw-${i}`), { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.45, stagger: 0.08 }, '-=0.5')
+              .fromTo(q(`blabel-${i}`), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45 }, '-=0.35')
+              .fromTo(q(`bline-${i}`), draw, drawn(0.5), '<');
+          }
+
+          // Act 3 — the ray out and the payoff.
+          tl.fromTo(q('diag'), draw, drawn(1.0), '-=0.4')
+            .fromTo(q('vline'), { opacity: 0 }, { opacity: 1, duration: 0.4 }, '<')
+            .fromTo(q('end'), { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.8 }, '-=0.5');
+
+          // Continuous depth: the ring system drifts subtly with scroll.
+          gsap.fromTo(q('para'), { y: 18 }, {
+            y: -18,
+            ease: 'none',
+            scrollTrigger: { trigger: el, start: 'top bottom', end: 'bottom top', scrub: 0.6 },
+          });
         } else {
           tl.fromTo(q('origin'), { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(2)' })
             .fromTo(q('track-v'), { scaleY: 0 }, { scaleY: 1, duration: 1.3, ease: 'power2.inOut' }, '<')
@@ -104,12 +156,6 @@ export function WhyFursatly({
     return () => ctx?.revert();
   }, [motion]);
 
-  // ── Diagram geometry (viewBox 1200 × 640, axis at y = 360) ────────────────
-  const AXIS = 360;
-  // Bracket segments under the axis — one per stage.
-  const SEGS: [number, number][] = [[420, 610], [610, 800], [800, 990], [990, 1168]];
-  const NODES = [20, 198, 420, 610, 800, 990];
-  const RINGS = [70, 130, 200, 265];
   const sqStyle = { transformBox: 'fill-box', transformOrigin: 'center' } as React.CSSProperties;
   const hair = { stroke: 'currentColor', vectorEffect: 'non-scaling-stroke' as const };
 
@@ -123,17 +169,23 @@ export function WhyFursatly({
 
       {/* ── Desktop: the drawing ────────────────────────────────────────── */}
       <svg data-layout="lg" viewBox="0 0 1200 640" fill="none" className="mt-16 hidden w-full lg:block" aria-hidden>
-        {/* Concentric rings — the containers the information lives in */}
-        {RINGS.map((r) => (
-          <circle key={r} data-anim="ring" cx="420" cy={AXIS} r={r} pathLength={1} strokeDasharray={1}
-            className="text-foreground/20" {...hair} strokeWidth={1} />
-        ))}
+        {/* Ring system + diagonal, on a scroll-parallax layer. Each ring is
+            rotated 180° so its stroke draw starts at the shared tangent point
+            and blooms outward — the pipeline's reach expanding stage by stage. */}
+        <g data-anim="para">
+          {RINGS.map(({ cx, r, cls }, i) => (
+            <circle key={i} data-anim={`ring-${i}`} cx={cx} cy={AXIS} r={r}
+              transform={`rotate(180 ${cx} ${AXIS})`} pathLength={1} strokeDasharray={1}
+              className={cls} {...hair} strokeWidth={1} />
+          ))}
+          {/* Ray out of the tangent point, through the ring bands */}
+          <line data-anim="diag" x1={START} y1={AXIS} x2="1160" y2="55" pathLength={1} strokeDasharray={1}
+            className="text-foreground/15" {...hair} strokeWidth={1} />
+        </g>
 
-        {/* Long diagonal hairline through the rings */}
-        <line data-anim="diag" x1="420" y1={AXIS} x2="1160" y2="55" pathLength={1} strokeDasharray={1}
-          className="text-foreground/15" {...hair} strokeWidth={1} />
-
-        {/* Axis + arrowhead */}
+        {/* Axis: a soft wide beam under a crisp hairline, plus arrowhead */}
+        <line data-anim="beam" x1="20" y1={AXIS} x2="1162" y2={AXIS} pathLength={1} strokeDasharray={1}
+          className="text-foreground/[0.07]" stroke="currentColor" strokeWidth={7} />
         <line data-anim="axis" x1="20" y1={AXIS} x2="1162" y2={AXIS} pathLength={1} strokeDasharray={1}
           className="text-foreground/35" {...hair} strokeWidth={1.5} />
         <path data-anim="sq" d="M1154 352 L1166 360 L1154 368" className="text-foreground/50" {...hair}
@@ -161,51 +213,30 @@ export function WhyFursatly({
           ))}
         </g>
 
-        {/* Stage 01 keywords — small stack inside the inner rings, above its bracket */}
-        <g fill="currentColor" className="text-muted-foreground" textAnchor="middle">
-          {(stages[0]?.keywords ?? []).map((k, i) => (
-            <text key={k} data-anim="kw" x="515" y={284 + i * 28} fontSize="16.5">{k}</text>
-          ))}
-        </g>
-
-        {/* Stage 02 keywords — the diagonal cascade inside the rings */}
-        <g fill="currentColor" className="text-muted-foreground">
-          {(stages[1]?.keywords ?? []).map((k, i) => (
-            <text key={k} data-anim="kw" x={560 + i * 22} y={150 + i * 35} fontSize="16.5">{k}</text>
-          ))}
-        </g>
-
-        {/* Stage 03 keywords — two-line cluster near the outer ring */}
-        <g fill="currentColor" className="text-muted-foreground" textAnchor="middle">
-          {(() => {
-            const kw = stages[2]?.keywords ?? [];
-            const half = Math.ceil(kw.length / 2);
-            return [kw.slice(0, half), kw.slice(half)]
-              .filter((l) => l.length)
-              .map((l, i) => (
-                <text key={i} data-anim="kw" x="860" y={200 + i * 28} fontSize="16.5">{l.join(' · ')}</text>
-              ));
-          })()}
-        </g>
-
-        {/* Stage 04 keywords — single edge label at the rim, by the diagonal */}
-        {stages[3] && (
-          <text data-anim="kw" x="1040" y="130" fontSize="16.5" textAnchor="middle"
-            fill="currentColor" className="text-muted-foreground">
-            {stages[3].keywords.join(' · ')}
-          </text>
-        )}
+        {/* Stage keywords — each cluster contained in its own ring band */}
+        {stages.slice(0, 4).map((s, si) => (
+          <g key={si} fill="currentColor" className="text-muted-foreground">
+            {kwLines(s, si).map((line, li) => {
+              const p = KW_POS[si](li);
+              return (
+                <text key={li} data-anim={`kw-${si}`} x={p.x} y={p.y} fontSize="16.5" textAnchor={p.anchor}>
+                  {line}
+                </text>
+              );
+            })}
+          </g>
+        ))}
 
         {/* Bracket segments under the axis, one per stage */}
         {SEGS.map(([x1, x2], i) => (
           <g key={i}>
             <line data-anim="vline" x1={x1} y1={AXIS - 14} x2={x1} y2={460} className="text-foreground/15" {...hair} strokeWidth={1} />
-            <text data-anim="blabel" x={(x1 + x2) / 2} y="418" fontSize="21" fontWeight="600" textAnchor="middle"
+            <text data-anim={`blabel-${i}`} x={(x1 + x2) / 2} y="418" fontSize="21" fontWeight="600" textAnchor="middle"
               fill="currentColor" className="font-display text-foreground">
               <tspan className="text-accent" fill="currentColor">• </tspan>
               {stages[i]?.title}
             </text>
-            <path data-anim="bline" d={`M ${x1 + 6} 444 L ${x1 + 6} 452 L ${x2 - 6} 452 L ${x2 - 6} 444`}
+            <path data-anim={`bline-${i}`} d={`M ${x1 + 6} 444 L ${x1 + 6} 452 L ${x2 - 6} 452 L ${x2 - 6} 444`}
               pathLength={1} strokeDasharray={1} className="text-foreground/30" {...hair} strokeWidth={1} />
           </g>
         ))}
