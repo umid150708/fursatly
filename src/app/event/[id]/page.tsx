@@ -30,6 +30,14 @@ const itemText = (x: any): string =>
     ? x
     : x?.value || x?.text || x?.detail || x?.description || x?.name || '';
 
+/** URLs here come from scraped posts + LLM output stored in the DB — never trust
+ *  them as-is in an href. Only protocols a student can follow are allowed;
+ *  anything else (javascript:, data:, file:) renders no link at all. */
+const safeHref = (url?: string | null): string | null => {
+  const s = (url ?? '').trim();
+  return /^(https?:|mailto:)/i.test(s) ? s : null;
+};
+
 /** Card wrapper for the list sections — matches the homepage's bordered surface,
  *  with the per-category hue inherited from the page root via the --hue var. */
 function InfoCard({
@@ -217,6 +225,7 @@ export default function EventDetail() {
 
   const cleanLocation = (event.location && !/\bnull\b|\bnone\b|\bundefined\b/i.test(event.location)) ? event.location : '—';
   const cleanLanguage = (event.language && !/\bnull\b|\bnone\b|\bundefined\b/i.test(event.language)) ? translateLanguage(event.language, t) : '—';
+  const applyHref = safeHref(research?.officialWebsite);
 
   const resourcesLabel = ['Scholarships', 'Research', 'STEM', 'Competitions'].includes(event.source)
     ? t.prepResources
@@ -357,15 +366,17 @@ export default function EventDetail() {
                         </h3>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                           {research.resources.map((res: any, idx: number) => {
+                            const href = safeHref(res.url);
+                            if (!href) return null; // unlinkable resource — don't render a dead card
                             const isVideo = res.type === 'Video' ||
-                              (res.url && (res.url.includes('youtube.com') || res.url.includes('youtu.be')));
+                              href.includes('youtube.com') || href.includes('youtu.be');
                             const ytId = isVideo
-                              ? (res.url?.match(/[?&]v=([^&]+)/)?.[1] || res.url?.match(/youtu\.be\/([^?]+)/)?.[1])
+                              ? (href.match(/[?&]v=([^&]+)/)?.[1] || href.match(/youtu\.be\/([^?]+)/)?.[1])
                               : null;
                             return isVideo ? (
                               <a
                                 key={idx}
-                                href={res.url}
+                                href={href}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="group overflow-hidden rounded-xl border border-border bg-card transition-all duration-500 hover:-translate-y-1 hover:border-[hsl(var(--hue)/0.55)]"
@@ -398,7 +409,7 @@ export default function EventDetail() {
                             ) : (
                               <a
                                 key={idx}
-                                href={res.url}
+                                href={href}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="group flex flex-col rounded-xl border border-border bg-card p-6 transition-all duration-500 hover:-translate-y-1 hover:border-[hsl(var(--hue)/0.55)]"
@@ -433,9 +444,9 @@ export default function EventDetail() {
                   <Fact icon={Languages} label={t.languageLabel} value={cleanLanguage} />
                 </div>
 
-                {research?.officialWebsite && (
+                {applyHref && (
                   <a
-                    href={research.officialWebsite}
+                    href={applyHref}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.02]"
