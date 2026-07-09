@@ -145,6 +145,10 @@ export const translations = {
     feat3Desc: 'Deep AI research on every listing — eligibility, tips and resources.',
     feat4Title: '3 Languages',
     feat4Desc: 'All content in English, Uzbek and Russian — fully translated.',
+    feat1Keys: ['Hand-checked', 'Trusted sources', 'No spam'],
+    feat2Keys: ['Age', 'Language', 'Country', 'Deadline', 'Funding'],
+    feat3Keys: ['Eligibility', 'Tips', 'Resources', 'Videos'],
+    feat4Keys: ['English', 'Uzbek', 'Russian'],
 
     // Telegram CTA
     ctaTitle: 'Never Miss a Deadline',
@@ -300,6 +304,10 @@ export const translations = {
     feat3Desc: 'Har bir e\'lon uchun chuqur AI tadqiqoti — talablar, maslahatlar, resurslar.',
     feat4Title: '3 ta til',
     feat4Desc: 'Barcha kontent ingliz, o\'zbek va rus tillarida to\'liq tarjima qilingan.',
+    feat1Keys: ['Qo\'lda tekshirilgan', 'Ishonchli manba', 'Spamsiz'],
+    feat2Keys: ['Yosh', 'Til', 'Mamlakat', 'Muddat', 'Moliya'],
+    feat3Keys: ['Talablar', 'Maslahatlar', 'Resurslar', 'Videolar'],
+    feat4Keys: ['Ingliz', 'O\'zbek', 'Rus'],
 
     // Telegram CTA
     ctaTitle: 'Muddatni o\'tkazib yubormang',
@@ -455,6 +463,10 @@ export const translations = {
     feat3Desc: 'Глубокий AI-анализ каждого объявления — требования, советы, ресурсы.',
     feat4Title: '3 языка',
     feat4Desc: 'Весь контент на английском, узбекском и русском языках.',
+    feat1Keys: ['Проверено вручную', 'Надёжные источники', 'Без спама'],
+    feat2Keys: ['Возраст', 'Язык', 'Страна', 'Срок', 'Финансы'],
+    feat3Keys: ['Требования', 'Советы', 'Ресурсы', 'Видео'],
+    feat4Keys: ['Английский', 'Узбекский', 'Русский'],
 
     // Telegram CTA
     ctaTitle: 'Не пропустите дедлайн',

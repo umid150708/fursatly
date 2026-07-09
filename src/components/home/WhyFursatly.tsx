@@ -3,10 +3,11 @@
 import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { useMotion } from '@/components/motion/MotionConfig';
+import { SectionHeader } from '@/components/home/SectionHeader';
 
 interface Stage {
   title: string;
-  desc: string;
+  keywords: string[];
 }
 
 /**
@@ -22,12 +23,14 @@ interface Stage {
  */
 export function WhyFursatly({
   lead,
+  index,
   title,
   start,
   end,
   stages,
 }: {
   lead: string;
+  index: string;
   title: string;
   start: string;
   end: string;
@@ -55,10 +58,7 @@ export function WhyFursatly({
           scrollTrigger: { trigger: el, start: 'top 70%', once: true },
         });
 
-        tl.fromTo(q('[data-anim="eyebrow"]'), { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.6 })
-          .fromTo(q('[data-anim="title"]'), { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.8 }, '-=0.4')
-          .fromTo(q('[data-anim="underline"]'), { scaleX: 0 }, { scaleX: 1, duration: 0.7 }, '-=0.45')
-          .fromTo(inLayout('origin'), { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(2)' }, '-=0.2')
+        tl.fromTo(inLayout('origin'), { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(2)' })
           .fromTo(q('[data-anim="circle"]'), { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 1.9, stagger: 0.18, ease: 'power2.inOut' }, '<')
           .fromTo(inLayout('track-h'), { scaleX: 0 }, { scaleX: 1, duration: 1.3, ease: 'power2.inOut' }, '<')
           .fromTo(inLayout('track-v'), { scaleY: 0 }, { scaleY: 1, duration: 1.3, ease: 'power2.inOut' }, '<')
@@ -71,26 +71,25 @@ export function WhyFursatly({
     return () => ctx?.revert();
   }, [motion]);
 
+  // Concentric rings act as containers for the stage keywords — the copy sits
+  // inside them (à la the reference's "Creating Value" diagram), centred over
+  // the right half of the journey where the transformation happens.
   const circles = (
     <svg
-      className="pointer-events-none absolute right-0 top-1/2 h-[560px] w-[560px] -translate-y-1/2 translate-x-1/4 text-foreground/15"
+      className="pointer-events-none absolute left-1/2 top-1/2 h-[720px] w-[720px] -translate-x-[38%] -translate-y-1/2 text-foreground/[0.18]"
       viewBox="0 0 320 320"
       fill="none"
       aria-hidden
     >
-      {[64, 104, 150].map((r) => (
-        <circle key={r} data-anim="circle" cx="160" cy="160" r={r} pathLength={1} strokeDasharray={1} stroke="currentColor" strokeWidth={0.6} />
+      {[72, 116, 158].map((r) => (
+        <circle key={r} data-anim="circle" cx="160" cy="160" r={r} pathLength={1} strokeDasharray={1} stroke="currentColor" strokeWidth={0.5} />
       ))}
     </svg>
   );
 
   return (
     <section ref={root} className="container relative overflow-hidden py-24 md:py-32">
-      <div className="relative">
-        <p data-anim="eyebrow" className="text-eyebrow text-accent">{lead}</p>
-        <h2 data-anim="title" className="text-display mt-4 font-display font-semibold">{title}</h2>
-        <span data-anim="underline" className="mt-6 block h-px w-24 origin-left bg-accent" aria-hidden />
-      </div>
+      <SectionHeader label={lead} index={index} title={title} />
 
       {/* ── Desktop: horizontal journey ─────────────────────────────────── */}
       <div data-layout="lg" className="relative mt-24 hidden lg:block">
@@ -124,7 +123,11 @@ export function WhyFursatly({
               </div>
               <div data-anim="stage" className="flex flex-1 flex-col items-center pt-6 text-center">
                 <span className="text-eyebrow font-semibold text-accent">0{i + 1}</span>
-                <p className="mt-3 max-w-[13rem] text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
+                <ul className="mt-3 space-y-1.5">
+                  {s.keywords.map((k) => (
+                    <li key={k} className="text-sm text-muted-foreground">{k}</li>
+                  ))}
+                </ul>
               </div>
             </div>
           ))}
@@ -154,7 +157,11 @@ export function WhyFursatly({
               <span data-anim="node" className="absolute -left-10 top-1 h-3 w-3 rotate-45 border border-foreground/60 bg-background" />
               <span className="text-eyebrow font-semibold text-accent">0{i + 1}</span>
               <h3 className="mt-2 font-display text-lg font-semibold">{s.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
+              <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                {s.keywords.map((k) => (
+                  <li key={k} className="text-sm text-muted-foreground">{k}</li>
+                ))}
+              </ul>
             </li>
           ))}
 
