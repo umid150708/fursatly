@@ -121,8 +121,26 @@ export async function pickOfficial(candidates, title, callLLM) {
   return top.url; // default: most-linked host
 }
 
+// SSRF guard: these URLs come from scraped Telegram posts and LLM output, and
+// this code fetches them server-side on a cron. Only plain web URLs pointing at
+// public hosts may be fetched — never localhost, private ranges, or link-local
+// (cloud metadata). A student can't use such a link anyway, so it's also 'dead'.
+const PRIVATE_HOST =
+  /^(localhost$|127\.|0\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|\[|::1$|.*\.(local|internal)$)/i;
+
+export function isFetchableUrl(url) {
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+    return !PRIVATE_HOST.test(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
 /** GET the URL (following redirects) and report whether it resolves. */
 export async function checkReachable(url) {
+  if (!isFetchableUrl(url)) return 'dead';
   try {
     const res = await fetch(url, {
       redirect: 'follow',

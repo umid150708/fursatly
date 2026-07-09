@@ -36,7 +36,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  typescript: { ignoreBuildErrors: true },
+  // Type errors FAIL the build — tsc is clean; keep it that way.
+  typescript: { ignoreBuildErrors: false },
   eslint: { ignoreDuringBuilds: true },
 
   // Don't advertise the Next.js version in response headers
