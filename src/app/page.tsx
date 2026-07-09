@@ -21,6 +21,7 @@ import { SiteFooter } from '@/components/home/SiteFooter';
 import { EventCard } from '@/components/home/EventCard';
 import { FloatingCards } from '@/components/home/FloatingCards';
 import { WhyFursatly } from '@/components/home/WhyFursatly';
+import { SectionHeader } from '@/components/home/SectionHeader';
 import { Reveal } from '@/components/motion/Reveal';
 import { SplitText } from '@/components/motion/SplitText';
 import { Marquee } from '@/components/motion/Marquee';
@@ -217,10 +218,10 @@ export default function Home() {
   const open = (id: string) => router.push(`/event/${id}`);
 
   const feats = [
-    { title: t.feat1Title, desc: t.feat1Desc },
-    { title: t.feat2Title, desc: t.feat2Desc },
-    { title: t.feat3Title, desc: t.feat3Desc },
-    { title: t.feat4Title, desc: t.feat4Desc },
+    { title: t.feat1Title, keywords: t.feat1Keys },
+    { title: t.feat2Title, keywords: t.feat2Keys },
+    { title: t.feat3Title, keywords: t.feat3Keys },
+    { title: t.feat4Title, keywords: t.feat4Keys },
   ];
 
   // ── Filter panel (Sheet body) ────────────────────────────────────────────
@@ -417,10 +418,7 @@ export default function Home() {
 
         {/* ── MISSION ──────────────────────────────────────────────────── */}
         <section className="container py-28 md:py-40">
-          <Reveal><p className="text-eyebrow mb-8 text-accent">{t.missionLead}</p></Reveal>
-          <Reveal delay={0.05}>
-            <h2 className="text-display max-w-[20ch] font-display font-semibold">{t.missionTitle}</h2>
-          </Reveal>
+          <SectionHeader label={t.missionLead} index="01" title={t.missionTitle} titleClassName="max-w-[20ch]" />
           <Reveal delay={0.15}>
             <p className="mt-10 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">{t.missionBody}</p>
           </Reveal>
@@ -428,7 +426,7 @@ export default function Home() {
         </section>
 
         {/* ── VALUE PROPS ──────────────────────────────────────────────── */}
-        <WhyFursatly lead={t.valuesLead} title={t.whyFursatly} start={t.pipelineStart} end={t.pipelineEnd} stages={feats} />
+        <WhyFursatly lead={t.valuesLead} index="02" title={t.whyFursatly} start={t.pipelineStart} end={t.pipelineEnd} stages={feats} />
 
         {/* ── CLOSING SOON ─────────────────────────────────────────────── */}
         {closingSoonEvents.length > 0 && (
@@ -464,17 +462,13 @@ export default function Home() {
 
         {/* ── EXPLORE / EVENTS GRID ────────────────────────────────────── */}
         <section id="opportunities" className="container scroll-mt-24 py-16">
-          <div className="mb-12 flex flex-wrap items-end justify-between gap-6">
-            <div>
-              <p className="text-eyebrow text-accent">{t.exploreLead}</p>
-              <h2 className="text-display mt-4 font-display font-semibold">{t.exploreTitle}</h2>
-            </div>
-            {dbEvents && (
-              <span className="text-eyebrow text-muted-foreground">
-                {filteredEvents.length} / {dbEvents.length}
-              </span>
-            )}
-          </div>
+          <SectionHeader
+            label={t.exploreLead}
+            index="03"
+            title={t.exploreTitle}
+            subtitle={dbEvents ? `${filteredEvents.length} / ${dbEvents.length}` : undefined}
+            className="mb-12"
+          />
 
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-32">
