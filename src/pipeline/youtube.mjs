@@ -9,7 +9,7 @@
  * Returns up to `max` (default 3) videos: [{ url, title, channel, type }].
  * Silent failure at every step — videos are an optional enhancement.
  *
- * Used by both the live pipeline (ported to TS in src/pipeline/enrich.ts),
+ * Used by both the live pipeline (src/pipeline/enrich.ts),
  * bulk-enrich.mjs, and backfill-videos.mjs.
  */
 

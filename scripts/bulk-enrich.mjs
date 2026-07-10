@@ -19,7 +19,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { loadEnv, groqKeys } from './lib/env.mjs';
 import { GroqClient, parseJSON } from './lib/groq.mjs';
-import { findYouTubeVideos } from './lib/youtube.mjs';
+import { findYouTubeVideos } from '../src/pipeline/youtube.mjs';
+import { researchPrompt, translationPrompt } from '../src/pipeline/prompts.mjs';
+import { detectFunding, qualityGate } from '../src/pipeline/quality.mjs';
 
 // ── Config ─────────────────────────────────────────────────────────────────────
 const DRY_RUN      = process.argv.includes('dry');
@@ -40,91 +42,7 @@ const groq     = new GroqClient(GROQ_KEYS);
 const callGroq = (prompt, maxTokens) => groq.call(prompt, maxTokens);
 
 // ── Prompts ────────────────────────────────────────────────────────────────────
-function researchPrompt(title, description) {
-  return `You are a research assistant for Fursatly, an opportunity platform for Uzbek students.
-
-Analyze this opportunity and return ONLY a valid JSON object. No markdown, no explanation.
-
-Title: ${title}
-Description: ${(description ?? '').slice(0, 2000)}
-
-Return this exact shape:
-{
-  "is_opportunity": true,
-  "extendedDescription": "2-3 sentences: what this opportunity is, who benefits, why it matters",
-  "eligibilityCriteria": ["requirement 1", "requirement 2"],
-  "keyDetails": ["concrete fact 1 (prize/duration/benefit)", "fact 2"],
-  "competitionTips": ["actionable tip a student can do today", "tip 2"],
-  "officialWebsite": "https://... or null",
-  "applyLabel": "Apply on official website",
-  "confidence": 0.85
-}
-
-Rules:
-- is_opportunity: true ONLY if this is something a student actively applies to and receives a direct personal benefit from — scholarship, grant, internship, fellowship, exchange programme, competition with a prize, research programme, fully-funded trip. Set to false for: awards ceremonies where others nominate or vote for you, pure spectator events, info sessions, conferences without funding, nomination-only events, honorary recognitions. When in doubt, set false.
-- eligibilityCriteria: ONLY requirements EXPLICITLY stated. If none, return []. NEVER invent.
-- keyDetails: numbers, dates, money, durations. Never repeat the description.
-- competitionTips: actionable steps. Not "work hard". Not "be yourself".
-- confidence: 0.0–1.0 based on clarity of source
-- officialWebsite: the application/info URL. Check the description first — if it contains a 🔗 line, that IS the URL, copy it exactly. Otherwise use any URL in the description text. If none is present but you recognise the program, provide the correct official URL from your knowledge. Return null only if you genuinely cannot determine it.
-- Arrays may be empty [] if there is genuinely nothing to add`;
-}
-
-function translationPrompt(fields, language) {
-  return `Translate to ${language}. Return ONLY the JSON object, no explanation.
-
-${JSON.stringify(fields, null, 2)}
-
-Rules:
-- Keep the same JSON keys
-- Arrays must stay as arrays of strings
-- Translate naturally, not word-for-word
-- ${language === 'Uzbek (Latin script)' ? 'Use Latin Uzbek script, not Cyrillic' : 'Use natural Russian'}`;
-}
-
 // ── Funding detection ──────────────────────────────────────────────────────────
-function detectFunding(research) {
-  const text = [
-    research.extendedDescription ?? '',
-    ...(research.keyDetails ?? []),
-    ...(research.eligibilityCriteria ?? []),
-    ...(research.competitionTips ?? []),
-  ].join(' ').toLowerCase();
-
-  const fullSignals = [
-    'fully funded', 'full fund', 'full scholarship', 'full grant', 'full coverage',
-    'covers all', 'all expenses', 'all costs covered', "to'liq grant",
-    "to'liq moliyalashtirish", 'полное финансирование',
-    'stipend included', 'flight covered', 'accommodation covered', 'travel covered', '100%',
-  ];
-  const partialSignals = [
-    'partial', 'qisman', 'частичное', 'contribution',
-    'co-funded', 'partially covered', 'some expenses',
-  ];
-
-  if (fullSignals.some(s => text.includes(s))) return 'Full';
-  if (partialSignals.some(s => text.includes(s))) return 'Partial';
-  return null;
-}
-
-// ── Quality gate ───────────────────────────────────────────────────────────────
-function qualityGate(event, research) {
-  if (!event.title || event.title.trim().length < 8)
-    return { pass: false, reason: `Title too short: "${event.title}"` };
-  if (event.deadline) {
-    const dl = new Date(event.deadline);
-    if (!isNaN(dl.getTime()) && dl < new Date())
-      return { pass: false, reason: `Deadline passed: ${event.deadline}` };
-  }
-  if (research.is_opportunity === false)
-    return { pass: false, reason: `Not a genuine opportunity (awards ceremony / passive event): "${event.title}"` };
-  return { pass: true, reason: '' };
-}
-
-// ── YouTube search ─────────────────────────────────────────────────────────────
-// Multi-query finder lives in ./lib/youtube.mjs (shared with backfill-videos.mjs).
-
-// ── Enrich one event ───────────────────────────────────────────────────────────
 async function enrichEvent(event, stats) {
   // Step 1: Research
   let research;

@@ -1,7 +1,7 @@
 /**
  * Fursatly — Preparation-Video Backfill
  *
- * Re-runs ONLY the YouTube step (multi-query finder in ./lib/youtube.mjs) over
+ * Re-runs ONLY the YouTube step (multi-query finder in ../src/pipeline/youtube.mjs) over
  * existing active events that are thin on videos, and overwrites their
  * research_data.preparationResources. Nothing else in research_data is touched —
  * translations, tips, eligibility, funding all stay exactly as they are.
@@ -20,7 +20,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { loadEnv, groqKeys } from './lib/env.mjs';
 import { GroqClient } from './lib/groq.mjs';
-import { findYouTubeVideos } from './lib/youtube.mjs';
+import { findYouTubeVideos } from '../src/pipeline/youtube.mjs';
 
 // ── Config ─────────────────────────────────────────────────────────────────────
 const DRY_RUN      = process.argv.includes('dry');
