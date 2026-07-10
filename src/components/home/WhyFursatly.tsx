@@ -111,31 +111,79 @@ export function WhyFursatly({
 
         const tl = gsap.timeline({
           defaults: { ease: 'expo.out' },
-          scrollTrigger: { trigger: el, start: 'top 70%', once: true },
+          // Start once the diagram itself is well inside the viewport, so the
+          // construction is actually WATCHED, not finished during the scroll.
+          scrollTrigger: { trigger: el, start: 'top 55%', once: true },
         });
 
         if (desktop) {
-          // Act 1 — the intake: origin circle, axis beam, connector, nodes.
-          tl.fromTo(q('oc'), draw, drawn(0.9))
-            .fromTo(q('otext'), { opacity: 0 }, { opacity: 1, duration: 0.5 }, '-=0.5')
-            .fromTo(q('beam'), draw, drawn(1.3), '-=0.4')
-            .fromTo(q('axis'), draw, drawn(1.3), '<')
-            .fromTo(q('via'), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.5 }, '-=0.8')
-            .fromTo(q('sq'), { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, stagger: 0.07, ease: 'back.out(2)' }, '-=0.6');
+          // The construction is led by a visible pen point — a compass tip that
+          // physically travels every primary stroke while the stroke draws
+          // under it. Same duration + ease as the paired dash tween keeps the
+          // tip exactly on the advancing stroke end.
+          const pen = q('pen');
+          const EASE = 'power1.inOut';
+          /** Pen sweeps a circle from angle offset (fraction of a turn). */
+          const penCircle = (cx: number, cy: number, r: number, dur: number, flip: boolean) => {
+            const p = { t: 0 };
+            return gsap.to(p, {
+              t: 1, duration: dur, ease: EASE,
+              onUpdate() {
+                const a = p.t * Math.PI * 2;
+                // flip=false: start at 3 o'clock (plain circle); true: at 9 o'clock (rotated rings)
+                const s = flip ? -1 : 1;
+                gsap.set(pen, { attr: { cx: cx + s * r * Math.cos(a), cy: cy + s * r * Math.sin(a) } });
+              },
+            });
+          };
+          /** Pen runs a straight segment. */
+          const penLine = (x1: number, y1: number, x2: number, y2: number, dur: number) => {
+            const p = { t: 0 };
+            return gsap.to(p, {
+              t: 1, duration: dur, ease: EASE,
+              onUpdate() {
+                gsap.set(pen, { attr: { cx: x1 + (x2 - x1) * p.t, cy: y1 + (y2 - y1) * p.t } });
+              },
+            });
+          };
 
-          // Act 2 — the four stages, left→right: each ring blooms out of the
-          // shared tangent point, then its keywords surface, then its bracket.
+          // ── Act 1: the origin circle is swept, then the axis is ruled ────
+          tl.set(pen, { attr: { cx: 198, cy: AXIS }, opacity: 1 })
+            .fromTo(q('oc'), draw, drawn(1.4, EASE))
+            .add(penCircle(110, AXIS, 88, 1.4, false), '<')
+            .fromTo(q('otext'), { opacity: 0 }, { opacity: 1, duration: 0.6 }, '-=0.5');
+
+          const AXIS_DUR = 2.2;
+          const axisAt = (x: number) => `axis+=${(AXIS_DUR * (x - 20)) / (1162 - 20)}`;
+          tl.addLabel('axis')
+            .fromTo(q('beam'), draw, drawn(AXIS_DUR, EASE), 'axis')
+            .fromTo(q('axis'), draw, drawn(AXIS_DUR, EASE), 'axis')
+            .add(penLine(20, AXIS, 1162, AXIS, AXIS_DUR), 'axis');
+          // Nodes pop the moment the pen passes them; the connector label too.
+          q('sq').forEach((node: Element, i: number) => {
+            tl.fromTo(node, { scale: 0, opacity: 0 },
+              { scale: 1, opacity: 1, duration: 0.4, ease: 'back.out(2.5)' }, axisAt(NODES[i]));
+          });
+          tl.fromTo(q('via'), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.6 }, axisAt(309))
+            .fromTo(q('arrow'), { opacity: 0 }, { opacity: 1, duration: 0.3 }, axisAt(1150));
+
+          // ── Act 2: each ring is drawn by the compass out of the shared
+          // tangent point; its keywords + bracket follow before the next ring.
           for (let i = 0; i < 4; i++) {
-            tl.fromTo(q(`ring-${i}`), draw, drawn(1.0), i === 0 ? '-=0.25' : '-=0.55')
-              .fromTo(q(`kw-${i}`), { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.45, stagger: 0.08 }, '-=0.5')
-              .fromTo(q(`blabel-${i}`), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45 }, '-=0.35')
-              .fromTo(q(`bline-${i}`), draw, drawn(0.5), '<');
+            const { cx, r } = RINGS[i];
+            tl.fromTo(q(`ring-${i}`), draw, drawn(1.35, EASE), i === 0 ? '+=0.05' : '-=0.35')
+              .add(penCircle(cx, AXIS, r, 1.35, true), '<')
+              .fromTo(q(`kw-${i}`), { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 }, '-=0.45')
+              .fromTo(q(`blabel-${i}`), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45 }, '-=0.3')
+              .fromTo(q(`bline-${i}`), draw, drawn(0.55, EASE), '<');
           }
 
-          // Act 3 — the ray out and the payoff.
-          tl.fromTo(q('diag'), draw, drawn(1.0), '-=0.4')
+          // ── Act 3: the ray out, pen lifts off, the payoff lands ──────────
+          tl.fromTo(q('diag'), draw, drawn(1.2, EASE), '-=0.2')
+            .add(penLine(START, AXIS, 1160, 55, 1.2), '<')
             .fromTo(q('vline'), { opacity: 0 }, { opacity: 1, duration: 0.4 }, '<')
-            .fromTo(q('end'), { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.8 }, '-=0.5');
+            .to(pen, { opacity: 0, duration: 0.35 }, '-=0.1')
+            .fromTo(q('end'), { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.8 }, '-=0.6');
 
           // Continuous depth: the ring system drifts subtly with scroll.
           gsap.fromTo(q('para'), { y: 18 }, {
@@ -188,8 +236,8 @@ export function WhyFursatly({
           className="text-foreground/[0.07]" stroke="currentColor" strokeWidth={7} />
         <line data-anim="axis" x1="20" y1={AXIS} x2="1162" y2={AXIS} pathLength={1} strokeDasharray={1}
           className="text-foreground/35" {...hair} strokeWidth={1.5} />
-        <path data-anim="sq" d="M1154 352 L1166 360 L1154 368" className="text-foreground/50" {...hair}
-          strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={sqStyle} />
+        <path data-anim="arrow" d="M1154 352 L1166 360 L1154 368" className="text-foreground/50" {...hair}
+          strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
 
         {/* Square node markers on the axis */}
         {NODES.map((x) => (
@@ -248,6 +296,11 @@ export function WhyFursatly({
             <text key={i} x="1164" y={AXIS - 58 + i * 42} fontSize="36" fontWeight="600">{l}</text>
           ))}
         </g>
+
+        {/* The pen — the compass tip that leads every stroke while it draws.
+            Hidden until the timeline picks it up (and always, on reduced-motion). */}
+        <circle data-anim="pen" cx="198" cy={AXIS} r="4" opacity="0"
+          fill="hsl(var(--accent))" stroke="hsl(var(--background))" strokeWidth="1.5" />
       </svg>
 
       {/* ── Mobile: vertical timeline ───────────────────────────────────── */}
