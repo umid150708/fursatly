@@ -28,6 +28,7 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
       gsap.registerPlugin(ScrollTrigger);
 
       lenis = new Lenis({ smoothWheel: true, duration: 1.1 }) as any;
+      (window as any).lenis = lenis; // exposed so anchor scrolls ("Show results") route through Lenis
       lenis!.on('scroll', ScrollTrigger.update);
       tick = (time: number) => lenis!.raf(time * 1000);
       gsap.ticker.add(tick);
@@ -38,6 +39,7 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
       cancelled = true;
       if (tick) gsap.ticker.remove(tick);
       if (lenis) lenis.destroy();
+      (window as any).lenis = null;
     };
   }, [motion]);
 
