@@ -217,6 +217,41 @@ export default function Home() {
 
   const open = (id: string) => router.push(`/event/${id}`);
 
+  // Browse vs. searching: once the user narrows anything, results matter more
+  // than the brand story, so the two swap places in the layout below.
+  const isFiltering = searchTerm.trim() !== '' || activeFilterCount > 0 || activeCategory !== null;
+
+  // Scroll to the results. Programmatic scroll routes through Lenis (native
+  // scrollIntoView fights its rAF loop); `force` overrides Lenis' own guards.
+  const scrollToResults = () => {
+    const el = document.getElementById('opportunities');
+    if (!el) return;
+    const lenis = (window as any).lenis;
+    if (lenis?.scrollTo) lenis.scrollTo(el, { offset: -96, force: true });
+    else el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // Reveal the results when the filter sheet closes. The sheet's scroll-lock
+  // (react-remove-scroll) freezes scrolling AND clamps a too-early scroll, so we
+  // poll a few frames until the lock lifts, then scroll (giving up after ~1s).
+  const onFilterOpenChange = (open: boolean) => {
+    if (open) return;
+    const start = performance.now();
+    const waitThenScroll = () => {
+      const locked = document.body.style.overflow === 'hidden';
+      if (locked && performance.now() - start < 1000) { requestAnimationFrame(waitThenScroll); return; }
+      scrollToResults();
+    };
+    requestAnimationFrame(waitThenScroll);
+  };
+
+  // Swapping large sections invalidates ScrollTrigger's cached positions.
+  React.useEffect(() => {
+    let cancelled = false;
+    import('gsap/ScrollTrigger').then(({ ScrollTrigger }) => { if (!cancelled) ScrollTrigger.refresh(); });
+    return () => { cancelled = true; };
+  }, [isFiltering]);
+
   const feats = [
     { title: t.feat1Title, keywords: t.feat1Keys },
     { title: t.feat2Title, keywords: t.feat2Keys },
@@ -325,143 +360,20 @@ export default function Home() {
     </ScrollRail>
   );
 
-  return (
-    <div className="flex min-h-screen flex-col">
-      <SiteNav />
-
-      <main className="flex-1">
-        {/* ── HERO ─────────────────────────────────────────────────────── */}
-        <section className="grain relative flex min-h-screen items-center overflow-hidden">
-          <HeroBackground />
-          <FloatingCards cards={floatingCards} onOpen={open} />
-          <div className="container relative z-10 pb-20 pt-28">
-            <div className="mb-6 flex items-center gap-3">
-              <span className="text-eyebrow text-accent">{t.heroKicker}</span>
-            </div>
-            <h1 className="text-hero max-w-[13ch] font-display font-bold">
-              <SplitText text={t.heroTitle} delay={0.1} />
-            </h1>
-            <Reveal delay={0.35} className="mt-8 max-w-xl">
-              <p className="text-lg leading-relaxed text-muted-foreground md:text-2xl">{t.heroSubtitle}</p>
-            </Reveal>
-
-            <Reveal delay={0.5} className="mt-10 max-w-xl">
-              <div className="flex gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder={t.searchPlaceholder}
-                    className="h-14 rounded-lg border-border bg-background/70 pl-12 text-base backdrop-blur-md"
-                  />
-                </div>
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" className="relative h-14 w-14 rounded-lg border-border bg-background/70 backdrop-blur-md">
-                      <SlidersHorizontal className="h-5 w-5" />
-                      {activeFilterCount > 0 && (
-                        <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-accent-foreground">
-                          {activeFilterCount}
-                        </span>
-                      )}
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="right" className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-md">
-                    <SheetHeader className="space-y-1 border-b border-border px-6 py-5 text-left">
-                      <SheetTitle className="font-display text-xl">{t.filterTitle}</SheetTitle>
-                      <p className="text-sm text-muted-foreground">
-                        <span className="font-semibold tabular-nums text-foreground">{filteredEvents.length}</span> {t.resultsLabel}
-                      </p>
-                    </SheetHeader>
-                    <div className="flex-1 overflow-y-auto px-6 py-6">
-                      {renderFilterPanel()}
-                    </div>
-                    <div className="flex items-center gap-3 border-t border-border p-4">
-                      <Button variant="outline" className="flex-1" onClick={resetFilters} disabled={activeFilterCount === 0}>
-                        <X className="mr-2 h-4 w-4" /> {t.resetAll}
-                      </Button>
-                      <SheetClose asChild>
-                        <Button className="flex-1">{t.showResults}</Button>
-                      </SheetClose>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
-              <div className="mt-5 flex flex-wrap gap-2">
-                <button onClick={() => setActiveCategory(null)} className={chip(activeCategory === null)}>{t.catAll}</button>
-                {categories.map((c) => (
-                  <button key={c.id} onClick={() => setActiveCategory(c.id)} className={chip(activeCategory === c.id)}>
-                    {t[c.labelKey]}
-                  </button>
-                ))}
-              </div>
-            </Reveal>
-          </div>
-
-          <div className="text-eyebrow absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3 text-muted-foreground">
-            {t.scroll}
-            <span className="h-12 w-px animate-pulse bg-gradient-to-b from-accent to-transparent" />
-          </div>
-        </section>
-
-        {/* ── MARQUEE ──────────────────────────────────────────────────── */}
-        <section className="border-y border-border py-3">
-          <Marquee
-            items={TICKER_ITEMS.map((item) => (
-              <span className="flex items-center px-6 py-2 text-sm text-muted-foreground">
-                {item}<span className="ml-6 text-accent">/</span>
-              </span>
-            ))}
-          />
-        </section>
-
-        {/* ── MISSION ──────────────────────────────────────────────────── */}
-        <section className="container py-28 md:py-40">
+  // Mission and the results list swap order with isFiltering (see below), so
+  // both are defined once and referenced in each ordering.
+  const missionSection = (
+    <section className="container py-28 md:py-40">
           <SectionHeader label={t.missionLead} index="01" title={t.missionTitle} titleClassName="max-w-[20ch]" />
           <Reveal delay={0.15}>
             <p className="mt-10 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">{t.missionBody}</p>
           </Reveal>
           <Parallax speed={28}><SuzaniRule className="mt-16" /></Parallax>
         </section>
+  );
 
-        {/* ── VALUE PROPS ──────────────────────────────────────────────── */}
-        <WhyFursatly lead={t.valuesLead} index="02" title={t.whyFursatly} start={t.pipelineStart} via={t.pipelineVia} end={t.pipelineEnd} stages={feats} />
-
-        {/* ── CLOSING SOON ─────────────────────────────────────────────── */}
-        {closingSoonEvents.length > 0 && (
-          <section className="container py-14">
-            <div className="mb-8 flex items-center gap-3">
-              <Flame className="h-5 w-5 text-urgent" />
-              <h2 className="text-eyebrow font-semibold text-urgent">{t.closingSoon}</h2>
-              <span className="text-eyebrow text-muted-foreground">{closingSoonEvents.length}</span>
-            </div>
-            <div className="no-scrollbar flex gap-4 overflow-x-auto pb-2">
-              {closingSoonEvents.map((event) => {
-                const daysLeft = getDaysLeft(event.deadline);
-                const tr = event.research_data?.translations?.[locale];
-                const title = (locale !== 'en' && tr?.title) ? tr.title : event.title;
-                return (
-                  <button
-                    key={event.id}
-                    onClick={() => open(event.id)}
-                    className="group w-72 shrink-0 rounded-xl border border-border bg-card p-5 text-left transition-all hover:-translate-y-1 hover:border-urgent/50"
-                  >
-                    <div className="mb-3 flex items-center justify-between">
-                      <span className="text-eyebrow text-muted-foreground">{translateSource(event.source || 'Other', t)}</span>
-                      <span className="text-eyebrow font-semibold text-urgent">{daysLeft}{t.dLeft}</span>
-                    </div>
-                    <p className="line-clamp-2 font-display text-base font-semibold leading-snug group-hover:text-accent">{title}</p>
-                    <p className="mt-3 text-sm text-muted-foreground">{event.location || '—'}</p>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* ── EXPLORE / EVENTS GRID ────────────────────────────────────── */}
-        <section id="opportunities" className="container scroll-mt-24 py-16">
+  const exploreSection = (
+    <section id="opportunities" className="container scroll-mt-24 py-16">
           <SectionHeader
             label={t.exploreLead}
             index="03"
@@ -525,6 +437,142 @@ export default function Home() {
             </div>
           )}
         </section>
+  );
+
+  return (
+    <div className="flex min-h-screen flex-col">
+      <SiteNav />
+
+      <main className="flex-1">
+        {/* ── HERO ─────────────────────────────────────────────────────── */}
+        <section className="grain relative flex min-h-screen items-center overflow-hidden">
+          <HeroBackground />
+          <FloatingCards cards={floatingCards} onOpen={open} />
+          <div className="container relative z-10 pb-20 pt-28">
+            <div className="mb-6 flex items-center gap-3">
+              <span className="text-eyebrow text-accent">{t.heroKicker}</span>
+            </div>
+            <h1 className="text-hero max-w-[13ch] font-display font-bold">
+              <SplitText text={t.heroTitle} delay={0.1} />
+            </h1>
+            <Reveal delay={0.35} className="mt-8 max-w-xl">
+              <p className="text-lg leading-relaxed text-muted-foreground md:text-2xl">{t.heroSubtitle}</p>
+            </Reveal>
+
+            <Reveal delay={0.5} className="mt-10 max-w-xl">
+              <div className="flex gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder={t.searchPlaceholder}
+                    className="h-14 rounded-lg border-border bg-background/70 pl-12 text-base backdrop-blur-md"
+                  />
+                </div>
+                <Sheet onOpenChange={onFilterOpenChange}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" className="relative h-14 w-14 rounded-lg border-border bg-background/70 backdrop-blur-md">
+                      <SlidersHorizontal className="h-5 w-5" />
+                      {activeFilterCount > 0 && (
+                        <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-accent-foreground">
+                          {activeFilterCount}
+                        </span>
+                      )}
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-md">
+                    <SheetHeader className="space-y-1 border-b border-border px-6 py-5 text-left">
+                      <SheetTitle className="font-display text-xl">{t.filterTitle}</SheetTitle>
+                      <p className="text-sm text-muted-foreground">
+                        <span className="font-semibold tabular-nums text-foreground">{filteredEvents.length}</span> {t.resultsLabel}
+                      </p>
+                    </SheetHeader>
+                    <div className="flex-1 overflow-y-auto px-6 py-6">
+                      {renderFilterPanel()}
+                    </div>
+                    <div className="flex items-center gap-3 border-t border-border p-4">
+                      <Button variant="outline" className="flex-1" onClick={resetFilters} disabled={activeFilterCount === 0}>
+                        <X className="mr-2 h-4 w-4" /> {t.resetAll}
+                      </Button>
+                      <SheetClose asChild>
+                        <Button className="flex-1">{t.showResults}</Button>
+                      </SheetClose>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <button onClick={() => setActiveCategory(null)} className={chip(activeCategory === null)}>{t.catAll}</button>
+                {categories.map((c) => (
+                  <button key={c.id} onClick={() => setActiveCategory(c.id)} className={chip(activeCategory === c.id)}>
+                    {t[c.labelKey]}
+                  </button>
+                ))}
+              </div>
+            </Reveal>
+          </div>
+
+          <div className="text-eyebrow absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3 text-muted-foreground">
+            {t.scroll}
+            <span className="h-12 w-px animate-pulse bg-gradient-to-b from-accent to-transparent" />
+          </div>
+        </section>
+
+        {/* ── MARQUEE ──────────────────────────────────────────────────── */}
+        <section className="border-y border-border py-3">
+          <Marquee
+            items={TICKER_ITEMS.map((item) => (
+              <span className="flex items-center px-6 py-2 text-sm text-muted-foreground">
+                {item}<span className="ml-6 text-accent">/</span>
+              </span>
+            ))}
+          />
+        </section>
+
+        {/* ── MISSION + RESULTS (swap when filtering) ──────────────────── */}
+        {isFiltering ? (
+          <>
+            {exploreSection}
+            {missionSection}
+          </>
+        ) : (
+          <>
+            {missionSection}
+        {/* ── CLOSING SOON ─────────────────────────────────────────────── */}
+        {closingSoonEvents.length > 0 && (
+          <section className="container py-14">
+            <div className="mb-8 flex items-center gap-3">
+              <Flame className="h-5 w-5 text-urgent" />
+              <h2 className="text-eyebrow font-semibold text-urgent">{t.closingSoon}</h2>
+              <span className="text-eyebrow text-muted-foreground">{closingSoonEvents.length}</span>
+            </div>
+            <div className="no-scrollbar flex gap-4 overflow-x-auto pb-2">
+              {closingSoonEvents.map((event) => {
+                const daysLeft = getDaysLeft(event.deadline);
+                const tr = event.research_data?.translations?.[locale];
+                const title = (locale !== 'en' && tr?.title) ? tr.title : event.title;
+                return (
+                  <button
+                    key={event.id}
+                    onClick={() => open(event.id)}
+                    className="group w-72 shrink-0 rounded-xl border border-border bg-card p-5 text-left transition-all hover:-translate-y-1 hover:border-urgent/50"
+                  >
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="text-eyebrow text-muted-foreground">{translateSource(event.source || 'Other', t)}</span>
+                      <span className="text-eyebrow font-semibold text-urgent">{daysLeft}{t.dLeft}</span>
+                    </div>
+                    <p className="line-clamp-2 font-display text-base font-semibold leading-snug group-hover:text-accent">{title}</p>
+                    <p className="mt-3 text-sm text-muted-foreground">{event.location || '—'}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+            {exploreSection}
+          </>
+        )}
 
         {/* ── STATS ────────────────────────────────────────────────────── */}
         <section className="border-y border-border py-24">
@@ -535,6 +583,9 @@ export default function Home() {
             <AnimatedCounter target={3} label={t.statLanguages} />
           </div>
         </section>
+
+        {/* ── VALUE PROPS ──────────────────────────────────────────────── */}
+        <WhyFursatly lead={t.valuesLead} index="02" title={t.whyFursatly} start={t.pipelineStart} via={t.pipelineVia} end={t.pipelineEnd} stages={feats} />
 
         {/* ── CTA ──────────────────────────────────────────────────────── */}
         <section className="container py-28">
