@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Wordmark } from '@/components/brand/Wordmark';
-import { DoppiIcon } from '@/components/UzbekMotif';
+import { DoppiIcon } from '@/components/brand/DoppiIcon';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 

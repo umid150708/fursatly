@@ -4,8 +4,11 @@
  */
 
 import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
 
-const ENV_PATH = '/Users/user/Desktop/Fursatly/.env.local';
+// Resolve .env.local relative to THIS file (scripts/lib/ → repo root), so the
+// scripts work wherever the repo lives — never hardcode an absolute path.
+const ENV_PATH = fileURLToPath(new URL('../../.env.local', import.meta.url));
 
 /** Parse .env.local into a plain object. Exits the process if unreadable. */
 export function loadEnv() {
