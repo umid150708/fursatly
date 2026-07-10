@@ -109,12 +109,14 @@ export function WhyFursatly({
         const draw = { strokeDashoffset: 1 };
         const drawn = (d: number, ease = 'power2.inOut') => ({ strokeDashoffset: 0, duration: d, ease });
 
-        const tl = gsap.timeline({
-          defaults: { ease: 'expo.out' },
-          // Start once the diagram itself is well inside the viewport, so the
-          // construction is actually WATCHED, not finished during the scroll.
-          scrollTrigger: { trigger: el, start: 'top 55%', once: true },
-        });
+        // Build the construction timeline PAUSED and play it from a standalone
+        // ScrollTrigger (added after it's built). Keeping the timeline OFF the
+        // ScrollTrigger is deliberate: a later ScrollTrigger.refresh() — fired
+        // when the homepage reorders as the user filters — recomputes trigger
+        // positions and, for a fromTo tied to a trigger, re-applies the "from"
+        // state. On this long draw that froze the diagram half-constructed.
+        // A plain paused timeline is never touched by refresh().
+        const tl = gsap.timeline({ defaults: { ease: 'expo.out' }, paused: true });
 
         if (desktop) {
           // The construction is led by a visible pen point — a compass tip that
@@ -198,6 +200,9 @@ export function WhyFursatly({
             .fromTo(q('stage'), { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, stagger: 0.14 }, '-=1.0')
             .fromTo(q('end'), { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.7 }, '-=0.2');
         }
+
+        // Play the construction once, when the diagram scrolls into view.
+        ScrollTrigger.create({ trigger: el, start: 'top 55%', once: true, onEnter: () => tl.play() });
       }, el);
     })();
 
