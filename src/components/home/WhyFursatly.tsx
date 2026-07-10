@@ -98,6 +98,7 @@ export function WhyFursatly({
     if (!motion || !root.current) return;
     const el = root.current;
     let ctx: gsap.Context | null = null;
+    let io: IntersectionObserver | null = null;
 
     (async () => {
       const { ScrollTrigger } = await import('gsap/ScrollTrigger');
@@ -201,12 +202,25 @@ export function WhyFursatly({
             .fromTo(q('end'), { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.7 }, '-=0.2');
         }
 
-        // Play the construction once, when the diagram scrolls into view.
-        ScrollTrigger.create({ trigger: el, start: 'top 55%', once: true, onEnter: () => tl.play() });
+        // Play the construction once, when the DRAWING itself is meaningfully
+        // in view — not the section heading above it (which fired the draw, and
+        // on fast frame rates finished it, while the diagram was still below the
+        // fold, so it read as pre-drawn). An IntersectionObserver is used rather
+        // than a ScrollTrigger so the play is reliably tied to real visibility
+        // under Lenis smooth-scroll and immune to the ScrollTrigger.refresh()
+        // the homepage fires when it reorders on filter.
+        const drawEl = (desktop
+          ? el.querySelector('[data-layout="lg"]')
+          : el.querySelector('[data-layout="sm"]')) ?? el;
+        io = new IntersectionObserver(
+          (entries) => { if (entries.some((e) => e.isIntersecting)) { tl.play(); io?.disconnect(); } },
+          { rootMargin: '0px 0px -30% 0px' },   // ~30% of the diagram in view before it draws
+        );
+        io.observe(drawEl);
       }, el);
     })();
 
-    return () => ctx?.revert();
+    return () => { io?.disconnect(); ctx?.revert(); };
   }, [motion]);
 
   const sqStyle = { transformBox: 'fill-box', transformOrigin: 'center' } as React.CSSProperties;
