@@ -2,7 +2,8 @@
 
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, Mail, KeyRound, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { Loader2, Mail, KeyRound, Sparkles, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/supabase';
 import { useLanguage } from '@/context/LanguageContext';
 import { Button } from '@/components/ui/button';
@@ -124,6 +125,12 @@ function AuthPageInner() {
       <SiteNav />
       <main className="container flex min-h-screen items-center justify-center py-28">
         <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 md:p-10">
+          <Link
+            href="/"
+            className="mb-6 inline-flex items-center gap-2 text-eyebrow text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" /> {t.backToOpportunities}
+          </Link>
           <p className="text-eyebrow mb-2 font-semibold text-accent">
             <Sparkles className="mr-1 inline h-3.5 w-3.5" />
             Fursatly
