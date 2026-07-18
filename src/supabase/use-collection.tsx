@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 type AwaitableLike<T> = PromiseLike<{ data: T[] | null; error: any }>;
@@ -22,14 +22,22 @@ export interface UseCollectionResult<T> {
  *
  * IMPORTANT: Pass a stable (memoized) queryFn via useCallback to avoid
  * infinite re-fetch loops.
+ *
+ * `initialData` (optional) seeds the state from a server-rendered payload so
+ * the first paint shows content instead of a spinner. The very first client
+ * fetch is skipped — the server just delivered the same rows — but re-fetches
+ * from a CHANGED queryFn (e.g. a category filter) and the 5-minute poll still
+ * run as before.
  */
 export function useCollection<T = any>(
   supabase: SupabaseClient | null,
   queryFn: (() => AwaitableLike<T>) | null,
+  initialData?: WithId<T>[] | null,
 ): UseCollectionResult<T> {
-  const [data, setData]       = useState<WithId<T>[] | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // start true so SSR shows spinner, not "no results"
+  const [data, setData]       = useState<WithId<T>[] | null>(initialData ?? null);
+  const [isLoading, setIsLoading] = useState(!initialData); // spinner only when there's nothing to show yet
   const [error, setError]     = useState<Error | null>(null);
+  const skipFirstFetch = useRef(Boolean(initialData));
 
   const fetchData = useCallback(async () => {
     if (!supabase || !queryFn) {
@@ -49,8 +57,13 @@ export function useCollection<T = any>(
     setIsLoading(false);
   }, [supabase, queryFn]);
 
-  // Initial fetch
+  // Initial fetch — skipped once when server-rendered initialData already
+  // holds these rows; later queryFn changes (filters) fetch as normal.
   useEffect(() => {
+    if (skipFirstFetch.current) {
+      skipFirstFetch.current = false;
+      return;
+    }
     fetchData();
   }, [fetchData]);
 
