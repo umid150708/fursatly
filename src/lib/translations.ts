@@ -208,6 +208,18 @@ export const translations = {
     saveOpp: 'Save',
     unsaveOpp: 'Saved',
     signInToSave: 'Sign in to save opportunities',
+
+    // Mentor chatbot
+    mentorTitle: 'Ask the Mentor',
+    mentorSubtitle: 'Personalised guidance on this opportunity and studying abroad',
+    mentorPlaceholder: 'Ask anything about this opportunity or studying abroad…',
+    mentorSend: 'Send',
+    mentorGreeting: 'Hi! I can help you understand this opportunity, check how it fits you, and plan your next steps. What would you like to know?',
+    mentorSignIn: 'Sign in to chat with the mentor',
+    mentorTyping: 'Mentor is typing…',
+    mentorErrorBusy: 'The mentor is busy right now. Please try again in a moment.',
+    mentorErrorRate: "You've reached today's message limit. Come back tomorrow!",
+    mentorErrorGeneric: 'Something went wrong. Please try again.',
   },
 
   uz: {
@@ -415,6 +427,18 @@ export const translations = {
     saveOpp: 'Saqlash',
     unsaveOpp: 'Saqlangan',
     signInToSave: 'Imkoniyatlarni saqlash uchun tizimga kiring',
+
+    // Mentor chatbot
+    mentorTitle: 'Mentordan so‘rang',
+    mentorSubtitle: 'Ushbu imkoniyat va chet elda o‘qish bo‘yicha shaxsiy maslahat',
+    mentorPlaceholder: 'Ushbu imkoniyat yoki chet elda o‘qish haqida so‘rang…',
+    mentorSend: 'Yuborish',
+    mentorGreeting: 'Salom! Men bu imkoniyatni tushunishga, sizga mosligini baholashga va keyingi qadamlarni rejalashtirishga yordam beraman. Nimani bilmoqchisiz?',
+    mentorSignIn: 'Mentor bilan suhbatlashish uchun kiring',
+    mentorTyping: 'Mentor yozmoqda…',
+    mentorErrorBusy: 'Mentor hozir band. Iltimos, birozdan so‘ng qayta urinib ko‘ring.',
+    mentorErrorRate: 'Bugungi xabarlar chegarasiga yetdingiz. Ertaga qaytib keling!',
+    mentorErrorGeneric: 'Xatolik yuz berdi. Iltimos, qayta urinib ko‘ring.',
   },
 
   ru: {
@@ -622,6 +646,18 @@ export const translations = {
     saveOpp: 'Сохранить',
     unsaveOpp: 'Сохранено',
     signInToSave: 'Войдите, чтобы сохранять возможности',
+
+    // Mentor chatbot
+    mentorTitle: 'Спросить ментора',
+    mentorSubtitle: 'Персональные советы по этой возможности и учёбе за рубежом',
+    mentorPlaceholder: 'Спросите об этой возможности или учёбе за рубежом…',
+    mentorSend: 'Отправить',
+    mentorGreeting: 'Привет! Я помогу разобраться в этой возможности, оценить, подходит ли она вам, и спланировать следующие шаги. Что вы хотите узнать?',
+    mentorSignIn: 'Войдите, чтобы общаться с ментором',
+    mentorTyping: 'Ментор печатает…',
+    mentorErrorBusy: 'Ментор сейчас занят. Пожалуйста, попробуйте ещё раз чуть позже.',
+    mentorErrorRate: 'Вы достигли дневного лимита сообщений. Возвращайтесь завтра!',
+    mentorErrorGeneric: 'Что-то пошло не так. Пожалуйста, попробуйте ещё раз.',
   },
 };
 
