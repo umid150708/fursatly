@@ -227,10 +227,12 @@ export function AccountClient() {
                   <Input
                     id="pf-age"
                     type="number"
+                    inputMode="numeric"
                     min={10}
                     max={100}
                     value={age}
                     onChange={(e) => setAge(e.target.value)}
+                    className="[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   />
                 </div>
                 <div>
