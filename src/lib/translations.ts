@@ -1,5 +1,7 @@
 export type Locale = 'uz' | 'en' | 'ru';
 
+import { canonicalSource, type CanonicalSource } from './canonicalCategory';
+
 export const translations = {
   en: {
     // Hero
@@ -47,7 +49,7 @@ export const translations = {
     clearFilters: 'Clear all filters',
 
     // Categories
-    catAll: '✨ All',
+    catAll: 'All',
     catScholarships: 'Scholarships',
     catCompetitions: 'Competitions',
     catSummerPrograms: 'Summer Programs',
@@ -109,7 +111,6 @@ export const translations = {
     srcSTEM:           'STEM',
     srcInternships:    'Internships',
     srcWorkshops:      'Workshops',
-    srcFellowship:     'Fellowship',
     srcOther:          'Other',
 
     // Stats bar
@@ -159,6 +160,54 @@ export const translations = {
     // Misc
     unknown: 'Unknown',
     online: 'Online',
+
+    // Auth
+    authTitleIn: 'Welcome back',
+    authTitleUp: 'Create your account',
+    authSubtitle: 'Save opportunities and get deadline reminders.',
+    authEmail: 'Email',
+    authPassword: 'Password',
+    authSignIn: 'Sign in',
+    authSignUp: 'Sign up',
+    authNoAccount: "Don't have an account? Sign up",
+    authHaveAccount: 'Already have an account? Sign in',
+    authOr: 'or continue with',
+    authMagic: 'Email me a magic link',
+    authMagicSent: 'Check your inbox — your sign-in link is on its way.',
+    authConfirmSent: 'Almost there! Confirm your email via the link we just sent.',
+    authGoogle: 'Continue with Google',
+    authEmailFirst: 'Enter your email above first.',
+    authErrorGeneric: 'Something went wrong',
+    authErrorCreds: 'Wrong email or password.',
+    authErrorRate: 'Too many attempts — please wait a minute and try again.',
+    authErrorWeakPassword: 'Password must be at least 6 characters.',
+
+    // Account
+    accountTitle: 'My account',
+    profileSection: 'Profile',
+    displayName: 'Name',
+    ageLabel: 'Age',
+    countryLabel: 'Country',
+    interestsLabel: 'Interests',
+    interestsHint: 'e.g. STEM, design, volunteering',
+    remindersToggle: 'Deadline reminders',
+    remindersHint: 'We DM you on Telegram 3 days and 1 day before a saved deadline.',
+    saveProfile: 'Save profile',
+    profileSaved: 'Profile saved',
+    telegramSection: 'Telegram',
+    telegramConnected: 'Connected',
+    telegramConnectHint: 'Connect Telegram to receive deadline reminders as direct messages.',
+    telegramConnectedToast: 'Telegram connected',
+    telegramAlreadyLinked: 'This Telegram account is already linked to another Fursatly account.',
+    savedSection: 'Saved opportunities',
+    noSaved: "You haven't saved any opportunities yet.",
+    browseCta: 'Browse opportunities',
+    signOut: 'Sign out',
+
+    // Save button
+    saveOpp: 'Save',
+    unsaveOpp: 'Saved',
+    signInToSave: 'Sign in to save opportunities',
   },
 
   uz: {
@@ -207,7 +256,7 @@ export const translations = {
     clearFilters: 'Barcha filtrlarni tozalash',
 
     // Categories
-    catAll: '✨ Barchasi',
+    catAll: 'Barchasi',
     catScholarships: 'Grantlar',
     catCompetitions: 'Musobaqalar',
     catSummerPrograms: 'Yozgi dasturlar',
@@ -269,7 +318,6 @@ export const translations = {
     srcSTEM:           'STEM',
     srcInternships:    'Stajirovka',
     srcWorkshops:      'Seminarlar',
-    srcFellowship:     'Stipendiya',
     srcOther:          'Boshqa',
 
     // Stats bar
@@ -319,6 +367,54 @@ export const translations = {
     // Misc
     unknown: 'Noma\'lum',
     online: 'Onlayn',
+
+    // Auth
+    authTitleIn: 'Xush kelibsiz',
+    authTitleUp: 'Hisob yarating',
+    authSubtitle: 'Imkoniyatlarni saqlang va muddat eslatmalarini oling.',
+    authEmail: 'Email',
+    authPassword: 'Parol',
+    authSignIn: 'Kirish',
+    authSignUp: 'Ro\'yxatdan o\'tish',
+    authNoAccount: 'Hisobingiz yo\'qmi? Ro\'yxatdan o\'ting',
+    authHaveAccount: 'Hisobingiz bormi? Kirish',
+    authOr: 'yoki davom eting',
+    authMagic: 'Magic havolani emailga yuborish',
+    authMagicSent: 'Pochtangizni tekshiring — kirish havolasi yo\'lda.',
+    authConfirmSent: 'Oz qoldi! Yuborilgan havola orqali emailingizni tasdiqlang.',
+    authGoogle: 'Google bilan davom etish',
+    authEmailFirst: 'Avval yuqoriga emailingizni kiriting.',
+    authErrorGeneric: 'Xatolik yuz berdi',
+    authErrorCreds: 'Email yoki parol noto\'g\'ri.',
+    authErrorRate: 'Juda ko\'p urinish — bir daqiqa kutib, qayta urinib ko\'ring.',
+    authErrorWeakPassword: 'Parol kamida 6 belgidan iborat bo\'lishi kerak.',
+
+    // Account
+    accountTitle: 'Mening hisobim',
+    profileSection: 'Profil',
+    displayName: 'Ism',
+    ageLabel: 'Yosh',
+    countryLabel: 'Mamlakat',
+    interestsLabel: 'Qiziqishlar',
+    interestsHint: 'masalan: STEM, dizayn, volontyorlik',
+    remindersToggle: 'Muddat eslatmalari',
+    remindersHint: 'Saqlangan imkoniyat muddatidan 3 kun va 1 kun oldin Telegramda xabar yuboramiz.',
+    saveProfile: 'Profilni saqlash',
+    profileSaved: 'Profil saqlandi',
+    telegramSection: 'Telegram',
+    telegramConnected: 'Ulangan',
+    telegramConnectHint: 'Muddat eslatmalarini olish uchun Telegramni ulang.',
+    telegramConnectedToast: 'Telegram ulandi',
+    telegramAlreadyLinked: 'Bu Telegram hisobi boshqa Fursatly hisobiga ulangan.',
+    savedSection: 'Saqlangan imkoniyatlar',
+    noSaved: 'Hali hech qanday imkoniyat saqlamagansiz.',
+    browseCta: 'Imkoniyatlarni ko\'rish',
+    signOut: 'Chiqish',
+
+    // Save button
+    saveOpp: 'Saqlash',
+    unsaveOpp: 'Saqlangan',
+    signInToSave: 'Imkoniyatlarni saqlash uchun tizimga kiring',
   },
 
   ru: {
@@ -367,7 +463,7 @@ export const translations = {
     clearFilters: 'Сбросить фильтры',
 
     // Categories
-    catAll: '✨ Все',
+    catAll: 'Все',
     catScholarships: 'Стипендии',
     catCompetitions: 'Конкурсы',
     catSummerPrograms: 'Летние программы',
@@ -429,7 +525,6 @@ export const translations = {
     srcSTEM:           'STEM',
     srcInternships:    'Стажировки',
     srcWorkshops:      'Семинары',
-    srcFellowship:     'Стипендиат',
     srcOther:          'Другое',
 
     // Stats bar
@@ -479,6 +574,54 @@ export const translations = {
     // Misc
     unknown: 'Неизвестно',
     online: 'Онлайн',
+
+    // Auth
+    authTitleIn: 'С возвращением',
+    authTitleUp: 'Создайте аккаунт',
+    authSubtitle: 'Сохраняйте возможности и получайте напоминания о дедлайнах.',
+    authEmail: 'Email',
+    authPassword: 'Пароль',
+    authSignIn: 'Войти',
+    authSignUp: 'Зарегистрироваться',
+    authNoAccount: 'Нет аккаунта? Зарегистрируйтесь',
+    authHaveAccount: 'Уже есть аккаунт? Войти',
+    authOr: 'или продолжить с',
+    authMagic: 'Отправить magic-ссылку на email',
+    authMagicSent: 'Проверьте почту — ссылка для входа уже в пути.',
+    authConfirmSent: 'Почти готово! Подтвердите email по отправленной ссылке.',
+    authGoogle: 'Продолжить с Google',
+    authEmailFirst: 'Сначала введите email выше.',
+    authErrorGeneric: 'Что-то пошло не так',
+    authErrorCreds: 'Неверный email или пароль.',
+    authErrorRate: 'Слишком много попыток — подождите минуту и попробуйте снова.',
+    authErrorWeakPassword: 'Пароль должен содержать минимум 6 символов.',
+
+    // Account
+    accountTitle: 'Мой аккаунт',
+    profileSection: 'Профиль',
+    displayName: 'Имя',
+    ageLabel: 'Возраст',
+    countryLabel: 'Страна',
+    interestsLabel: 'Интересы',
+    interestsHint: 'например: STEM, дизайн, волонтёрство',
+    remindersToggle: 'Напоминания о дедлайнах',
+    remindersHint: 'Мы напишем вам в Telegram за 3 дня и за 1 день до дедлайна.',
+    saveProfile: 'Сохранить профиль',
+    profileSaved: 'Профиль сохранён',
+    telegramSection: 'Telegram',
+    telegramConnected: 'Подключён',
+    telegramConnectHint: 'Подключите Telegram, чтобы получать напоминания о дедлайнах.',
+    telegramConnectedToast: 'Telegram подключён',
+    telegramAlreadyLinked: 'Этот Telegram уже привязан к другому аккаунту Fursatly.',
+    savedSection: 'Сохранённые возможности',
+    noSaved: 'Вы ещё ничего не сохранили.',
+    browseCta: 'Смотреть возможности',
+    signOut: 'Выйти',
+
+    // Save button
+    saveOpp: 'Сохранить',
+    unsaveOpp: 'Сохранено',
+    signInToSave: 'Войдите, чтобы сохранять возможности',
   },
 };
 
@@ -487,9 +630,13 @@ export type Dict = typeof translations.en;
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
-/** Translate a DB source/category value to the current locale */
+/**
+ * Translate a DB source/category value to the current locale. Raw values are
+ * resolved through the canonical taxonomy first, so aliases ("Grants",
+ * "Fellowships"…) and unknown junk never leak untranslated into the UI.
+ */
 export function translateSource(source: string, t: typeof translations.en): string {
-  const map: Record<string, keyof typeof translations.en> = {
+  const map: Record<CanonicalSource, keyof typeof translations.en> = {
     'Scholarships':   'srcScholarships',
     'Competitions':   'srcCompetitions',
     'Summer Programs':'srcSummerPrograms',
@@ -498,11 +645,9 @@ export function translateSource(source: string, t: typeof translations.en): stri
     'STEM':           'srcSTEM',
     'Internships':    'srcInternships',
     'Workshops':      'srcWorkshops',
-    'Fellowship':     'srcFellowship',
     'Other':          'srcOther',
   };
-  const key = map[source];
-  return key ? (t[key] as string) : source;
+  return t[map[canonicalSource(source)]] as string;
 }
 
 /** Translate a DB language value to the current locale */

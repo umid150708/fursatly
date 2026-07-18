@@ -4,7 +4,8 @@ import './globals.css';
 import { LanguageProvider } from '@/context/LanguageContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { Toaster } from '@/components/ui/toaster';
-import { SupabaseClientProvider } from '@/supabase';
+import { SupabaseClientProvider, AuthProvider } from '@/supabase';
+import { SavedProvider } from '@/context/SavedContext';
 import { MotionConfigProvider } from '@/components/motion/MotionConfig';
 import { SmoothScrollProvider } from '@/components/motion/SmoothScrollProvider';
 import { SiteBackground } from '@/components/SiteBackground';
@@ -39,24 +40,36 @@ const motionProbe = `(function(){try{
   document.documentElement.dataset.motion=(!m&&!save)?'full':'reduced';
 }catch(e){document.documentElement.dataset.motion='full';}})();`;
 
+/* Apply the theme BEFORE first paint. Dark is the default for first-time
+   visitors; a saved "light" preference wins. Mirrors resolveTheme() in
+   src/lib/preferences.ts — keep the two in sync. */
+const themeProbe = `(function(){try{
+  if(localStorage.getItem('fursatly_theme')!=='light')document.documentElement.classList.add('dark');
+}catch(e){document.documentElement.classList.add('dark');}})();`;
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="uz" suppressHydrationWarning className={`${inter.variable} ${display.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${display.variable}`}>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeProbe }} />
         <script dangerouslySetInnerHTML={{ __html: motionProbe }} />
       </head>
       <body className="font-body antialiased min-h-screen">
         <SiteBackground />
         <ThemeProvider>
           <SupabaseClientProvider>
-            <LanguageProvider>
-              <MotionConfigProvider>
-                <SmoothScrollProvider>
-                  {children}
-                  <Toaster />
-                </SmoothScrollProvider>
-              </MotionConfigProvider>
-            </LanguageProvider>
+            <AuthProvider>
+              <SavedProvider>
+                <LanguageProvider>
+                  <MotionConfigProvider>
+                    <SmoothScrollProvider>
+                      {children}
+                      <Toaster />
+                    </SmoothScrollProvider>
+                  </MotionConfigProvider>
+                </LanguageProvider>
+              </SavedProvider>
+            </AuthProvider>
           </SupabaseClientProvider>
         </ThemeProvider>
       </body>

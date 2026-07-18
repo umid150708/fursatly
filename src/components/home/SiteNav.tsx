@@ -5,6 +5,7 @@ import { Wordmark } from '@/components/brand/Wordmark';
 import { DoppiIcon } from '@/components/brand/DoppiIcon';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { AccountButton } from '@/components/AccountButton';
 
 /**
  * Scroll-reactive nav: transparent over the hero, condenses + goes solid once
@@ -81,6 +82,7 @@ export function SiteNav() {
           <div className="flex items-center gap-1 md:gap-2">
             <ThemeToggle />
             <LanguageSwitcher />
+            <AccountButton />
           </div>
         </div>
       </div>

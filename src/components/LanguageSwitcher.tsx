@@ -10,10 +10,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const options: { id: 'uz' | 'en' | 'ru'; label: string; flag: string }[] = [
-  { id: 'uz', label: "O'zbekcha", flag: '🇺🇿' },
-  { id: 'en', label: 'English',   flag: '🇬🇧' },
-  { id: 'ru', label: 'Русский',   flag: '🇷🇺' },
+const options: { id: 'uz' | 'en' | 'ru'; label: string }[] = [
+  { id: 'uz', label: "O'zbekcha" },
+  { id: 'en', label: 'English' },
+  { id: 'ru', label: 'Русский' },
 ];
 
 export function LanguageSwitcher() {
@@ -54,7 +54,9 @@ export function LanguageSwitcher() {
             }`}
           >
             <div className="flex items-center gap-2.5">
-              <span className="text-base">{opt.flag}</span>
+              <span className="flex h-6 w-8 items-center justify-center rounded-md bg-secondary text-[11px] font-bold tracking-wide text-muted-foreground">
+                {opt.id.toUpperCase()}
+              </span>
               <span className="text-sm font-semibold">{opt.label}</span>
             </div>
             {locale === opt.id && <Check className="h-3.5 w-3.5 text-primary" />}
