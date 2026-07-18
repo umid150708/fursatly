@@ -58,6 +58,19 @@ describe('extractMentorEvent', () => {
   });
 });
 
+describe('deadline formatting in the prompt', () => {
+  it('trims a stored timestamp down to the date and labels it plainly', () => {
+    const p = buildMentorPrompt({
+      event: { title: 'X', deadline: '2026-07-31T00:00:00' },
+      profile: null,
+      messages: [{ role: 'user', content: 'when?' }],
+      locale: 'en',
+    });
+    expect(p).toContain('Application deadline: 2026-07-31');
+    expect(p).not.toContain('2026-07-31T00:00:00');
+  });
+});
+
 describe('buildMentorPrompt', () => {
   const event = {
     title: 'Chevening',

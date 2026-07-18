@@ -45,6 +45,13 @@ const asText = (x: any): string =>
 const cleanList = (items: any): string[] =>
   Array.isArray(items) ? items.map(asText).filter((s) => s.length > 0) : [];
 
+/** Trim a stored timestamp (e.g. "2026-07-31T00:00:00") down to its date part.
+ *  String-based, so it never shifts across a timezone the way Date parsing can. */
+const formatDeadline = (raw: string): string => {
+  const m = /^\d{4}-\d{2}-\d{2}/.exec(raw);
+  return m ? m[0] : raw;
+};
+
 /** Keep only the most recent messages so long chats stay within token budget. */
 export function trimHistory(messages: ChatMessage[], maxMessages = MAX_HISTORY_MESSAGES): ChatMessage[] {
   return messages.slice(-maxMessages);
@@ -68,7 +75,7 @@ export function extractMentorEvent(row: any): MentorEvent {
 function factLines(event: MentorEvent): string {
   const lines: string[] = [`Title: ${event.title}`];
   if (event.organisation) lines.push(`Organiser: ${event.organisation}`);
-  if (event.deadline) lines.push(`Deadline: ${event.deadline}`);
+  if (event.deadline) lines.push(`Application deadline: ${formatDeadline(event.deadline)}`);
   if (event.officialWebsite) lines.push(`Official website: ${event.officialWebsite}`);
   if (event.extendedDescription) lines.push(`About: ${event.extendedDescription}`);
   if (event.keyDetails?.length) lines.push(`Key details: ${event.keyDetails.join('; ')}`);
@@ -111,6 +118,7 @@ export function buildMentorPrompt(input: {
     'RULES:',
     '- Help with education, opportunities, studying abroad, and careers. If the student asks something clearly unrelated, gently steer back to how you can help.',
     '- Ground any claim about THIS opportunity in the facts above. Never invent deadlines, eligibility, or links. If a detail is not provided, say so and point them to the official website.',
+    '- When the facts above include an application deadline, state it plainly — do not claim it is unknown.',
     '- If you are unsure, say so instead of guessing.',
     `- Reply in ${LANG_NAME[locale]}.`,
     '- Be concise and give actionable next steps.',
