@@ -1,8 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-type Theme = 'light' | 'dark';
+import { resolveTheme, type Theme } from '@/lib/preferences';
 
 type ThemeContextType = {
   theme: Theme;
@@ -11,17 +10,17 @@ type ThemeContextType = {
 };
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: 'light',
+  theme: 'dark',
   toggleTheme: () => {},
-  isDark: false,
+  isDark: true,
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
-    const saved = localStorage.getItem('fursatly_theme') as Theme | null;
-    const initial: Theme = saved === 'dark' || saved === 'light' ? saved : 'light';
+    // The pre-paint probe in layout.tsx already set the class; sync React state.
+    const initial = resolveTheme(localStorage.getItem('fursatly_theme'));
     setTheme(initial);
     document.documentElement.classList.toggle('dark', initial === 'dark');
   }, []);

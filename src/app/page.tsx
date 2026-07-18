@@ -3,13 +3,16 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Search, SlidersHorizontal, ArrowRight, ArrowUpRight, Loader2, X, Flame, Send,
+  Search, SlidersHorizontal, ArrowRight, ArrowUpRight, Loader2, X, Flame, Send, Sparkles,
+  GraduationCap, Trophy, Sun, FlaskConical, HeartHandshake, Cpu, Briefcase, BookOpen,
+  type LucideIcon,
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useDb } from '@/supabase';
 import { useCollection } from '@/supabase/use-collection';
 import { translateSource } from '@/lib/translations';
 import { catHue } from '@/lib/categoryColor';
+import { canonicalSource, rawSourcesFor } from '@/lib/canonicalCategory';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -83,11 +86,20 @@ function locationBucket(loc?: string | null): LocBucket | null {
   return 'abroad';                       // International, USA, Germany, …
 }
 
-const TICKER_ITEMS = [
-  '🎓 Scholarships', '🏆 Competitions', '☀️ Summer Programs', '🔬 Research', '🤝 Volunteer',
-  '💻 STEM', '💼 Internships', '📚 Workshops', '🌍 Fellowships',
-  '🇺🇸 USA', '🇬🇧 UK', '🇩🇪 Germany', '🇰🇷 Korea', '🇯🇵 Japan', '🇹🇷 Türkiye', '🇫🇷 France',
-];
+// Ticker: category icons (Lucide, matching the rest of the UI — no emoji) and
+// destination countries as plain names. Category labels come from `t` so the
+// ticker follows the active locale.
+const TICKER_ICONS: Record<string, LucideIcon> = {
+  Scholarships: GraduationCap,
+  Competitions: Trophy,
+  'Summer Programs': Sun,
+  Research: FlaskConical,
+  Volunteer: HeartHandshake,
+  STEM: Cpu,
+  Internships: Briefcase,
+  Workshops: BookOpen,
+};
+const TICKER_COUNTRIES = ['USA', 'UK', 'Germany', 'South Korea', 'Japan', 'Türkiye', 'France'];
 
 export default function Home() {
   const { t, locale } = useLanguage();
@@ -128,7 +140,8 @@ export default function Home() {
       .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(300);
-    if (activeCategory) q = q.eq('source', activeCategory);
+    // Match aliases too ("Grants", "Fellowships"… fold into their canonical category)
+    if (activeCategory) q = q.in('source', rawSourcesFor(activeCategory));
     return q;
   }, [supabase, activeCategory]);
 
@@ -176,8 +189,7 @@ export default function Home() {
     if (activeCategory) return null;
     const groups: Record<string, any[]> = {};
     filteredEvents.forEach((e) => {
-      const cat = e.source || 'Other';
-      (groups[cat] ||= []).push(e);
+      (groups[canonicalSource(e.source)] ||= []).push(e);
     });
     return groups;
   }, [filteredEvents, activeCategory]);
@@ -190,7 +202,7 @@ export default function Home() {
     const seen = new Set<string>();
     const out: { id: string; title: string; category: string; hue: string }[] = [];
     for (const e of dbEvents) {
-      const cat = e.source || 'Other';
+      const cat = canonicalSource(e.source);
       if (!activeCategory && seen.has(cat)) continue; // dedupe per-category only in "All" mode
       seen.add(cat);
       const title = (locale !== 'en' && e.research_data?.translations?.[locale]?.title) || e.title;
@@ -503,7 +515,9 @@ export default function Home() {
                 </Sheet>
               </div>
               <div className="mt-5 flex flex-wrap gap-2">
-                <button onClick={() => setActiveCategory(null)} className={chip(activeCategory === null)}>{t.catAll}</button>
+                <button onClick={() => setActiveCategory(null)} className={`${chip(activeCategory === null)} inline-flex items-center gap-2`}>
+                  <Sparkles className="h-4 w-4" aria-hidden /> {t.catAll}
+                </button>
                 {categories.map((c) => (
                   <button key={c.id} onClick={() => setActiveCategory(c.id)} className={chip(activeCategory === c.id)}>
                     {t[c.labelKey]}
@@ -522,11 +536,22 @@ export default function Home() {
         {/* ── MARQUEE ──────────────────────────────────────────────────── */}
         <section className="border-y border-border py-3">
           <Marquee
-            items={TICKER_ITEMS.map((item) => (
-              <span className="flex items-center px-6 py-2 text-sm text-muted-foreground">
-                {item}<span className="ml-6 text-accent">/</span>
-              </span>
-            ))}
+            items={[
+              ...categories.map(({ id, labelKey }) => {
+                const Icon = TICKER_ICONS[id];
+                return (
+                  <span className="flex items-center gap-2.5 px-6 py-2 text-sm text-muted-foreground">
+                    <Icon className="h-4 w-4 text-accent/80" aria-hidden />
+                    {t[labelKey]}<span className="ml-6 text-accent">/</span>
+                  </span>
+                );
+              }),
+              ...TICKER_COUNTRIES.map((name) => (
+                <span className="flex items-center px-6 py-2 text-sm text-muted-foreground">
+                  {name}<span className="ml-6 text-accent">/</span>
+                </span>
+              )),
+            ]}
           />
         </section>
 

@@ -27,6 +27,17 @@
     --ring: 186 78% 26%;
     --radius: 0.5rem;
 
+    /* ── Category hues — Uzbek jewel tones, ≥4.5:1 as text on --background ── */
+    --cat-scholarships: 186 74% 30%;  /* teal */
+    --cat-competitions: 41 64% 33%;   /* gold */
+    --cat-summer-programs: 24 74% 38%; /* amber */
+    --cat-research: 244 42% 56%;      /* indigo */
+    --cat-volunteer: 158 46% 33%;     /* emerald */
+    --cat-stem: 208 68% 42%;          /* blue */
+    --cat-internships: 220 14% 44%;   /* slate */
+    --cat-workshops: 344 54% 48%;     /* pomegranate */
+    --cat-other: 220 10% 43%;
+
     /* ── Extra design tokens ─────────────────────────────────────────────── */
     --urgent: 30 82% 50%;             /* warm amber — urgency ("closing soon") */
     --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -58,6 +69,18 @@
     --border: 218 13% 21%;
     --input: 218 13% 21%;
     --ring: 190 80% 52%;
+
+    /* Lighter, softer tonal variants of the category hues for dark surfaces */
+    --cat-scholarships: 186 60% 52%;
+    --cat-competitions: 41 70% 58%;
+    --cat-summer-programs: 24 85% 62%;
+    --cat-research: 244 65% 74%;
+    --cat-volunteer: 158 45% 55%;
+    --cat-stem: 208 75% 62%;
+    --cat-internships: 220 16% 66%;
+    --cat-workshops: 344 70% 68%;
+    --cat-other: 220 10% 62%;
+
     --urgent: 28 82% 60%;
   }
 }

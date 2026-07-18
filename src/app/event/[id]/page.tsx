@@ -7,6 +7,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { translations, translateSource, translateLanguage } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { SiteNav } from '@/components/home/SiteNav';
+import { SaveButton } from '@/components/SaveButton';
 import { SiteFooter } from '@/components/home/SiteFooter';
 import { Reveal } from '@/components/motion/Reveal';
 import { catHue } from '@/lib/categoryColor';
@@ -296,6 +297,10 @@ export default function EventDetail() {
                           <User className="h-3.5 w-3.5 text-[hsl(var(--hue))]" /> {event.age_min ?? '?'}–{event.age_max ?? '?'}
                         </span>
                       )}
+                    </div>
+
+                    <div className="mt-6">
+                      <SaveButton eventId={event.id} size="lg" />
                     </div>
                   </div>
                 </header>

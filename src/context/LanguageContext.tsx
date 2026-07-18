@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Locale, translations } from '@/lib/translations';
+import { resolveLocale } from '@/lib/preferences';
 
 type LanguageContextType = {
   locale: Locale;
@@ -13,15 +14,12 @@ type LanguageContextType = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocale] = useState<Locale>('uz');
+  const [locale, setLocale] = useState<Locale>('en');
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-    const saved = localStorage.getItem('fursatly_locale') as Locale;
-    if (saved && (saved === 'uz' || saved === 'en' || saved === 'ru')) {
-      setLocale(saved);
-    }
+    setLocale(resolveLocale(localStorage.getItem('fursatly_locale')));
   }, []);
 
   const handleSetLocale = (newLocale: Locale) => {
