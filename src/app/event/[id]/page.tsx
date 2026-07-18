@@ -8,6 +8,7 @@ import { translations, translateSource, translateLanguage } from '@/lib/translat
 import { Button } from '@/components/ui/button';
 import { SiteNav } from '@/components/home/SiteNav';
 import { SaveButton } from '@/components/SaveButton';
+import { MentorPanel } from '@/components/mentor/MentorPanel';
 import { SiteFooter } from '@/components/home/SiteFooter';
 import { Reveal } from '@/components/motion/Reveal';
 import { catHue } from '@/lib/categoryColor';
@@ -467,6 +468,7 @@ export default function EventDetail() {
       </main>
 
       <SiteFooter t={t} onCategory={() => router.push('/')} />
+      <MentorPanel eventId={event.id} />
     </div>
   );
 }
