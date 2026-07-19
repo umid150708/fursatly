@@ -40,25 +40,29 @@ const RINGS = SEGS.map(([, end], i) => ({
   cls: ['text-foreground/30', 'text-foreground/25', 'text-foreground/20', 'text-foreground/15'][i],
 }));
 
-// Each stage's keywords live inside ITS ring band (between its circle and the
-// previous one), in the upper half — hand-placed like the reference drawing.
-const KW_POS: ((i: number) => { x: number; y: number; anchor: 'start' | 'middle' | 'end' })[] = [
-  (i) => ({ x: 515, y: 285 + i * 26, anchor: 'middle' }),        // stage 01 — inside the smallest ring
-  (i) => ({ x: 585 + i * 24, y: 190 + i * 34, anchor: 'start' }), // stage 02 — diagonal cascade in band 2
-  (i) => ({ x: 880, y: 180 + i * 28, anchor: 'middle' }),         // stage 03 — cluster in band 3 (2 merged lines)
-  () => ({ x: 1040, y: 130, anchor: 'middle' }),                  // stage 04 — edge label in the outer band
-];
-
-/** Stage keywords → the terse lines drawn for that stage (03 merges pairs, 04 joins all). */
-function kwLines(stage: Stage | undefined, idx: number): string[] {
-  const kw = stage?.keywords ?? [];
-  if (idx === 2) {
-    const half = Math.ceil(kw.length / 2);
-    return [kw.slice(0, half).join(' · '), kw.slice(half).join(' · ')].filter(Boolean);
-  }
-  if (idx === 3) return kw.length ? [kw.join(' · ')] : [];
-  return kw;
+// Stage 0's short keywords stack at the smallest ring's heart (chord-checked
+// so every line fits inside the circle). Stages 1–3 ride the INSIDE of their
+// own ring on hidden arc paths (textPath) — the words curve with the circle
+// they belong to, so they can never fall outside the drawing. `theta` is the
+// angle (°) at the ring centre where the line is centred on the upper arc;
+// the rows fan toward the axis arrow, echoing the diagonal ray.
+interface ArcLine {
+  ring: number;               // index into RINGS
+  inset: number;              // how far inside the ring the text floats
+  theta: number;              // centre angle on the upper semicircle
+  pick: [number, number];     // keyword slice for this line
 }
+const ARC_LINES: ArcLine[] = [
+  { ring: 1, inset: 16, theta: 70, pick: [0, 3] },
+  { ring: 1, inset: 44, theta: 64, pick: [3, 5] },
+  { ring: 2, inset: 16, theta: 52, pick: [0, 2] },
+  { ring: 2, inset: 44, theta: 47, pick: [2, 4] },
+  { ring: 3, inset: 16, theta: 38, pick: [0, 99] },
+];
+/** Upper semicircle, left tangent → right, so textPath text reads upright. */
+const arcPathD = (cx: number, r: number) => `M ${cx - r} ${AXIS} A ${r} ${r} 0 0 1 ${cx + r} ${AXIS}`;
+/** Distance along that path (as %) where angle `theta` sits. */
+const arcOffset = (theta: number) => `${(((180 - theta) / 180) * 100).toFixed(1)}%`;
 
 /**
  * "Why Fursatly" as a hand-composed process drawing, literal to the reference
@@ -248,6 +252,37 @@ export function WhyFursatly({
           {/* Ray out of the tangent point, through the ring bands */}
           <line data-anim="diag" x1={START} y1={AXIS} x2="1160" y2="55" pathLength={1} strokeDasharray={1}
             className="text-foreground/15" {...hair} strokeWidth={1} />
+
+          {/* Stage keywords — inside the parallax group so each cluster drifts
+              WITH its circle. Stages 1–3 curve along hidden arcs just inside
+              their own ring; the background-colored halo (paintOrder stroke)
+              lets the words punch cleanly through any hairline they cross. */}
+          <defs>
+            {ARC_LINES.map((a, i) => (
+              <path key={i} id={`wf-kw-arc-${i}`}
+                d={arcPathD(RINGS[a.ring].cx, RINGS[a.ring].r - a.inset)} />
+            ))}
+          </defs>
+          {ARC_LINES.map((a, i) => {
+            const kws = (stages[a.ring]?.keywords ?? []).slice(a.pick[0], a.pick[1]);
+            if (!kws.length) return null;
+            return (
+              <text key={`arc-${i}`} data-anim={`kw-${a.ring}`} fontSize="16.5" fill="currentColor"
+                className="text-muted-foreground" paintOrder="stroke"
+                stroke="hsl(var(--background))" strokeWidth={5} strokeLinejoin="round">
+                <textPath href={`#wf-kw-arc-${i}`} startOffset={arcOffset(a.theta)} textAnchor="middle">
+                  {kws.join(' · ')}
+                </textPath>
+              </text>
+            );
+          })}
+          {/* Stage 0: centred stack straddling the smallest ring's heart */}
+          <g fill="currentColor" className="text-muted-foreground" paintOrder="stroke"
+            stroke="hsl(var(--background))" strokeWidth={5} strokeLinejoin="round" textAnchor="middle">
+            {(stages[0]?.keywords ?? []).map((k, i) => (
+              <text key={i} data-anim="kw-0" x={RINGS[0].cx} y={326 + i * 26} fontSize="16.5">{k}</text>
+            ))}
+          </g>
         </g>
 
         {/* Axis: a soft wide beam under a crisp hairline, plus arrowhead */}
@@ -279,20 +314,6 @@ export function WhyFursatly({
             <text key={i} x="309" y={AXIS - 44 + i * 28} fontSize="23" fontWeight="600">{l}</text>
           ))}
         </g>
-
-        {/* Stage keywords — each cluster contained in its own ring band */}
-        {stages.slice(0, 4).map((s, si) => (
-          <g key={si} fill="currentColor" className="text-muted-foreground">
-            {kwLines(s, si).map((line, li) => {
-              const p = KW_POS[si](li);
-              return (
-                <text key={li} data-anim={`kw-${si}`} x={p.x} y={p.y} fontSize="16.5" textAnchor={p.anchor}>
-                  {line}
-                </text>
-              );
-            })}
-          </g>
-        ))}
 
         {/* Bracket segments under the axis, one per stage */}
         {SEGS.map(([x1, x2], i) => (
