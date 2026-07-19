@@ -220,6 +220,14 @@ export const translations = {
     mentorErrorBusy: 'The mentor is busy right now. Please try again in a moment.',
     mentorErrorRate: "You've reached today's message limit. Come back tomorrow!",
     mentorErrorGeneric: 'Something went wrong. Please try again.',
+    mentorOnline: 'Online',
+
+    // Telegram connect + reminders
+    telegramConnectCta: 'Connect Telegram',
+    telegramConnectOpen: 'Opening Telegram — tap “Start” there, then come back here.',
+    remindNudgeTitle: 'Get deadline reminders',
+    remindNudgeBody: "Connect Telegram and we'll message you 3 days and 1 day before this deadline.",
+    remindArmed: "Reminders on — we'll message you on Telegram 3 days and 1 day before the deadline.",
   },
 
   uz: {
@@ -439,6 +447,14 @@ export const translations = {
     mentorErrorBusy: 'Mentor hozir band. Iltimos, birozdan so‘ng qayta urinib ko‘ring.',
     mentorErrorRate: 'Bugungi xabarlar chegarasiga yetdingiz. Ertaga qaytib keling!',
     mentorErrorGeneric: 'Xatolik yuz berdi. Iltimos, qayta urinib ko‘ring.',
+    mentorOnline: 'Onlayn',
+
+    // Telegram connect + reminders
+    telegramConnectCta: 'Telegramni ulash',
+    telegramConnectOpen: 'Telegram ochilmoqda — u yerda “Start” tugmasini bosing, so‘ng bu yerga qayting.',
+    remindNudgeTitle: 'Muddat eslatmalarini oling',
+    remindNudgeBody: 'Telegramni ulang — muddatdan 3 kun va 1 kun oldin sizga xabar yuboramiz.',
+    remindArmed: 'Eslatmalar yoqilgan — muddatdan 3 kun va 1 kun oldin Telegramda xabar yuboramiz.',
   },
 
   ru: {
@@ -658,6 +674,14 @@ export const translations = {
     mentorErrorBusy: 'Ментор сейчас занят. Пожалуйста, попробуйте ещё раз чуть позже.',
     mentorErrorRate: 'Вы достигли дневного лимита сообщений. Возвращайтесь завтра!',
     mentorErrorGeneric: 'Что-то пошло не так. Пожалуйста, попробуйте ещё раз.',
+    mentorOnline: 'Онлайн',
+
+    // Telegram connect + reminders
+    telegramConnectCta: 'Подключить Telegram',
+    telegramConnectOpen: 'Открываем Telegram — нажмите там «Start» и вернитесь сюда.',
+    remindNudgeTitle: 'Получайте напоминания о дедлайнах',
+    remindNudgeBody: 'Подключите Telegram — мы напишем вам за 3 дня и за 1 день до дедлайна.',
+    remindArmed: 'Напоминания включены — мы напишем вам в Telegram за 3 дня и за 1 день до дедлайна.',
   },
 };
 

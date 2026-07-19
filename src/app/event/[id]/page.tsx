@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { SiteNav } from '@/components/home/SiteNav';
 import { SaveButton } from '@/components/SaveButton';
 import { MentorPanel } from '@/components/mentor/MentorPanel';
+import { TelegramRemindHint } from '@/components/TelegramRemindHint';
 import { SiteFooter } from '@/components/home/SiteFooter';
 import { Reveal } from '@/components/motion/Reveal';
 import { catHue } from '@/lib/categoryColor';
@@ -302,6 +303,7 @@ export default function EventDetail() {
 
                     <div className="mt-6">
                       <SaveButton eventId={event.id} size="lg" />
+                      <TelegramRemindHint eventId={event.id} />
                     </div>
                   </div>
                 </header>
