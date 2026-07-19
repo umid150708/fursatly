@@ -585,7 +585,7 @@ export default function HomeClient({ initialEvents = null }: { initialEvents?: a
               <h2 className="text-eyebrow font-semibold text-urgent">{t.closingSoon}</h2>
               <span className="text-eyebrow text-muted-foreground">{closingSoonEvents.length}</span>
             </div>
-            <div className="no-scrollbar flex gap-4 overflow-x-auto pb-2">
+            <div className="scrollbar-thin flex gap-4 overflow-x-auto pb-3">
               {closingSoonEvents.map((event) => {
                 const daysLeft = getDaysLeft(event.deadline);
                 const tr = event.research_data?.translations?.[locale];
