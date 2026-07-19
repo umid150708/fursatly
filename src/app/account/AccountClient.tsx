@@ -15,8 +15,7 @@ import { Input } from '@/components/ui/input';
 import { SiteNav } from '@/components/home/SiteNav';
 import { SiteFooter } from '@/components/home/SiteFooter';
 import { EventCard } from '@/components/home/EventCard';
-import { TelegramLoginButton } from '@/components/auth/TelegramLoginButton';
-import type { TelegramAuthPayload } from '@/lib/telegram-auth';
+import { TelegramConnectButton } from '@/components/TelegramConnectButton';
 
 interface Profile {
   id: string;
@@ -56,7 +55,17 @@ export function AccountClient() {
   const [interests, setInterests] = useState('');
   const [remindersEnabled, setRemindersEnabled] = useState(true);
 
+  // Bumped on window focus so returning from the Telegram connect flow
+  // refreshes the card into its "connected" state without a manual reload.
+  const [profileVersion, setProfileVersion] = useState(0);
+
   useEffect(() => setNow(new Date()), []);
+
+  useEffect(() => {
+    const onFocus = () => setProfileVersion((v) => v + 1);
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
 
   // ── Load profile ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -79,7 +88,7 @@ export function AccountClient() {
     return () => {
       cancelled = true;
     };
-  }, [supabase, user]);
+  }, [supabase, user, profileVersion]);
 
   // ── Load saved opportunities (refetches after each save/unsave) ───────
   useEffect(() => {
@@ -128,34 +137,6 @@ export function AccountClient() {
   };
 
   // ── Connect Telegram to this account ──────────────────────────────────
-  const handleTelegramConnect = useCallback(
-    async (payload: TelegramAuthPayload) => {
-      if (!session) return;
-      const res = await fetch('/api/auth/telegram', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ mode: 'connect', payload }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setProfile((p) =>
-          p ? { ...p, telegram_chat_id: payload.id, telegram_username: payload.username ?? null } : p,
-        );
-        toast({ title: t.telegramConnectedToast });
-      } else {
-        toast({
-          title: t.authErrorGeneric,
-          description: data.error === 'telegram_already_linked' ? t.telegramAlreadyLinked : data.error,
-          variant: 'destructive',
-        });
-      }
-    },
-    [session, toast, t],
-  );
-
   const handleSignOut = async () => {
     await signOut();
     router.push('/');
@@ -291,7 +272,7 @@ export function AccountClient() {
               ) : (
                 <>
                   <p className="text-sm text-muted-foreground">{t.telegramConnectHint}</p>
-                  <TelegramLoginButton onAuth={handleTelegramConnect} />
+                  <TelegramConnectButton className="w-full sm:w-auto" />
                 </>
               )}
             </div>
