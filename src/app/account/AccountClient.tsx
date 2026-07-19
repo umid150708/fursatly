@@ -10,6 +10,7 @@ import { useSaved } from '@/context/SavedContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { catHue } from '@/lib/categoryColor';
+import { eventSlug } from '@/lib/event-path';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SiteNav } from '@/components/home/SiteNav';
@@ -304,7 +305,7 @@ export function AccountClient() {
                       t={t}
                       locale={locale}
                       now={now}
-                      onOpen={() => router.push(`/event/${row.events.id}`)}
+                      onOpen={() => router.push(`/event/${eventSlug(row.events)}`)}
                       hue={catHue(row.events.source)}
                     />
                   ))}

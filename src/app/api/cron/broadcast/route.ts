@@ -18,6 +18,7 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { eventSlug } from '@/lib/event-path';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -101,7 +102,7 @@ function buildPost(ev: any): string {
   L.push('');
   const url = applyUrl(ev);
   if (url) L.push(`🔗 <a href="${escAttr(url)}">Ariza / Заявка / Apply</a>`);
-  L.push(`👉 <a href="${SITE}/event/${ev.id}">Batafsil / Подробнее / Details</a>`);
+  L.push(`👉 <a href="${SITE}/event/${eventSlug(ev)}">Batafsil / Подробнее / Details</a>`);
   L.push('');
   L.push(`#${cat.tag} #Fursatly #imkoniyat`);
   return L.join('\n');

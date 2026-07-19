@@ -23,6 +23,7 @@ import { resolveApplyLink } from './resolve-link.mjs';
 import { researchPrompt, translationPrompt } from './prompts.mjs';
 import { findYouTubeVideos } from './youtube.mjs';
 import { detectFunding, qualityGate } from './quality.mjs';
+import { slugify } from '@/lib/slug';
 
 function db() {
   return createClient(
@@ -57,6 +58,7 @@ interface ResearchData {
   translations?:         { uz?: UzTranslation; ru?: RuTranslation };
   preparationResources?: VideoResource[];
   lastEnrichedAt:        string;
+  slug?:                 string;         // clean URL segment (see src/lib/slug.ts)
 }
 
 interface UzTranslation {
@@ -173,6 +175,9 @@ export async function enrichEvent(eventId: string): Promise<void> {
     // resolveApplyLink never throws, but guard anyway — links are optional.
   }
 
+  // ── Step 5b: Clean URL slug (kept stable once set) ─────────────────────────
+  research.slug = existing.slug ?? (await uniqueSlug(supabase, event.title, eventId));
+
   // ── Step 6: Activate ───────────────────────────────────────────────────────
   await supabase
     .from('events')
@@ -181,4 +186,29 @@ export async function enrichEvent(eventId: string): Promise<void> {
       research_data: research,
     })
     .eq('id', eventId);
+}
+
+/** Slugify the title and make it unique across events (excluding this one). */
+async function uniqueSlug(
+  supabase: any,
+  title: string,
+  selfId: string,
+): Promise<string> {
+  const taken = async (slug: string): Promise<boolean> => {
+    const { data } = await supabase
+      .from('events')
+      .select('id')
+      .eq('research_data->>slug', slug)
+      .neq('id', selfId)
+      .limit(1);
+    return (data?.length ?? 0) > 0;
+  };
+
+  const base = slugify(title);
+  let candidate = base || `opportunity-${selfId.replace(/-/g, '').slice(0, 8)}`;
+  if (!(await taken(candidate))) return candidate;
+  for (let n = 2; ; n++) {
+    candidate = `${base || 'opportunity'}-${n}`;
+    if (!(await taken(candidate))) return candidate;
+  }
 }
