@@ -9,6 +9,7 @@ import { SavedProvider } from '@/context/SavedContext';
 import { MotionConfigProvider } from '@/components/motion/MotionConfig';
 import { SmoothScrollProvider } from '@/components/motion/SmoothScrollProvider';
 import { SiteBackground } from '@/components/SiteBackground';
+import { BackToTop } from '@/components/BackToTop';
 
 const inter = Inter({
   subsets: ['latin', 'latin-ext', 'cyrillic'],
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                   <MotionConfigProvider>
                     <SmoothScrollProvider>
                       {children}
+                      <BackToTop />
                       <Toaster />
                     </SmoothScrollProvider>
                   </MotionConfigProvider>

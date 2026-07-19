@@ -122,6 +122,7 @@ export function buildMentorPrompt(input: {
     '- If you are unsure, say so instead of guessing.',
     `- Reply in ${LANG_NAME[locale]}.`,
     '- Be concise and give actionable next steps.',
+    '- Write plain text only — no markdown syntax like ** or # (the chat renders raw text).',
     '',
     'CONVERSATION SO FAR:',
     transcript,
