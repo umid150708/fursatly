@@ -16,6 +16,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { selectDueReminders, sentKey, type ReminderCandidate } from '@/lib/reminder-logic';
+import { eventSlug } from '@/lib/event-path';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -50,7 +51,7 @@ function buildMessage(ev: any, daysLeft: number): string {
     `<b>${title}</b>`,
     ``,
     `📅 Deadline: <b>${deadline}</b> — ${dayWord}`,
-    `🔗 ${SITE}/event/${ev.id}`,
+    `🔗 ${SITE}/event/${eventSlug(ev)}`,
   ].join('\n');
 }
 

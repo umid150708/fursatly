@@ -14,6 +14,7 @@ import { translateSource } from '@/lib/translations';
 import { catHue } from '@/lib/categoryColor';
 import { canonicalSource, rawSourcesFor } from '@/lib/canonicalCategory';
 import { EVENT_LIST_SELECT, mapEventListRow } from '@/lib/event-list';
+import { eventSlug } from '@/lib/event-path';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -240,7 +241,7 @@ export default function HomeClient({ initialEvents = null }: { initialEvents?: a
     setAgeRange([0, 100]); setFilterFunding('All'); setFilterDeadline('All');
   };
 
-  const open = (id: string) => router.push(`/event/${id}`);
+  const open = (idOrSlug: string) => router.push(`/event/${idOrSlug}`);
 
   // Browse vs. searching: once the user narrows anything, results matter more
   // than the brand story, so the two swap places in the layout below.
@@ -367,7 +368,7 @@ export default function HomeClient({ initialEvents = null }: { initialEvents?: a
       {events.map((event, i) => (
         <Reveal key={event.id} className="h-full" delay={(i % 3) * 0.06}>
           <div className="h-full">
-            <EventCard event={event} t={t} locale={locale} now={now} onOpen={() => open(event.id)} hue={catHue(event.source)} />
+            <EventCard event={event} t={t} locale={locale} now={now} onOpen={() => open(eventSlug(event))} hue={catHue(event.source)} />
           </div>
         </Reveal>
       ))}
@@ -379,7 +380,7 @@ export default function HomeClient({ initialEvents = null }: { initialEvents?: a
     <ScrollRail>
       {events.map((event) => (
         <div key={event.id} className="w-[270px] shrink-0 sm:w-[310px] md:w-[350px]">
-          <EventCard event={event} t={t} locale={locale} now={now} onOpen={() => open(event.id)} hue={hue} />
+          <EventCard event={event} t={t} locale={locale} now={now} onOpen={() => open(eventSlug(event))} hue={hue} />
         </div>
       ))}
     </ScrollRail>
@@ -593,7 +594,7 @@ export default function HomeClient({ initialEvents = null }: { initialEvents?: a
                 return (
                   <button
                     key={event.id}
-                    onClick={() => open(event.id)}
+                    onClick={() => open(eventSlug(event))}
                     className="group w-72 shrink-0 rounded-xl border border-border bg-card p-5 text-left transition-all hover:-translate-y-1 hover:border-urgent/50"
                   >
                     <div className="mb-3 flex items-center justify-between">

@@ -10,6 +10,7 @@ import { SiteNav } from '@/components/home/SiteNav';
 import { SaveButton } from '@/components/SaveButton';
 import { MentorPanel } from '@/components/mentor/MentorPanel';
 import { TelegramRemindHint } from '@/components/TelegramRemindHint';
+import { isUuid } from '@/lib/event-path';
 import { SiteFooter } from '@/components/home/SiteFooter';
 import { Reveal } from '@/components/motion/Reveal';
 import { catHue } from '@/lib/categoryColor';
@@ -129,13 +130,20 @@ export default function EventDetail() {
     async function fetchEvent() {
       if (!supabase || !id) return;
 
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('id', id)
-        .single();
+      // The route param is either a clean slug or a legacy UUID — resolve both.
+      const param = String(id);
+      const query = supabase.from('events').select('*');
+      const { data, error } = await (
+        isUuid(param) ? query.eq('id', param) : query.eq('research_data->>slug', param)
+      ).single();
 
       if (data) {
+        // Landed via a legacy UUID but the event has a slug → upgrade the
+        // address bar to the clean URL (no reload, no history entry).
+        const slug = data.research_data?.slug;
+        if (isUuid(param) && slug) {
+          window.history.replaceState(null, '', `/event/${slug}`);
+        }
         setEvent(data);
 
         // Map research_data to expected format

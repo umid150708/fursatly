@@ -13,16 +13,19 @@
 
 export const EVENT_LIST_SELECT =
   'id,title,description,location,deadline,language,age_min,age_max,source,created_at,' +
+  'slug:research_data->>slug,' +
   'funding_type:research_data->>funding_type,' +
   'uz_title:research_data->translations->uz->>title,' +
   'ru_title:research_data->translations->ru->>title';
 
 /** Rebuild the nested research_data shape from the flat aliased columns. */
 export function mapEventListRow(row: any): any {
-  const { funding_type, uz_title, ru_title, ...rest } = row ?? {};
+  const { slug, funding_type, uz_title, ru_title, ...rest } = row ?? {};
   return {
     ...rest,
+    slug: slug ?? null, // top-level for eventSlug()
     research_data: {
+      slug: slug ?? null,
       funding_type: funding_type ?? null,
       translations: {
         ...(uz_title ? { uz: { title: uz_title } } : {}),
