@@ -16,6 +16,23 @@ export function ThemeToggle() {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (!btn || !supports || reduce) { toggleTheme(); return; }
 
+    // The clip-path reveal rasterizes on the main thread and snapshots the whole
+    // page. On the homepage that snapshot includes a live WebGL canvas (a costly
+    // readback) and competes with Lenis/GSAP/shader RAF loops — which stalls the
+    // reveal mid-way. Quiet all of it for the ~0.6s the transition runs. The
+    // 'vt-start' event (fired synchronously BEFORE the snapshot) lets the shader
+    // hide itself so it's excluded from the capture entirely.
+    const lenis = (window as any).lenis;
+    lenis?.stop();
+    window.dispatchEvent(new Event('fursatly:vt-start'));
+    let restored = false;
+    const restore = () => {
+      if (restored) return;
+      restored = true;
+      lenis?.start();
+      window.dispatchEvent(new Event('fursatly:vt-end'));
+    };
+
     // Circular reveal of the new theme, expanding from the toggle button.
     const rect = btn.getBoundingClientRect();
     const x = rect.left + rect.width / 2;
@@ -25,9 +42,11 @@ export function ThemeToggle() {
     transition.ready.then(() => {
       document.documentElement.animate(
         { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${end}px at ${x}px ${y}px)`] },
-        { duration: 950, easing: 'cubic-bezier(0.16,1,0.3,1)', pseudoElement: '::view-transition-new(root)' },
+        { duration: 650, easing: 'cubic-bezier(0.16,1,0.3,1)', pseudoElement: '::view-transition-new(root)' },
       );
     });
+    transition.finished.then(restore, restore);
+    setTimeout(restore, 1500); // safety net if the transition never settles
   };
 
   return (

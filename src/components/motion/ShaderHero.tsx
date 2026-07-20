@@ -51,6 +51,21 @@ export default function ShaderHero({ accent, className = '' }: ShaderHeroProps) 
   // Latest accent, read by the render loop without forcing a re-init.
   const accentRef = useRef(accent);
   accentRef.current = accent;
+  // Paused during a theme View Transition so the live canvas isn't rasterized
+  // into the snapshot (a costly GPU readback that stalls the reveal).
+  const pausedRef = useRef(false);
+
+  useEffect(() => {
+    const canvas = ref.current;
+    const onStart = () => { pausedRef.current = true; if (canvas) canvas.style.visibility = 'hidden'; };
+    const onEnd = () => { pausedRef.current = false; if (canvas) canvas.style.visibility = ''; };
+    window.addEventListener('fursatly:vt-start', onStart);
+    window.addEventListener('fursatly:vt-end', onEnd);
+    return () => {
+      window.removeEventListener('fursatly:vt-start', onStart);
+      window.removeEventListener('fursatly:vt-end', onEnd);
+    };
+  }, []);
 
   useEffect(() => {
     const canvas = ref.current;
@@ -93,9 +108,13 @@ export default function ShaderHero({ accent, className = '' }: ShaderHeroProps) 
 
         const loop = (time: number) => {
           if (destroyed) return;
-          program.uniforms.uTime.value = time * 0.00018;
-          program.uniforms.uAccent.value.set(...accentRef.current);
-          renderer.render({ scene: mesh });
+          // Skip the GPU render while paused (theme transition) — keeps the RAF
+          // alive so it resumes cleanly, but does no WebGL work.
+          if (!pausedRef.current) {
+            program.uniforms.uTime.value = time * 0.00018;
+            program.uniforms.uAccent.value.set(...accentRef.current);
+            renderer.render({ scene: mesh });
+          }
           raf = requestAnimationFrame(loop);
         };
         raf = requestAnimationFrame(loop);
