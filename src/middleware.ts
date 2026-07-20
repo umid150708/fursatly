@@ -6,6 +6,18 @@ import { createServerClient } from '@supabase/ssr';
  * /account server-side (no flash of unauthenticated content).
  */
 export async function middleware(request: NextRequest) {
+  // ── Canonical host ─────────────────────────────────────────────────────────
+  // fursatly.uz (apex) and www.fursatly.uz both serve the app, but Supabase
+  // sets the auth cookie host-only. Signing in on one host left the other
+  // logged out (OAuth lands on the www Site URL, then apex visitors saw no
+  // session). Funnel everyone to the apex so there is a single cookie jar —
+  // query + path preserved so the OAuth `?code=` survives the hop.
+  const host = request.headers.get('host');
+  if (host === 'www.fursatly.uz') {
+    const url = new URL(request.nextUrl.pathname + request.nextUrl.search, 'https://fursatly.uz');
+    return NextResponse.redirect(url, 308);
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
