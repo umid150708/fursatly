@@ -26,9 +26,16 @@ const display = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://fursatly.uz'),
   title: 'Fursatly — Unlock Your Future',
   description: 'AI-curated scholarships, competitions, fellowships and programs for Central Asian students. Every opportunity, researched and translated.',
   icons: { icon: '/icon.png', apple: '/icon.png' },
+  openGraph: {
+    siteName: 'Fursatly',
+    type: 'website',
+    title: 'Fursatly — Unlock Your Future',
+    description: 'AI-curated scholarships, competitions, fellowships and programs for Central Asian students.',
+  },
 };
 
 /* Decide the motion tier BEFORE first paint, so scroll-reveal targets are only
