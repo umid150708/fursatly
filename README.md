@@ -42,8 +42,11 @@ AI-powered opportunity platform for Central Asian students — scholarships, com
 | Path | Frequency | What it does |
 |---|---|---|
 | `/api/cron/scrape` | Daily 02:00 UTC | Pulls last 24h of posts from 3 Telegram channels |
-| `/api/cron/enrich` | Every 10 min (cron-job.org) | Enriches 2 queued events + backfills missing translations |
 | `/api/cron/cleanup` | Daily 03:00 UTC | Hard-deletes events past their deadline |
+| `/api/cron/enrich` | Daily 04:00 UTC (+ every 10 min via cron-job.org) | Enriches queued events |
+| `/api/cron/enrich-backfill` | Daily 04:30 UTC | Backfills missing translations/slugs |
+| `/api/cron/reminders` | Daily 05:00 UTC | DMs saved-event deadline reminders (3d/1d) |
+| `/api/cron/broadcast` | Daily 06:00 UTC | Posts up to 5 new opportunities to the public TG channel (`TELEGRAM_CHANNEL`) |
 
 All cron routes require `?secret=<CRON_SECRET>` query param or `Authorization: Bearer <CRON_SECRET>` header.
 
