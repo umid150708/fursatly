@@ -6,7 +6,7 @@ AI-powered opportunity platform for Central Asian students — scholarships, com
 
 ## What it does
 
-- **Scrapes** Uzbek Telegram channels every 10 min for new opportunities
+- **Scrapes** a rotating set of Uzbek Telegram channels daily for new opportunities
 - **AI-filters** ads, channel-promos, and informational roundups
 - **Extracts** structured data (title, deadline, location, age range, apply URL)
 - **Enriches** each opportunity with eligibility, tips, and resources via Llama-3.3-70B on Groq
@@ -41,7 +41,7 @@ AI-powered opportunity platform for Central Asian students — scholarships, com
 
 | Path | Frequency | What it does |
 |---|---|---|
-| `/api/cron/scrape` | Daily 02:00 UTC | Pulls last 24h of posts from 3 Telegram channels |
+| `/api/cron/scrape` | Daily 02:00 UTC | Pulls last 24h of posts from a rotating set of Telegram channels (day-rotated, per-channel capped) |
 | `/api/cron/cleanup` | Daily 03:00 UTC | Hard-deletes events past their deadline |
 | `/api/cron/enrich` | Daily 04:00 UTC (+ every 10 min via cron-job.org) | Enriches queued events |
 | `/api/cron/enrich-backfill` | Daily 04:30 UTC | Backfills missing translations/slugs |

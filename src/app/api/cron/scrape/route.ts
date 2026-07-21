@@ -1,8 +1,10 @@
 /**
  * GET /api/cron/scrape
  *
- * Scrapes the last 24 h of posts from all Telegram channels.
- * Runs daily at 02:00 UTC via Vercel cron.
+ * Scrapes the last 24 h of posts from a rotating set of Telegram channels.
+ * Runs daily at 02:00 UTC via Vercel cron. Channel order rotates by day and
+ * each channel is capped per run, so every source (including newly-added ones)
+ * gets fair coverage instead of the first channel draining the AI budget.
  *
  * Features:
  *  - Paginates using ?before={msgId} until posts older than 24 h are reached
@@ -20,11 +22,24 @@ import { ingestEventFromText } from '@/services/event-ingestion';
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
-const ALL_CHANNELS        = ['edugrandsuz', 'grantlar', 'Volunteensuz'];
+const ALL_CHANNELS        = ['edugrandsuz', 'grantlar', 'Volunteensuz', 'eduhub_uz'];
 const MAX_PAGES           = 2;     // 2 pages per channel — plenty for a 24h window
 const MIN_TEXT_LENGTH     = 80;    // ignore very short posts
 const CUTOFF_MS           = 25 * 60 * 60 * 1000; // 25 h overlap so we never miss a post
-const MAX_POSTS_PER_RUN   = 6;     // total across all channels — keeps AI cost inside the 60s window
+const MAX_POSTS_PER_RUN   = 6;     // total AI extractions/run — keeps cost inside the 60s window
+const PER_CHANNEL_CAP     = 3;     // no single channel may drain the whole run's budget
+
+/**
+ * Rotate the channel order by day so every source gets fair coverage. The
+ * per-run AI budget is small, so a fixed order would always drain the first
+ * channels and starve the rest (especially newly-added ones). Rotating the
+ * start index each day covers the whole list over ceil(len/2) days.
+ */
+function rotatedChannels(): string[] {
+  const day = Math.floor(Date.now() / 86_400_000);
+  const r = day % ALL_CHANNELS.length;
+  return [...ALL_CHANNELS.slice(r), ...ALL_CHANNELS.slice(0, r)];
+}
 
 // ── HTML helpers ──────────────────────────────────────────────────────────────
 
@@ -101,7 +116,7 @@ export async function GET(request: Request) {
   // Track total ingest count across channels so we don't exceed our budget.
   let totalIngested = 0;
 
-  for (const channel of ALL_CHANNELS) {
+  for (const channel of rotatedChannels()) {
     if (totalIngested >= MAX_POSTS_PER_RUN) {
       console.log(`[Scraper] Budget exhausted — skipping ${channel}`);
       break;
@@ -144,10 +159,12 @@ export async function GET(request: Request) {
     console.log(`[Scraper] ${channel}: ${unique.length} unique posts from last 24 h`);
 
     // ── Ingest each post ────────────────────────────────────────────────────
-    // Stop ingesting once we hit the per-run budget; remaining posts get
-    // picked up on the next cron tick.
+    // Stop ingesting once we hit the per-run budget or this channel's share;
+    // remaining posts get picked up on the next cron tick.
+    let channelIngested = 0;
     for (const post of unique) {
       if (totalIngested >= MAX_POSTS_PER_RUN) break;
+      if (channelIngested >= PER_CHANNEL_CAP) break;
       try {
         const eventId = await ingestEventFromText(post.text);
         results.push({
@@ -155,6 +172,7 @@ export async function GET(request: Request) {
           status: eventId ? 'inserted' : 'skipped',
         });
         totalIngested++;
+        channelIngested++;
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error(`[Scraper] Ingest error on ${channel}:`, msg);
