@@ -22,7 +22,7 @@ Description: ${(description ?? '').slice(0, 2000) || 'Not provided'}
 Return this exact shape:
 {
   "is_opportunity": true,
-  "extendedDescription": "2-3 sentences: what this opportunity is, who benefits, why it matters",
+  "extendedDescription": "2-3 punchy sentences that make a student want this. Lead with the concrete benefit (money, access, experience). Do NOT restate the title. Write like an announcement, not an encyclopedia entry.",
   "eligibilityCriteria": ["requirement 1", "requirement 2"],
   "keyDetails": ["concrete fact 1 (prize/duration/benefit)", "fact 2"],
   "competitionTips": ["actionable tip a student can do today", "tip 2"],
@@ -32,6 +32,7 @@ Return this exact shape:
 }
 
 Rules:
+- extendedDescription: NEVER begin by repeating the title or the organisation name — the reader already sees it. Open on the single most compelling fact (the prize, the funding, the access). No filler like "This opportunity is a unique chance to…".
 - is_opportunity: true ONLY if this is something a student actively applies to and receives a direct personal benefit from — scholarship, grant, internship, fellowship, exchange programme, competition with a prize, research programme, fully-funded trip. Set to false for: awards ceremonies where others nominate or vote for you, pure spectator events, info sessions, conferences without funding, nomination-only events, honorary recognitions. When in doubt, set false.
 - eligibilityCriteria: ONLY requirements EXPLICITLY stated in the text. If none stated, return []. NEVER invent.
 - keyDetails: must be SUBSTANTIVE facts — a prize amount ("$3,000 prize"), a duration ("12-week summer program"), a stipend ("monthly $800 stipend"), a class size ("400 selected participants"), a specific date range. Each entry must be ≥ 4 words OR contain a number/currency/duration unit. NEVER write vague placeholders like "this week", "next year", "International", "fully-funded", "online" on their own. If the source has no concrete numbers/dates/quantities, return [] — empty is better than fabricated.

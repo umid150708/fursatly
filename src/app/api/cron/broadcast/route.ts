@@ -40,7 +40,7 @@ function db() {
   );
 }
 
-async function sendPost(token: string, text: string, previewUrl: string): Promise<{ ok: boolean; error?: string }> {
+async function sendPost(token: string, text: string): Promise<{ ok: boolean; error?: string }> {
   const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -48,8 +48,9 @@ async function sendPost(token: string, text: string, previewUrl: string): Promis
       chat_id: CHANNEL,
       text,
       parse_mode: 'HTML',
-      // Show the event page's OG card as a large preview under the post.
-      link_preview_options: { url: previewUrl, prefer_large_media: true },
+      // No link preview — the post carries its own formatting; the big OG card
+      // was redundant with the text and pushed the CTA off-screen.
+      link_preview_options: { is_disabled: true },
     }),
     signal: AbortSignal.timeout(15_000),
   });
@@ -104,7 +105,7 @@ export async function GET(request: Request) {
 
   const results: any[] = [];
   for (const ev of candidates) {
-    const sent = await sendPost(token!, buildPost(ev), detailsUrl(ev));
+    const sent = await sendPost(token!, buildPost(ev));
     if (sent.ok) {
       await supabase
         .from('events')
