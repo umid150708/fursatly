@@ -47,6 +47,7 @@ AI-powered opportunity platform for Central Asian students — scholarships, com
 | `/api/cron/enrich-backfill` | Daily 04:30 UTC | Backfills missing translations/slugs |
 | `/api/cron/reminders` | Daily 05:00 UTC | DMs saved-event deadline reminders (3d/1d) |
 | `/api/cron/broadcast` | Daily 06:00 UTC | Posts up to 5 new opportunities to the public TG channel (`TELEGRAM_CHANNEL`) |
+| `/api/cron/digest` | Mon 07:00 UTC | Posts a weekly "closing this week" roundup to the TG channel |
 
 All cron routes require `?secret=<CRON_SECRET>` query param or `Authorization: Bearer <CRON_SECRET>` header.
 

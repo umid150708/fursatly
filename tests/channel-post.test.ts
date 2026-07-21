@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildPost, isPostable, detailsUrl } from '../src/lib/channel-post';
+import { buildPost, buildDigest, isPostable, detailsUrl } from '../src/lib/channel-post';
 
 const enriched = {
   id: '0f01ae61-ab70-4c8f-825b-bd97aa559a2a',
@@ -103,5 +103,37 @@ describe('buildPost', () => {
       research_data: { ...enriched.research_data, translations: {} },
     });
     expect(noTr).toContain('🇺🇿 <b>KAIST Scholarships &lt;2026&gt;</b>');
+  });
+});
+
+describe('buildDigest', () => {
+  const soon = (days: number) => new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+  const events = [
+    { id: 'a', title: 'Closes Today Grant', source: 'Scholarships', deadline: soon(0),
+      research_data: { slug: 'closes-today' } },
+    { id: 'b', title: 'Prize in <5> days', source: 'Competitions', deadline: soon(5),
+      research_data: { slug: 'prize-5' } },
+  ];
+  const digest = buildDigest(events);
+
+  it('renders a trilingual header', () => {
+    expect(digest).toContain('Closing this week');
+    expect(digest).toContain('Дедлайны этой недели');
+    expect(digest).toContain('Shu hafta');
+  });
+
+  it('links each event to its details page and escapes titles', () => {
+    expect(digest).toContain('href="https://fursatly.uz/event/closes-today"');
+    expect(digest).toContain('Prize in &lt;5&gt; days');
+  });
+
+  it('flags the ≤3-day items with a red dot and shows "today"', () => {
+    expect(digest).toContain('🔴');
+    expect(digest).toMatch(/bugun \/ today/);
+  });
+
+  it('ends with the site CTA', () => {
+    expect(digest).toContain('fursatly.uz');
+    expect(digest).toContain('#deadline');
   });
 });

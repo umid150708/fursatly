@@ -130,6 +130,32 @@ export function isPostable(ev: any): boolean {
   return Boolean(rd.extendedDescription || rd.translations?.uz?.title);
 }
 
+/**
+ * Weekly "closing this week" digest — one compact message listing the events
+ * with the soonest upcoming deadlines. A ritual on top of the daily
+ * per-opportunity posts. Caller passes already-filtered, soonest-first events.
+ */
+export function buildDigest(events: any[]): string {
+  const L: string[] = [];
+  L.push(`🔥 <b>Shu hafta tugaydigan imkoniyatlar</b>`);
+  L.push(`🔥 <b>Дедлайны этой недели · Closing this week</b>`);
+  L.push('');
+
+  for (const ev of events) {
+    const cat = CATEGORY[ev.source] || CATEGORY.Other;
+    const dl = daysLeft(ev.deadline);
+    const dot = dl !== null && dl <= 3 ? '🔴 ' : '';
+    const left = dl === 0 ? 'bugun / today!' : dl === 1 ? '1 kun / day' : `${dl} kun / days`;
+    L.push(`${cat.emoji} <a href="${detailsUrl(ev)}">${escText(ev.title)}</a>`);
+    L.push(`   ${dot}⏳ ${fmtDate(ev.deadline)} · ${left}`);
+  }
+
+  L.push('');
+  L.push(`👉 <a href="${SITE}">Barchasi / Все / All → fursatly.uz</a>`);
+  L.push(`#deadline #Fursatly #imkoniyat`);
+  return L.join('\n');
+}
+
 export function buildPost(ev: any): string {
   const rd = ev.research_data || {};
   const cat = CATEGORY[ev.source] || CATEGORY.Other;
