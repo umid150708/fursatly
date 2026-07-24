@@ -69,6 +69,13 @@ typecheck + build green.
 
 ## Gotchas / tribal knowledge
 
+- **React 19 prod hydration strips `<html>` attributes it didn't render** —
+  dev hydration doesn't. Any pre-paint probe writing to `documentElement`
+  (theme class, `data-motion`) MUST be re-asserted in a client effect after
+  mount (ThemeContext and MotionConfig both do this now). This once silently
+  killed the entire animation tier on prod only: frozen floating cards,
+  pre-drawn Why-Fursatly diagram, no Lenis — while localhost looked perfect.
+
 - **Vercel Attack Challenge Mode** was ON earlier (served "Vercel Security
   Checkpoint" to visitors AND 403'd Telegram webhooks + all curl). It is OFF
   now. If the checkpoint page reappears: Vercel → fursatly → Firewall.
