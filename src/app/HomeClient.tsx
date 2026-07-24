@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Search, SlidersHorizontal, ArrowRight, ArrowUpRight, Loader2, X, Flame, Send, Sparkles,
+  Search, SlidersHorizontal, ArrowRight, ArrowUpRight, Loader2, X, Flame, Send,
   GraduationCap, Trophy, Sun, FlaskConical, HeartHandshake, Cpu, Briefcase, BookOpen,
   type LucideIcon,
 } from 'lucide-react';
@@ -15,6 +15,7 @@ import { catHue } from '@/lib/categoryColor';
 import { canonicalSource, rawSourcesFor } from '@/lib/canonicalCategory';
 import { EVENT_LIST_SELECT, mapEventListRow } from '@/lib/event-list';
 import { eventSlug } from '@/lib/event-path';
+import { CategoryPills } from '@/components/home/CategoryPills';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -286,11 +287,6 @@ export default function HomeClient({ initialEvents = null }: { initialEvents?: a
   ];
 
   // ── Filter panel (Sheet body) ────────────────────────────────────────────
-  const chip = (active: boolean) =>
-    `h-11 rounded-lg border px-4 text-sm font-medium transition-colors ${
-      active ? 'border-foreground bg-foreground text-background' : 'border-border hover:border-foreground/40'
-    }`;
-
   // Filter-panel chip: filled-but-quiet when idle, teal-accent when selected.
   // outline-none + focus-visible ring = brand-teal keyboard focus, no stray UA
   // outline when the sheet auto-focuses the first chip on open.
@@ -528,16 +524,14 @@ export default function HomeClient({ initialEvents = null }: { initialEvents?: a
                   </SheetContent>
                 </Sheet>
               </div>
-              <div className="mt-5 flex flex-wrap gap-2">
-                <button onClick={() => setActiveCategory(null)} className={`${chip(activeCategory === null)} inline-flex items-center gap-2`}>
-                  <Sparkles className="h-4 w-4" aria-hidden /> {t.catAll}
-                </button>
-                {categories.map((c) => (
-                  <button key={c.id} onClick={() => setActiveCategory(c.id)} className={chip(activeCategory === c.id)}>
-                    {t[c.labelKey]}
-                  </button>
-                ))}
-              </div>
+              <CategoryPills
+                active={activeCategory}
+                onChange={setActiveCategory}
+                options={[
+                  { id: null, label: t.catAll, icon: true },
+                  ...categories.map((c) => ({ id: c.id, label: t[c.labelKey] })),
+                ]}
+              />
             </Reveal>
           </div>
 
