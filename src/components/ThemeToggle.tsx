@@ -44,6 +44,25 @@ export function ThemeToggle() {
     const end = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
 
     busy.current = true;
+    // Skipping offscreen sections is what makes the flip cheap, but a skipped
+    // section collapses to its contain-intrinsic-size estimate — the page gets
+    // shorter and the scroll position snaps. Pin each one to the height it
+    // actually has, so the placeholder is exactly the size it replaces.
+    // contain-intrinsic-size describes the CONTENT box, so padding and border
+    // get added back on top of it — pinning offsetHeight made every section
+    // taller by its own padding and grew the page by ~1100px.
+    const sections = Array.from(document.querySelectorAll<HTMLElement>('section, footer'));
+    const boxes = sections.map((el) => {           // all reads first, then all writes
+      const cs = getComputedStyle(el);
+      return {
+        w: el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight),
+        h: el.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom),
+      };
+    });
+    sections.forEach((el, i) => {
+      el.style.containIntrinsicSize = `auto ${boxes[i].w}px auto ${boxes[i].h}px`;
+    });
+
     // The sweep re-paints the newly revealed region every frame, so anything
     // there that forces a backdrop read-back (backdrop-filter, mix-blend-mode)
     // is paid for on every one of them. Dropped for the duration, and applied
@@ -55,6 +74,7 @@ export function ThemeToggle() {
       if (restored) return;
       restored = true;
       root.classList.remove('theme-sweep');
+      for (const el of sections) el.style.containIntrinsicSize = '';
       busy.current = false;
       // Announced here rather than off `ready`: an aborted transition rejects
       // that promise, and the theme still changed — the announcement must not
