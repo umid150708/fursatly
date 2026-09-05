@@ -53,13 +53,20 @@ const motionProbe = `(function(){try{
    visitors; a saved "light" preference wins. Mirrors resolveTheme() in
    src/lib/preferences.ts — keep the two in sync. */
 const themeProbe = `(function(){try{
-  if(localStorage.getItem('fursatly_theme')!=='light')document.documentElement.classList.add('dark');
+  var light=localStorage.getItem('fursatly_theme')==='light';
+  if(!light)document.documentElement.classList.add('dark');
+  /* Browser chrome on mobile, corrected before first paint. Hexes mirror
+     --bg-dark / --bg-light in globals.css — keep the three in sync. */
+  if(light){var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#f7f6f3');}
 }catch(e){document.documentElement.classList.add('dark');}})();`;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${display.variable}`}>
       <head>
+        {/* Dark is the first-visit default; the probe below rewrites this when a
+            light preference is saved, and ThemeContext keeps it current after. */}
+        <meta name="theme-color" content="#111318" />
         <script dangerouslySetInnerHTML={{ __html: themeProbe }} />
         <script dangerouslySetInnerHTML={{ __html: motionProbe }} />
       </head>
