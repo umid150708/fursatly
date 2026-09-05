@@ -7,59 +7,63 @@ import { Sun, Moon } from 'lucide-react';
 
 const SWEEP_MS = 620;
 
-/** Radii for a wipe whose visible pace is even from start to finish.
+/** Radii for a wipe that sweeps the same amount of screen per unit of time.
  *
- *  Growing the radius at a fixed rate does NOT look like a fixed pace: the arc
- *  ends up running nearly tangent to the far edges, so the point where it
- *  crosses them races ahead. Measured on the viewport edges, a linear sweep
- *  runs 1.3-2.2x faster over its last 15% than through the middle, and how much
- *  depends on the aspect ratio and where the button sits — so a single hand-
- *  picked easing curve cannot fix every screen. This spaces the radii by how
- *  far the visible front travels rather than evenly in time, computed for the
- *  viewport in front of the user. Costs well under a millisecond.
+ *  Growing the radius at a fixed rate does not look like a fixed pace: the
+ *  circle starts at the button in the top-right corner, so how much of the
+ *  screen its edge covers per frame varies a lot over the sweep. An earlier
+ *  attempt spaced the radii by how fast the arc crossed the viewport edges,
+ *  which flattened that measure but left the screen area swept per 10% of the
+ *  time at 9.7, 10.5, 20.8, 18.4, 7.2, 11.7, 13.9, 3.7, 2.7, 1.4 — visibly
+ *  uneven. Spacing them by area instead gives 9.2, 10.6, 10.8, 10.9, 11.0,
+ *  10.1, 10.3, 10.6, 10.7, 5.6.
+ *
+ *  `CAP` limits how far the radius may grow in one step. Without it the final
+ *  corner — a small area reached only at full radius — would be crossed in a
+ *  rush at the end, which is the acceleration this is here to remove. It makes
+ *  the last stretch ease out slightly rather than speed up.
+ *
+ *  About a millisecond to build, and it depends on the viewport, so it is
+ *  computed per click rather than baked into one easing curve.
  */
 function sweepRadii(w: number, h: number, cx: number, cy: number, end: number): number[] {
-  const STEPS = 1200;
   const FRAMES = 24;
-  // Where the arc crosses each viewport edge; null before it reaches that edge.
-  const front = (r: number): (number | null)[] => {
-    const leg = (a: number) => { const v = r * r - a * a; return v > 0 ? Math.sqrt(v) : null; };
-    const top = leg(cy), bottom = leg(h - cy), left = leg(cx), right = leg(w - cx);
-    return [
-      top === null ? null : cx - top,
-      bottom === null ? null : cx - bottom,
-      left === null ? null : cy + left,
-      right === null ? null : cy + right,
-    ];
-  };
+  const STEPS = 1400;
+  const GX = 240, GY = 160;
+  const CAP = 2.0;
 
-  const dr = end / STEPS;
-  const cap = 20 * dr; // discount the instant an edge is first touched
-  const travel = [0];
-  let prev = front(0);
-  for (let i = 1; i <= STEPS; i++) {
-    const cur = front(i * dr);
-    let fastest = 0;
-    for (let k = 0; k < 4; k++) {
-      const a = cur[k], b = prev[k];
-      if (a !== null && b !== null) fastest = Math.max(fastest, Math.abs(a - b));
+  // How much of the screen sits at each distance from the origin.
+  const cell = 1 / (GX * GY);
+  const hist = new Float64Array(STEPS + 1);
+  for (let i = 0; i < GX; i++) {
+    const dx = (i + 0.5) * (w / GX) - cx;
+    for (let j = 0; j < GY; j++) {
+      const dy = (j + 0.5) * (h / GY) - cy;
+      const k = Math.min(STEPS, Math.ceil((Math.hypot(dx, dy) / end) * STEPS));
+      hist[k] += cell;
     }
-    travel.push(travel[i - 1] + Math.min(fastest, cap));
-    prev = cur;
   }
+  const cum = new Float64Array(STEPS + 1);
+  for (let k = 1; k <= STEPS; k++) cum[k] = cum[k - 1] + hist[k];
+  const total = cum[STEPS];
+  if (!(total > 0)) return [0, end]; // degenerate viewport — plain wipe
 
-  const total = travel[STEPS];
-  if (!(total > 0)) return [0, end]; // degenerate viewport — fall back to a plain wipe
-  const radii: number[] = [];
-  for (let k = 0; k <= FRAMES; k++) {
-    const want = (k / FRAMES) * total;
+  // Radius at each equal slice of area.
+  const raw: number[] = [];
+  for (let f = 0; f <= FRAMES; f++) {
+    const want = (f / FRAMES) * total;
     let lo = 0, hi = STEPS;
-    while (lo < hi) { const mid = (lo + hi) >> 1; if (travel[mid] < want) lo = mid + 1; else hi = mid; }
-    radii.push((lo / STEPS) * end);
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (cum[mid] < want) lo = mid + 1; else hi = mid; }
+    raw.push((lo / STEPS) * end);
   }
-  radii[0] = 0;
-  radii[FRAMES] = end;
-  return radii;
+  raw[0] = 0;
+  raw[FRAMES] = end;
+
+  const maxStep = CAP * (end / FRAMES);
+  const out = [0];
+  for (let f = 1; f <= FRAMES; f++) out.push(out[f - 1] + Math.min(raw[f] - raw[f - 1], maxStep));
+  const scale = end / out[FRAMES];
+  return out.map((v) => v * scale);
 }
 
 export function ThemeToggle() {
