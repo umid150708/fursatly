@@ -287,3 +287,15 @@ html.theme-sweep [class*="backdrop-blur"] {
   backdrop-filter: none;
 }
 html.theme-sweep .animate-float { animation-play-state: paused; }
+
+/* The real cost of a theme change is that flipping `dark` on <html> invalidates
+   the whole document, so Chrome re-rasters the ENTIRE scrollable page, not just
+   the viewport — measured at 11 dropped frames on the homepage even with no
+   animation running at all. Skipping offscreen sections for the duration takes
+   that to zero. Scoped to the sweep so normal scrolling, and the ScrollTrigger
+   measurements that depend on it, are never affected. */
+html.theme-sweep section,
+html.theme-sweep footer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 700px;
+}
