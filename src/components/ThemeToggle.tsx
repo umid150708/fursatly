@@ -105,10 +105,16 @@ export function ThemeToggle() {
     })).then(() => {
       root.animate(
         { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${end}px at ${x}px ${y}px)`] },
-        // Linear: one constant speed from start to finish. The previous eased
-        // curve covered ~95% of the distance in its first half and then
-        // crawled, which reads as a stall even with no dropped frames.
-        { duration: SWEEP_MS, easing: 'linear', pseudoElement: '::view-transition-new(root)' },
+        // The radius growing at a constant rate does NOT look like a constant
+        // pace. The circle starts at the button in the top-right corner, so
+        // near the end its arc runs almost tangent to the left edge and the
+        // point where it crosses that edge races down the screen — modelled at
+        // 1.79x the mid-animation speed over the last 15%, which is the late
+        // acceleration. easeOutExpo overcorrected the other way (0.03x at the
+        // end, 4.8x at the start: the "fast then frozen" version). This curve
+        // was solved against that model: the visible front travels at 1.01x at
+        // the end and 1.02x at the start relative to the middle.
+        { duration: SWEEP_MS, easing: 'cubic-bezier(0.15, 0.30, 0.55, 0.70)', pseudoElement: '::view-transition-new(root)' },
       );
     }).catch(() => {
       // An aborted transition (backgrounded tab, or a second toggle) rejects
