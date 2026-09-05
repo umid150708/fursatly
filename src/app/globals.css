@@ -5,7 +5,12 @@
 @layer base {
   :root {
     /* ── Monochrome base: warm off-white paper + ink ─────────────────────── */
-    --background: 45 18% 96%;
+    /* Both page backgrounds live here, unscoped, so the theme toggle can read
+       the INCOMING one while the outgoing theme is still applied. */
+    color-scheme: light;   /* native scrollbars / form controls follow the theme */
+    --bg-light: 45 18% 96%;
+    --bg-dark: 222 16% 8%;
+    --background: var(--bg-light);
     --foreground: 220 9% 10%;
     --card: 45 22% 98%;
     --card-foreground: 220 9% 10%;
@@ -49,7 +54,8 @@
 
   .dark {
     /* ── Cool graphite night mode — silver + chrome-cyan (sample-inspired) ── */
-    --background: 222 16% 8%;         /* cool graphite, faintly blue */
+    color-scheme: dark;
+    --background: var(--bg-dark);     /* cool graphite, faintly blue */
     --foreground: 210 16% 90%;        /* cool silver */
     --card: 222 15% 11%;
     --card-foreground: 210 16% 90%;
@@ -257,13 +263,3 @@
 }
 .animate-float { animation: float 7s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .animate-float { animation: none; } }
-
-/* Animated theme toggle — circular reveal via the View Transitions API.
-   Kill the default cross-fade so our clip-path animation is the only motion. */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
-}
-::view-transition-old(root) { z-index: 1; }
-::view-transition-new(root) { z-index: 2; }
