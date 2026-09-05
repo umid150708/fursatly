@@ -263,3 +263,27 @@
 }
 .animate-float { animation: float 7s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .animate-float { animation: none; } }
+
+/* Circular theme reveal (View Transitions). The new snapshot is wiped in over
+   the old one, so the page's real content changes as the edge passes it. Kill
+   the default cross-fade so the clip-path sweep is the only motion. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) { z-index: 1; }
+::view-transition-new(root) { z-index: 2; }
+
+/* The sweep re-paints the newly revealed region on every frame, and both
+   backdrop-filter and mix-blend-mode force a full backdrop read-back there —
+   which is what stalled the reveal mid-way. Dropped only while the sweep runs,
+   and set before the snapshot is taken so both captures match. Targeted rather
+   than a universal selector: `* { ... }` costs a full-document style recalc on
+   the way in and again on the way out. */
+html.theme-sweep .site-grain,
+html.theme-sweep .grain::after { display: none; }
+html.theme-sweep [class*="backdrop-blur"] {
+  backdrop-filter: none;
+}
+html.theme-sweep .animate-float { animation-play-state: paused; }
