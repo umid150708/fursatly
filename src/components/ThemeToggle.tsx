@@ -7,6 +7,61 @@ import { Sun, Moon } from 'lucide-react';
 
 const SWEEP_MS = 620;
 
+/** Radii for a wipe whose visible pace is even from start to finish.
+ *
+ *  Growing the radius at a fixed rate does NOT look like a fixed pace: the arc
+ *  ends up running nearly tangent to the far edges, so the point where it
+ *  crosses them races ahead. Measured on the viewport edges, a linear sweep
+ *  runs 1.3-2.2x faster over its last 15% than through the middle, and how much
+ *  depends on the aspect ratio and where the button sits — so a single hand-
+ *  picked easing curve cannot fix every screen. This spaces the radii by how
+ *  far the visible front travels rather than evenly in time, computed for the
+ *  viewport in front of the user. Costs well under a millisecond.
+ */
+function sweepRadii(w: number, h: number, cx: number, cy: number, end: number): number[] {
+  const STEPS = 1200;
+  const FRAMES = 24;
+  // Where the arc crosses each viewport edge; null before it reaches that edge.
+  const front = (r: number): (number | null)[] => {
+    const leg = (a: number) => { const v = r * r - a * a; return v > 0 ? Math.sqrt(v) : null; };
+    const top = leg(cy), bottom = leg(h - cy), left = leg(cx), right = leg(w - cx);
+    return [
+      top === null ? null : cx - top,
+      bottom === null ? null : cx - bottom,
+      left === null ? null : cy + left,
+      right === null ? null : cy + right,
+    ];
+  };
+
+  const dr = end / STEPS;
+  const cap = 20 * dr; // discount the instant an edge is first touched
+  const travel = [0];
+  let prev = front(0);
+  for (let i = 1; i <= STEPS; i++) {
+    const cur = front(i * dr);
+    let fastest = 0;
+    for (let k = 0; k < 4; k++) {
+      const a = cur[k], b = prev[k];
+      if (a !== null && b !== null) fastest = Math.max(fastest, Math.abs(a - b));
+    }
+    travel.push(travel[i - 1] + Math.min(fastest, cap));
+    prev = cur;
+  }
+
+  const total = travel[STEPS];
+  if (!(total > 0)) return [0, end]; // degenerate viewport — fall back to a plain wipe
+  const radii: number[] = [];
+  for (let k = 0; k <= FRAMES; k++) {
+    const want = (k / FRAMES) * total;
+    let lo = 0, hi = STEPS;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (travel[mid] < want) lo = mid + 1; else hi = mid; }
+    radii.push((lo / STEPS) * end);
+  }
+  radii[0] = 0;
+  radii[FRAMES] = end;
+  return radii;
+}
+
 export function ThemeToggle() {
   const { toggleTheme } = useTheme();
   const ref = useRef<HTMLButtonElement>(null);
@@ -104,17 +159,10 @@ export function ThemeToggle() {
       requestAnimationFrame(() => requestAnimationFrame(() => go()));
     })).then(() => {
       root.animate(
-        { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${end}px at ${x}px ${y}px)`] },
-        // The radius growing at a constant rate does NOT look like a constant
-        // pace. The circle starts at the button in the top-right corner, so
-        // near the end its arc runs almost tangent to the left edge and the
-        // point where it crosses that edge races down the screen — modelled at
-        // 1.79x the mid-animation speed over the last 15%, which is the late
-        // acceleration. easeOutExpo overcorrected the other way (0.03x at the
-        // end, 4.8x at the start: the "fast then frozen" version). This curve
-        // was solved against that model: the visible front travels at 1.01x at
-        // the end and 1.02x at the start relative to the middle.
-        { duration: SWEEP_MS, easing: 'cubic-bezier(0.15, 0.30, 0.55, 0.70)', pseudoElement: '::view-transition-new(root)' },
+        // Keyframes are evenly spaced in time and the radii are not: see
+        // sweepRadii. Interpolation between them stays linear.
+        { clipPath: sweepRadii(innerWidth, innerHeight, x, y, end).map((r) => `circle(${r}px at ${x}px ${y}px)`) },
+        { duration: SWEEP_MS, easing: 'linear', pseudoElement: '::view-transition-new(root)' },
       );
     }).catch(() => {
       // An aborted transition (backgrounded tab, or a second toggle) rejects
