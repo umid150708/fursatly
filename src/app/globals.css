@@ -292,10 +292,15 @@ html.theme-sweep .animate-float { animation-play-state: paused; }
    the whole document, so Chrome re-rasters the ENTIRE scrollable page, not just
    the viewport — measured at 11 dropped frames on the homepage even with no
    animation running at all. Skipping offscreen sections for the duration takes
-   that to zero. Scoped to the sweep so normal scrolling, and the ScrollTrigger
-   measurements that depend on it, are never affected. */
-html.theme-sweep section,
-html.theme-sweep footer {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 700px;
-}
+   that to zero. Only sections measured to be offscreen carry [data-vt-skip],
+   and each is pinned to its real size, so nothing visible is affected. */
+html.theme-sweep [data-vt-skip] { content-visibility: hidden; }
+
+/* Flipping the theme starts a colour transition on every element carrying a
+   `transition-colors` utility — measured at 1244 running at once, repainting
+   the page on every frame of the sweep. They are invisible anyway, since the
+   snapshot covers them, so dropping them is free: 6 dropped frames -> 0, and a
+   full 60fps sweep. */
+html.theme-sweep *,
+html.theme-sweep *::before,
+html.theme-sweep *::after { transition: none !important; }
