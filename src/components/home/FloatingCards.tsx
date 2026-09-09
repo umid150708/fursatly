@@ -82,13 +82,14 @@ export function FloatingCards({ cards, onOpen }: { cards: FloatCard[]; onOpen: (
 
     if (!motion) return; // reduced-motion: static at the home anchors, no drift
 
+    // Raw viewport coords only — `getBoundingClientRect()` forces a synchronous
+    // layout, and mousemove fires far more often than once a frame. The rect is
+    // read once per frame in the loop below instead, which never runs while the
+    // hero is off screen.
+    let cx0 = -9999, cy0 = -9999;
     let mx = -9999, my = -9999;
-    const onMove = (e: MouseEvent) => {
-      const r = container.getBoundingClientRect();
-      mx = e.clientX - r.left;
-      my = e.clientY - r.top;
-    };
-    const onLeave = () => { mx = -9999; my = -9999; };
+    const onMove = (e: MouseEvent) => { cx0 = e.clientX; cy0 = e.clientY; };
+    const onLeave = () => { cx0 = -9999; cy0 = -9999; };
     const onResize = () => {
       const m = measure(); W = m.W; H = m.H;
       st.forEach((c, i) => {
@@ -107,7 +108,12 @@ export function FloatingCards({ cards, onOpen }: { cards: FloatCard[]; onOpen: (
     let raf = 0;
     const loop = () => {
       const t = performance.now() / 1000;
-      const active = mx > -9998;
+      const active = cx0 > -9998;
+      if (active) {
+        const r = container.getBoundingClientRect();
+        mx = cx0 - r.left;
+        my = cy0 - r.top;
+      }
       items.forEach((el, i) => {
         const c = st[i];
         // free-floating base position: a slow looping orbit around the home anchor
@@ -139,15 +145,34 @@ export function FloatingCards({ cards, onOpen }: { cards: FloatCard[]; onOpen: (
       raf = requestAnimationFrame(loop);
     };
 
-    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mousemove', onMove, { passive: true });
     window.addEventListener('mouseleave', onLeave);
     window.addEventListener('resize', onResize);
-    raf = requestAnimationFrame(loop);
+
+    // The hero is one screen of a ~12,000px page, so this loop spent most of its
+    // life animating six cards nobody could see. Run it only while the hero is
+    // near the viewport.
+    //
+    // The margin is not slack, it is required: each card's position is a sine of
+    // the wall clock, and the clock keeps running while the loop is stopped, so
+    // the first frame after a restart lands wherever the orbit has drifted to by
+    // then — a visible jump if it happens with the hero already on screen.
+    // Restarting 300px early means the loop is always warm before the first
+    // pixel of the hero is visible.
+    const start = () => { if (!raf) raf = requestAnimationFrame(loop); };
+    const stop = () => { if (raf) { cancelAnimationFrame(raf); raf = 0; } };
+    const io = new IntersectionObserver(
+      ([e]) => (e.isIntersecting ? start() : stop()),
+      { rootMargin: '300px' },
+    );
+    io.observe(container);
+
     return () => {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseleave', onLeave);
       window.removeEventListener('resize', onResize);
-      cancelAnimationFrame(raf);
+      io.disconnect();
+      stop();
     };
     // Re-seed when the number of cards changes (category switch / first load).
   }, [motion, cards.length]);

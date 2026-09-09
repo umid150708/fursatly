@@ -45,21 +45,25 @@ function AnimatedCounter({ target, suffix = '', label }: { target: number; suffi
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    // rAF, not setInterval. Four of these run at once, and a 23ms timer lands
+    // off the frame clock — each tick re-rendered and re-laid-out the stats row
+    // at a moment the compositor wasn't asking for it. Driving them off the
+    // frame clock folds all four into the same frame, and the raf id is
+    // actually cancellable on unmount (the old interval was not).
+    let raf = 0;
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !started.current) {
-        started.current = true;
-        const steps = 60;
-        const inc = target / steps;
-        let current = 0;
-        const timer = setInterval(() => {
-          current = Math.min(current + inc, target);
-          setCount(Math.floor(current));
-          if (current >= target) clearInterval(timer);
-        }, 1400 / steps);
-      }
+      if (!entry.isIntersecting || started.current) return;
+      started.current = true;
+      const from = performance.now();
+      const step = (t: number) => {
+        const p = Math.min(1, (t - from) / 1400);
+        setCount(Math.floor(target * p));
+        if (p < 1) raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
     }, { threshold: 0.4 });
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => { observer.disconnect(); cancelAnimationFrame(raf); };
   }, [target]);
 
   return (
