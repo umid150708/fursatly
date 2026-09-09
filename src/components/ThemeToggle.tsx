@@ -6,6 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Sun, Moon } from 'lucide-react';
 
 const SWEEP_MS = 620;
+// The flip repaints the whole page — measured at ~8 dropped frames — and that
+// work lands right where the sweep would start. Two frames of held zero radius
+// let it finish behind the old snapshot, so the sweep runs over a settled page.
+const HOLD_MS = 32;
 
 /** Radii for a wipe that sweeps the same amount of screen per unit of time.
  *
@@ -155,18 +159,37 @@ export function ThemeToggle() {
       startViewTransition: (cb: () => void) => { ready: Promise<void>; finished: Promise<void> };
     }).startViewTransition(() => { toggleTheme(); });
 
-    transition.ready.then(() => new Promise<void>((go) => {
-      // The flip repaints the whole page — measured at ~8 dropped frames — and
-      // that work lands right where the sweep would start. Hold the old snapshot
-      // for two frames so the repaint finishes behind it, then sweep over the
-      // settled result. The wait is invisible: the old snapshot is on screen.
-      requestAnimationFrame(() => requestAnimationFrame(() => go()));
-    })).then(() => {
+    transition.ready.then(() => {
+      // Attached in this microtask, not a frame or two later. The new snapshot
+      // sits above the old one, so until a clip-path lands on it the browser
+      // paints it whole: waiting even one frame flashes the entire incoming
+      // theme across the screen before the sweep snaps back to nothing. The
+      // pause the flip's repaint needs is bought with `delay` + `fill:
+      // backwards` instead, which holds the new snapshot clipped to a
+      // zero-radius circle — the old snapshot alone on screen, no flash.
+      //
+      // Radii and centre go in as percentages, not pixels. A running clip-path
+      // animation on a view-transition pseudo-element is resolved by the
+      // compositor against the snapshot's device-pixel box, so on a 2x display
+      // pixel lengths land at half their value: the sweep started from the
+      // middle of the page rather than from this button, at half size.
+      // Percentages resolve proportionally, so they survive that scaling and
+      // describe the same circle at any devicePixelRatio.
+      const refR = Math.hypot(innerWidth, innerHeight) / Math.SQRT2; // circle()'s % basis
+      const cx = (x / innerWidth) * 100;
+      const cy = (y / innerHeight) * 100;
       root.animate(
         // Keyframes are evenly spaced in time and the radii are not: see
         // sweepRadii. Interpolation between them stays linear.
-        { clipPath: sweepRadii(innerWidth, innerHeight, x, y, end).map((r) => `circle(${r}px at ${x}px ${y}px)`) },
-        { duration: SWEEP_MS, easing: 'linear', pseudoElement: '::view-transition-new(root)' },
+        { clipPath: sweepRadii(innerWidth, innerHeight, x, y, end)
+            .map((r) => `circle(${(r / refR) * 100}% at ${cx}% ${cy}%)`) },
+        {
+          duration: SWEEP_MS,
+          delay: HOLD_MS,
+          fill: 'backwards',
+          easing: 'linear',
+          pseudoElement: '::view-transition-new(root)',
+        },
       );
     }).catch(() => {
       // An aborted transition (backgrounded tab, or a second toggle) rejects
@@ -174,7 +197,7 @@ export function ThemeToggle() {
     });
 
     transition.finished.then(restore, restore);
-    setTimeout(restore, SWEEP_MS + 900); // safety net if it never settles
+    setTimeout(restore, HOLD_MS + SWEEP_MS + 900); // safety net if it never settles
   }, [toggleTheme]);
 
   return (
