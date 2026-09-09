@@ -12,10 +12,21 @@ import { SiteBackground } from '@/components/SiteBackground';
 import { BackToTop } from '@/components/BackToTop';
 import { Analytics } from '@vercel/analytics/next';
 
+/* `preload: false` on both faces is deliberate. next/font emits a
+   <link rel="preload"> for EVERY subset, which defeats the whole point of the
+   unicode-range split: an English visitor was downloading Inter latin-ext
+   (83 KB) and cyrillic (18 KB) plus Space Grotesk latin-ext (19 KB) at top
+   priority, 189 KB of fonts in total, competing with the JS for bandwidth on
+   the critical path when only 69 KB of it could ever be rendered. Without the
+   preload the browser honours unicode-range and fetches only the subsets the
+   page actually paints; `display: swap` means text is on screen sooner either
+   way, and next/font's size-adjusted fallback keeps the swap from shifting
+   layout. */
 const inter = Inter({
   subsets: ['latin', 'latin-ext', 'cyrillic'],
   variable: '--font-body',
   display: 'swap',
+  preload: false,
 });
 
 const display = Space_Grotesk({
@@ -23,6 +34,7 @@ const display = Space_Grotesk({
   weight: ['500', '600', '700'],
   variable: '--font-display',
   display: 'swap',
+  preload: false,
 });
 
 export const metadata: Metadata = {

@@ -203,21 +203,61 @@
 }
 @keyframes line-rise { to { transform: translateY(0); } }
 
-/* CSS mesh-gradient hero (base layer + weak-device fallback for the WebGL shader) */
-.gradient-mesh {
-  background:
-    radial-gradient(60% 55% at 18% 22%, hsl(var(--accent) / 0.16), transparent 60%),
-    radial-gradient(48% 48% at 86% 18%, hsl(var(--urgent) / 0.09), transparent 55%),
-    radial-gradient(72% 72% at 72% 92%, hsl(var(--accent) / 0.10), transparent 62%),
-    hsl(var(--background));
-  background-size: 180% 180%;
-  animation: meshdrift 24s var(--ease-in-out-quart) infinite alternate;
+/* CSS mesh-gradient hero (base layer + weak-device fallback for the WebGL shader)
+
+   Each bloom is its own layer so the drift can run as a `transform`. It used to
+   be one element animating `background-position` across a 180%-sized stack —
+   a property the compositor can't animate, so Chrome repainted the full-viewport
+   hero on every frame, continuously, for as long as the hero was on screen.
+
+   The geometry is unchanged. Every layer is inset -40%, i.e. exactly the 1.8x
+   box the old `background-size: 180%` painted into, so each gradient's own
+   `at x% y%` still resolves against the same area. The keyframes below are the
+   old background-position pairs converted to the equivalent translation:
+   a background-position of p% offsets the tile by -0.8E x p%, and the layer
+   already starts 0.4E up and left, so the translate is (0.4E - 0.8E x p) / 1.8E.
+   Same motion, same look, no repaint. */
+.gradient-mesh { background: hsl(var(--background)); overflow: hidden; }
+.mesh-layer {
+  position: absolute;
+  inset: -40%;
+  background-repeat: no-repeat;
+  animation-duration: 24s;
+  animation-timing-function: var(--ease-in-out-quart);
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
 }
-@keyframes meshdrift {
-  from { background-position: 0% 0%, 100% 0%, 100% 100%; }
-  to   { background-position: 28% 18%, 62% 34%, 42% 68%; }
+.mesh-a {
+  background-image: radial-gradient(60% 55% at 18% 22%, hsl(var(--accent) / 0.16), transparent 60%);
+  animation-name: meshdrift-a;
 }
-@media (prefers-reduced-motion: reduce) { .gradient-mesh { animation: none; } }
+.mesh-b {
+  background-image: radial-gradient(48% 48% at 86% 18%, hsl(var(--urgent) / 0.09), transparent 55%);
+  animation-name: meshdrift-b;
+}
+.mesh-c {
+  background-image: radial-gradient(72% 72% at 72% 92%, hsl(var(--accent) / 0.10), transparent 62%);
+  animation-name: meshdrift-c;
+}
+@keyframes meshdrift-a {
+  from { transform: translate3d(22.22%, 22.22%, 0); }
+  to   { transform: translate3d(9.78%, 14.22%, 0); }
+}
+@keyframes meshdrift-b {
+  from { transform: translate3d(-22.22%, 22.22%, 0); }
+  to   { transform: translate3d(-5.33%, 7.11%, 0); }
+}
+@keyframes meshdrift-c {
+  from { transform: translate3d(-22.22%, -22.22%, 0); }
+  to   { transform: translate3d(3.56%, -8%, 0); }
+}
+/* Reduced motion: hold the layers at the opening frame, still composited. */
+@media (prefers-reduced-motion: reduce) {
+  .mesh-layer { animation: none; }
+  .mesh-a { transform: translate3d(22.22%, 22.22%, 0); }
+  .mesh-b { transform: translate3d(-22.22%, 22.22%, 0); }
+  .mesh-c { transform: translate3d(-22.22%, -22.22%, 0); }
+}
 
 @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
 
