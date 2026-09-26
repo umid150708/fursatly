@@ -13,6 +13,11 @@ const BASE = 'https://fursatly.uz';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const home = { url: BASE, changeFrequency: 'daily' as const, priority: 1 };
+  const legal = ['/privacy', '/terms'].map((p) => ({
+    url: `${BASE}${p}`,
+    changeFrequency: 'yearly' as const,
+    priority: 0.3,
+  }));
 
   try {
     const supabase = createClient(
@@ -33,8 +38,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
 
-    return [home, ...events];
+    return [home, ...legal, ...events];
   } catch {
-    return [home]; // partial sitemap beats a 500 for crawlers
+    return [home, ...legal]; // partial sitemap beats a 500 for crawlers
   }
 }

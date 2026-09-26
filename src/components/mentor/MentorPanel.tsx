@@ -244,6 +244,9 @@ export function MentorPanel({ eventId }: { eventId: string }) {
               <Send className="h-4 w-4" />
             </button>
           </form>
+          <p className="border-t border-border px-4 py-2 text-center text-[11px] leading-snug text-muted-foreground">
+            {t.mentorDisclaimer}
+          </p>
         </div>
       )}
     </>

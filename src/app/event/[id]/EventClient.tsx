@@ -10,6 +10,7 @@ import { SiteNav } from '@/components/home/SiteNav';
 import { SaveButton } from '@/components/SaveButton';
 import { MentorPanel } from '@/components/mentor/MentorPanel';
 import { TelegramRemindHint } from '@/components/TelegramRemindHint';
+import { LEGAL_EMAIL } from '@/lib/legal/types';
 import { isUuid } from '@/lib/event-path';
 import { SiteFooter } from '@/components/home/SiteFooter';
 import { Reveal } from '@/components/motion/Reveal';
@@ -478,6 +479,16 @@ export default function EventClient({ initialEvent }: { initialEvent: any | null
                     {research?.applyLabel || t.officialWebsite}
                   </a>
                 )}
+
+                <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+                  {t.eventSourceNotice}{' '}
+                  <a
+                    href={`mailto:${LEGAL_EMAIL}?subject=${encodeURIComponent(`Fursatly: ${event.title}`)}`}
+                    className="underline underline-offset-2 hover:text-foreground"
+                  >
+                    {t.eventReportLink}
+                  </a>
+                </p>
               </div>
             </aside>
           </div>

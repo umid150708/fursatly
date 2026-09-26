@@ -71,6 +71,22 @@ export const translations = {
     footerRights: 'All rights reserved.',
     footerTagline: 'Built for the youth of Central Asia',
 
+    // Legal pages & notices
+    legalUpdated: 'Last updated',
+    authConsentPrefix: 'By continuing you agree to the',
+    authConsentTerms: 'Terms of Use',
+    authConsentAnd: 'and',
+    authConsentPrivacy: 'Privacy Policy.',
+    mentorDisclaimer: 'AI can make mistakes. Confirm deadlines and requirements on the official page.',
+    eventSourceNotice: 'Summarised from a public announcement; details may change. Confirm with the organiser before applying.',
+    eventReportLink: 'Report a problem or request removal',
+    deleteAccount: 'Delete account',
+    deleteAccountTitle: 'Delete your account?',
+    deleteAccountBody: 'This permanently removes your profile, saved opportunities and reminder settings. It cannot be undone.',
+    deleteAccountConfirm: 'Yes, delete everything',
+    deleteAccountDone: 'Your account has been deleted.',
+    cancel: 'Cancel',
+
     // Event detail page
     backToOpportunities: 'Back to Opportunities',
     organisedBy: 'Organised by',
@@ -298,6 +314,22 @@ export const translations = {
     footerRights: 'Barcha huquqlar himoyalangan.',
     footerTagline: 'O\'zbekiston yoshlari uchun tayyorlandi',
 
+    // Legal pages & notices
+    legalUpdated: 'Oxirgi yangilanish',
+    authConsentPrefix: 'Davom etish orqali siz',
+    authConsentTerms: 'Foydalanish shartlari',
+    authConsentAnd: 'va',
+    authConsentPrivacy: 'Maxfiylik siyosatiga rozilik bildirasiz.',
+    mentorDisclaimer: 'AI xato qilishi mumkin. Muddat va talablarni rasmiy sahifada tekshiring.',
+    eventSourceNotice: 'Ochiq e’londan qisqacha tayyorlangan; tafsilotlar o‘zgarishi mumkin. Topshirishdan oldin tashkilotchi bilan tekshiring.',
+    eventReportLink: 'Muammo haqida xabar berish yoki olib tashlashni so‘rash',
+    deleteAccount: 'Hisobni o‘chirish',
+    deleteAccountTitle: 'Hisobingiz o‘chirilsinmi?',
+    deleteAccountBody: 'Bu profilingiz, saqlangan imkoniyatlar va eslatma sozlamalarini butunlay o‘chiradi. Qaytarib bo‘lmaydi.',
+    deleteAccountConfirm: 'Ha, hammasini o‘chirish',
+    deleteAccountDone: 'Hisobingiz o‘chirildi.',
+    cancel: 'Bekor qilish',
+
     // Event detail page
     backToOpportunities: 'Imkoniyatlarga qaytish',
     organisedBy: 'Tashkilotchi:',
@@ -524,6 +556,22 @@ export const translations = {
     footerAbout: 'О нас',
     footerRights: 'Все права защищены.',
     footerTagline: 'Создано для молодёжи Центральной Азии',
+
+    // Legal pages & notices
+    legalUpdated: 'Последнее обновление',
+    authConsentPrefix: 'Продолжая, вы принимаете',
+    authConsentTerms: 'Условия использования',
+    authConsentAnd: 'и',
+    authConsentPrivacy: 'Политику конфиденциальности.',
+    mentorDisclaimer: 'ИИ может ошибаться. Проверяйте сроки и требования на официальной странице.',
+    eventSourceNotice: 'Составлено по открытому объявлению; детали могут измениться. Уточните у организатора перед подачей.',
+    eventReportLink: 'Сообщить о проблеме или запросить удаление',
+    deleteAccount: 'Удалить аккаунт',
+    deleteAccountTitle: 'Удалить аккаунт?',
+    deleteAccountBody: 'Это навсегда удалит ваш профиль, сохранённые возможности и настройки напоминаний. Отменить нельзя.',
+    deleteAccountConfirm: 'Да, удалить всё',
+    deleteAccountDone: 'Ваш аккаунт удалён.',
+    cancel: 'Отмена',
 
     // Event detail page
     backToOpportunities: 'Назад к возможностям',
