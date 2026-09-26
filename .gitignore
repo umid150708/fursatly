@@ -56,3 +56,4 @@ supabase/.temp/
 # Claude worktrees (must not be committed — leaks branch state)
 .claude/
 .gstack/
+graphify-out/
