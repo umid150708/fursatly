@@ -251,6 +251,17 @@ function AuthPageInner() {
               <TelegramLoginButton onAuth={handleTelegram} />
             )}
           </div>
+
+          <p className="mt-6 text-center text-xs leading-relaxed text-muted-foreground">
+            {t.authConsentPrefix}{' '}
+            <Link href="/terms" className="underline underline-offset-2 hover:text-foreground">
+              {t.authConsentTerms}
+            </Link>{' '}
+            {t.authConsentAnd}{' '}
+            <Link href="/privacy" className="underline underline-offset-2 hover:text-foreground">
+              {t.authConsentPrivacy}
+            </Link>
+          </p>
         </div>
       </main>
       <SiteFooter t={t} onCategory={() => router.push('/')} />

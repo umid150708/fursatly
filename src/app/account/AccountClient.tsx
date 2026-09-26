@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Loader2, LogOut, UserRound, BookmarkX, Send, CheckCircle2, Bell,
+  Loader2, LogOut, UserRound, BookmarkX, Send, CheckCircle2, Bell, Trash2,
 } from 'lucide-react';
 import { useDb, useAuth } from '@/supabase';
 import { useSaved } from '@/context/SavedContext';
@@ -13,6 +13,9 @@ import { catHue } from '@/lib/categoryColor';
 import { eventSlug } from '@/lib/event-path';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from '@/components/ui/dialog';
 import { SiteNav } from '@/components/home/SiteNav';
 import { SiteFooter } from '@/components/home/SiteFooter';
 import { EventCard } from '@/components/home/EventCard';
@@ -143,6 +146,23 @@ export function AccountClient() {
     router.push('/');
   };
 
+  // ── Delete account (right to erasure) ─────────────────────────────────
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    const res = await fetch('/api/account/delete', { method: 'POST' });
+    if (!res.ok) {
+      setDeleting(false);
+      toast({ title: t.authErrorGeneric, variant: 'destructive' });
+      return;
+    }
+    await signOut();
+    toast({ title: t.deleteAccountDone });
+    router.replace('/');
+  };
+
   if (!profile) {
     return (
       <>
@@ -210,7 +230,7 @@ export function AccountClient() {
                     id="pf-age"
                     type="number"
                     inputMode="numeric"
-                    min={10}
+                    min={13}
                     max={100}
                     value={age}
                     onChange={(e) => setAge(e.target.value)}
@@ -277,6 +297,18 @@ export function AccountClient() {
                 </>
               )}
             </div>
+
+            {/* ── Delete account ─────────────────────────────────────── */}
+            <div className="rounded-2xl border border-destructive/30 bg-card p-6 md:p-8">
+              <Button
+                variant="outline"
+                className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => setConfirmDelete(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t.deleteAccount}
+              </Button>
+            </div>
           </div>
 
           {/* ── Saved opportunities ────────────────────────────────────── */}
@@ -315,6 +347,24 @@ export function AccountClient() {
         </div>
       </main>
       <SiteFooter t={t} onCategory={() => router.push('/')} />
+
+      <Dialog open={confirmDelete} onOpenChange={(o) => !deleting && setConfirmDelete(o)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">{t.deleteAccountTitle}</DialogTitle>
+            <DialogDescription>{t.deleteAccountBody}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setConfirmDelete(false)} disabled={deleting}>
+              {t.cancel}
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              {t.deleteAccountConfirm}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

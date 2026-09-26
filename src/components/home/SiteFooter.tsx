@@ -1,94 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { ArrowUp } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Wordmark } from '@/components/brand/Wordmark';
 import type { Dict } from '@/lib/translations';
 
-type LegalKey = 'privacy' | 'terms' | 'cookies' | 'about';
+type LegalKey = 'about';
 
 const LEGAL_CONTENT: Record<LegalKey, { title: string; body: string }> = {
-  privacy: {
-    title: 'Privacy Policy',
-    body: `Last updated: May 2025
-
-Fursatly ("we", "our", "us") respects your privacy. This policy explains what data we collect and how we use it.
-
-**What we collect**
-• Account information (email, name) when you sign in
-• Usage data (pages visited, searches made) to improve recommendations
-• Device information (browser type, language preference)
-
-**How we use it**
-• To show you relevant opportunities based on your age and interests
-• To remember your language preference
-• To send you deadline reminders (only if you opt in)
-
-**What we don't do**
-• We never sell your personal data to third parties
-• We never share your data with event organizers without your consent
-• We don't use your data for advertising
-
-**Data storage**
-All data is stored securely in Supabase (EU region). You can request deletion of your account and all associated data at any time by contacting us.
-
-**Contact**
-For privacy concerns: privacy@fursatly.uz`,
-  },
-  terms: {
-    title: 'Terms of Use',
-    body: `Last updated: May 2025
-
-By using Fursatly, you agree to these terms.
-
-**The platform**
-Fursatly is a free platform that aggregates publicly available youth opportunities — scholarships, competitions, internships, and programs. We curate and translate this information to make it accessible to Uzbek youth.
-
-**Your responsibilities**
-• You must be at least 13 years old to use Fursatly
-• You agree not to misuse the platform (spam, scraping, abuse)
-• You understand that opportunity details come from third-party sources — always verify with the official website before applying
-
-**Our responsibilities**
-• We strive to keep information accurate and up to date
-• We are not responsible for outcomes of applications made through opportunities listed here
-• We do not guarantee admission, selection, or any result from any opportunity
-
-**Intellectual property**
-The Fursatly name, logo, and design are our property. Opportunity content belongs to the respective organizations.
-
-**Changes**
-We may update these terms. Continued use of the platform means you accept any updates.
-
-**Contact**
-legal@fursatly.uz`,
-  },
-  cookies: {
-    title: 'Cookie Policy',
-    body: `Last updated: May 2025
-
-Fursatly uses a minimal set of cookies to make the site work properly.
-
-**Essential cookies (always active)**
-• Session token — keeps you logged in
-• Language preference — remembers whether you chose Uzbek, Russian, or English
-• Theme preference — remembers light/dark mode
-
-**Analytics cookies (optional)**
-• We may use anonymous analytics to understand how people use the site. No personal data is included.
-
-**What we don't use**
-• No advertising cookies
-• No third-party tracking cookies
-• No social media tracking pixels
-
-**Managing cookies**
-You can clear cookies any time through your browser settings. Clearing session cookies will log you out.
-
-**Contact**
-cookies@fursatly.uz`,
-  },
   about: {
     title: 'About Fursatly',
     body: `Fursatly (from Uzbek: "fursatli" — opportune, timely) is a platform built for Uzbek youth to discover the world's best opportunities.
@@ -148,18 +69,26 @@ export function SiteFooter({ t, onCategory }: { t: Dict; onCategory: (c: string 
           <nav className="space-y-4">
             <h4 className="text-eyebrow text-muted-foreground">{t.footerLegal}</h4>
             <ul className="space-y-3 text-sm">
-              {([
-                { label: t.footerPrivacy, key: 'privacy' },
-                { label: t.footerTerms, key: 'terms' },
-                { label: t.footerCookies, key: 'cookies' },
-                { label: t.footerAbout, key: 'about' },
-              ] as const).map(({ label, key }) => (
-                <li key={key}>
-                  <button onClick={() => setLegal(key)} className="text-muted-foreground transition-colors hover:text-accent">
-                    {label}
-                  </button>
-                </li>
-              ))}
+              <li>
+                <Link href="/privacy" className="text-muted-foreground transition-colors hover:text-accent">
+                  {t.footerPrivacy}
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="text-muted-foreground transition-colors hover:text-accent">
+                  {t.footerTerms}
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy#cookies" className="text-muted-foreground transition-colors hover:text-accent">
+                  {t.footerCookies}
+                </Link>
+              </li>
+              <li>
+                <button onClick={() => setLegal('about')} className="text-muted-foreground transition-colors hover:text-accent">
+                  {t.footerAbout}
+                </button>
+              </li>
             </ul>
           </nav>
         </div>
