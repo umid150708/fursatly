@@ -71,6 +71,22 @@ export const translations = {
     footerRights: 'All rights reserved.',
     footerTagline: 'Built for the youth of Central Asia',
 
+    // Legal pages & notices
+    legalUpdated: 'Last updated',
+    authConsentPrefix: 'By continuing you agree to the',
+    authConsentTerms: 'Terms of Use',
+    authConsentAnd: 'and',
+    authConsentPrivacy: 'Privacy Policy.',
+    mentorDisclaimer: 'AI can make mistakes. Confirm deadlines and requirements on the official page.',
+    eventSourceNotice: 'Summarised from a public announcement; details may change. Confirm with the organiser before applying.',
+    eventReportLink: 'Report a problem or request removal',
+    deleteAccount: 'Delete account',
+    deleteAccountTitle: 'Delete your account?',
+    deleteAccountBody: 'This permanently removes your profile, saved opportunities and reminder settings. It cannot be undone.',
+    deleteAccountConfirm: 'Yes, delete everything',
+    deleteAccountDone: 'Your account has been deleted.',
+    cancel: 'Cancel',
+
     // Event detail page
     backToOpportunities: 'Back to Opportunities',
     organisedBy: 'Organised by',
@@ -228,6 +244,18 @@ export const translations = {
     remindNudgeTitle: 'Get deadline reminders',
     remindNudgeBody: "Connect Telegram and we'll message you 3 days and 1 day before this deadline.",
     remindArmed: "Reminders on — we'll message you on Telegram 3 days and 1 day before the deadline.",
+
+    // Gazette front page
+    mastheadTagline: 'Scholarships, competitions and programs — found, researched and translated every morning',
+    openNow: 'Open now',
+    inBrief: 'In brief',
+    readFull: 'Eligibility, tips and resources',
+    forecastTitle: 'Deadline forecast',
+    forecastThisWeek: 'This week',
+    forecastNextWeek: 'Next week',
+    forecastLater: 'Later',
+    onThisPage: 'Contents',
+    anyAge: 'Any age',
   },
 
   uz: {
@@ -297,6 +325,22 @@ export const translations = {
     footerAbout: 'Biz haqimizda',
     footerRights: 'Barcha huquqlar himoyalangan.',
     footerTagline: 'O\'zbekiston yoshlari uchun tayyorlandi',
+
+    // Legal pages & notices
+    legalUpdated: 'Oxirgi yangilanish',
+    authConsentPrefix: 'Davom etish orqali siz',
+    authConsentTerms: 'Foydalanish shartlari',
+    authConsentAnd: 'va',
+    authConsentPrivacy: 'Maxfiylik siyosatiga rozilik bildirasiz.',
+    mentorDisclaimer: 'AI xato qilishi mumkin. Muddat va talablarni rasmiy sahifada tekshiring.',
+    eventSourceNotice: 'Ochiq e’londan qisqacha tayyorlangan; tafsilotlar o‘zgarishi mumkin. Topshirishdan oldin tashkilotchi bilan tekshiring.',
+    eventReportLink: 'Muammo haqida xabar berish yoki olib tashlashni so‘rash',
+    deleteAccount: 'Hisobni o‘chirish',
+    deleteAccountTitle: 'Hisobingiz o‘chirilsinmi?',
+    deleteAccountBody: 'Bu profilingiz, saqlangan imkoniyatlar va eslatma sozlamalarini butunlay o‘chiradi. Qaytarib bo‘lmaydi.',
+    deleteAccountConfirm: 'Ha, hammasini o‘chirish',
+    deleteAccountDone: 'Hisobingiz o‘chirildi.',
+    cancel: 'Bekor qilish',
 
     // Event detail page
     backToOpportunities: 'Imkoniyatlarga qaytish',
@@ -455,6 +499,18 @@ export const translations = {
     remindNudgeTitle: 'Muddat eslatmalarini oling',
     remindNudgeBody: 'Telegramni ulang — muddatdan 3 kun va 1 kun oldin sizga xabar yuboramiz.',
     remindArmed: 'Eslatmalar yoqilgan — muddatdan 3 kun va 1 kun oldin Telegramda xabar yuboramiz.',
+
+    // Gazette front page
+    mastheadTagline: 'Grantlar, tanlovlar va dasturlar — har tong topiladi, o‘rganiladi va tarjima qilinadi',
+    openNow: 'Hozir ochiq',
+    inBrief: 'Qisqacha',
+    readFull: 'Talablar, maslahatlar va manbalar',
+    forecastTitle: 'Muddatlar prognozi',
+    forecastThisWeek: 'Shu hafta',
+    forecastNextWeek: 'Keyingi hafta',
+    forecastLater: 'Keyinroq',
+    onThisPage: 'Mundarija',
+    anyAge: 'Istalgan yosh',
   },
 
   ru: {
@@ -524,6 +580,22 @@ export const translations = {
     footerAbout: 'О нас',
     footerRights: 'Все права защищены.',
     footerTagline: 'Создано для молодёжи Центральной Азии',
+
+    // Legal pages & notices
+    legalUpdated: 'Последнее обновление',
+    authConsentPrefix: 'Продолжая, вы принимаете',
+    authConsentTerms: 'Условия использования',
+    authConsentAnd: 'и',
+    authConsentPrivacy: 'Политику конфиденциальности.',
+    mentorDisclaimer: 'ИИ может ошибаться. Проверяйте сроки и требования на официальной странице.',
+    eventSourceNotice: 'Составлено по открытому объявлению; детали могут измениться. Уточните у организатора перед подачей.',
+    eventReportLink: 'Сообщить о проблеме или запросить удаление',
+    deleteAccount: 'Удалить аккаунт',
+    deleteAccountTitle: 'Удалить аккаунт?',
+    deleteAccountBody: 'Это навсегда удалит ваш профиль, сохранённые возможности и настройки напоминаний. Отменить нельзя.',
+    deleteAccountConfirm: 'Да, удалить всё',
+    deleteAccountDone: 'Ваш аккаунт удалён.',
+    cancel: 'Отмена',
 
     // Event detail page
     backToOpportunities: 'Назад к возможностям',
@@ -682,6 +754,18 @@ export const translations = {
     remindNudgeTitle: 'Получайте напоминания о дедлайнах',
     remindNudgeBody: 'Подключите Telegram — мы напишем вам за 3 дня и за 1 день до дедлайна.',
     remindArmed: 'Напоминания включены — мы напишем вам в Telegram за 3 дня и за 1 день до дедлайна.',
+
+    // Gazette front page
+    mastheadTagline: 'Стипендии, конкурсы и программы — находим, изучаем и переводим каждое утро',
+    openNow: 'Открыто сейчас',
+    inBrief: 'Коротко',
+    readFull: 'Требования, советы и материалы',
+    forecastTitle: 'Прогноз дедлайнов',
+    forecastThisWeek: 'На этой неделе',
+    forecastNextWeek: 'На следующей неделе',
+    forecastLater: 'Позже',
+    onThisPage: 'Содержание',
+    anyAge: 'Любой возраст',
   },
 };
 

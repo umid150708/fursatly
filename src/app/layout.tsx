@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, Space_Grotesk } from 'next/font/google';
+import { Literata, Fira_Sans_Condensed } from 'next/font/google';
 import './globals.css';
 import { LanguageProvider } from '@/context/LanguageContext';
 import { ThemeProvider } from '@/context/ThemeContext';
@@ -14,25 +14,29 @@ import { Analytics } from '@vercel/analytics/next';
 
 /* `preload: false` on both faces is deliberate. next/font emits a
    <link rel="preload"> for EVERY subset, which defeats the whole point of the
-   unicode-range split: an English visitor was downloading Inter latin-ext
-   (83 KB) and cyrillic (18 KB) plus Space Grotesk latin-ext (19 KB) at top
-   priority, 189 KB of fonts in total, competing with the JS for bandwidth on
-   the critical path when only 69 KB of it could ever be rendered. Without the
-   preload the browser honours unicode-range and fetches only the subsets the
-   page actually paints; `display: swap` means text is on screen sooner either
-   way, and next/font's size-adjusted fallback keeps the swap from shifting
-   layout. */
-const inter = Inter({
+   unicode-range split: an English visitor would download the latin-ext and
+   cyrillic files at top priority, competing with the JS on the critical path,
+   when only the latin one can ever be rendered. Without the preload the browser
+   honours unicode-range and fetches only the subsets the page actually paints;
+   `display: swap` gets text on screen sooner, and next/font's size-adjusted
+   fallback keeps the swap from shifting layout.
+
+   Gazette type: Literata (a newspaper serif) for headlines and reading text,
+   Fira Sans Condensed for the small-caps labels, datelines and buttons. Both
+   carry Cyrillic and the Uzbek Latin apostrophes. Literata's optical-size axis
+   is left out on purpose — it roughly doubles the file for a subtle change. */
+const serif = Literata({
   subsets: ['latin', 'latin-ext', 'cyrillic'],
-  variable: '--font-body',
+  style: ['normal', 'italic'],
+  variable: '--font-serif',
   display: 'swap',
   preload: false,
 });
 
-const display = Space_Grotesk({
-  subsets: ['latin', 'latin-ext'],
-  weight: ['500', '600', '700'],
-  variable: '--font-display',
+const label = Fira_Sans_Condensed({
+  subsets: ['latin', 'latin-ext', 'cyrillic'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-label',
   display: 'swap',
   preload: false,
 });
@@ -50,37 +54,25 @@ export const metadata: Metadata = {
   },
 };
 
-/* Decide the motion tier BEFORE first paint, so scroll-reveal targets are only
-   hidden on devices that will actually animate them (no FOUC).
-   The lightweight motion (smooth-scroll, reveals, card rails) runs for everyone
-   EXCEPT people who opted out via OS "Reduce Motion" or Data Saver — the heavy
-   WebGL shader is gated separately (see MotionConfig). */
-const motionProbe = `(function(){try{
-  var m=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var save=navigator.connection&&navigator.connection.saveData;
-  document.documentElement.dataset.motion=(!m&&!save)?'full':'reduced';
-}catch(e){document.documentElement.dataset.motion='full';}})();`;
-
-/* Apply the theme BEFORE first paint. Dark is the default for first-time
-   visitors; a saved "light" preference wins. Mirrors resolveTheme() in
-   src/lib/preferences.ts — keep the two in sync. */
+/* Apply the theme BEFORE first paint. Light — the morning edition — is the
+   default for first-time visitors; a saved "dark" preference wins. Mirrors
+   resolveTheme() in src/lib/preferences.ts — keep the two in sync. */
 const themeProbe = `(function(){try{
-  var light=localStorage.getItem('fursatly_theme')==='light';
-  if(!light)document.documentElement.classList.add('dark');
+  var dark=localStorage.getItem('fursatly_theme')==='dark';
+  if(dark)document.documentElement.classList.add('dark');
   /* Browser chrome on mobile, corrected before first paint. Hexes mirror
-     --bg-dark / --bg-light in globals.css — keep the three in sync. */
-  if(light){var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#f7f6f3');}
-}catch(e){document.documentElement.classList.add('dark');}})();`;
+     --bg-light / --bg-dark in globals.css — keep the three in sync. */
+  if(dark){var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#141210');}
+}catch(e){}})();`;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${display.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${serif.variable} ${label.variable}`}>
       <head>
-        {/* Dark is the first-visit default; the probe below rewrites this when a
-            light preference is saved, and ThemeContext keeps it current after. */}
-        <meta name="theme-color" content="#111318" />
+        {/* Light is the first-visit default; the probe below rewrites this when a
+            dark preference is saved, and ThemeContext keeps it current after. */}
+        <meta name="theme-color" content="#f3efe6" />
         <script dangerouslySetInnerHTML={{ __html: themeProbe }} />
-        <script dangerouslySetInnerHTML={{ __html: motionProbe }} />
       </head>
       <body className="font-body antialiased min-h-screen">
         <SiteBackground />

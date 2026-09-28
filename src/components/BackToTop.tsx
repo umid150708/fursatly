@@ -40,7 +40,7 @@ export function BackToTop() {
       onClick={toTop}
       aria-label={t.backToTop}
       title={t.backToTop}
-      className="fixed bottom-6 left-6 z-40 grid h-11 w-11 place-items-center rounded-full border border-border bg-card/90 text-muted-foreground shadow-lg backdrop-blur transition-all hover:-translate-y-0.5 hover:text-foreground motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2"
+      className="fixed bottom-6 left-6 z-40 grid h-11 w-11 place-items-center border border-foreground bg-card text-foreground shadow-[3px_3px_0_hsl(var(--foreground)/0.15)] transition-colors hover:bg-foreground hover:text-background motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2"
     >
       <ArrowUp className="h-5 w-5" />
     </button>

@@ -7,19 +7,20 @@ export interface FloatCard {
   id: string;
   title: string;
   category: string;
-  hue: string; // bare HSL triple
+  hue: string; // section ink, e.g. "var(--cat-stem)"
 }
 
-// Home anchors in the empty upper-right space (fractions of the hero box) — the
-// original scatter. Each card free-floats within a small orbit of its anchor
-// rather than sitting perfectly still.
+// Home anchors on the right half of the front-page banner (fractions of the
+// banner box): two staggered columns of three, so the clippings read as pinned
+// up side by side rather than piled on each other. Each one free-floats within
+// a small orbit of its anchor rather than sitting perfectly still.
 const SLOTS = [
-  { top: 0.13, right: 0.01, w: 228 },
-  { top: 0.11, right: 0.29, w: 176 },
-  { top: 0.40, right: 0.04, w: 238 },
-  { top: 0.33, right: 0.23, w: 168 },
-  { top: 0.66, right: 0.03, w: 200 },
-  { top: 0.60, right: 0.27, w: 182 },
+  { top: 0.04, right: 0.26, w: 206 },
+  { top: 0.10, right: 0.03, w: 232 },
+  { top: 0.36, right: 0.28, w: 196 },
+  { top: 0.43, right: 0.05, w: 214 },
+  { top: 0.68, right: 0.25, w: 210 },
+  { top: 0.76, right: 0.03, w: 226 },
 ] as const;
 
 const R = 260;   // cursor influence radius (px)
@@ -28,7 +29,8 @@ const PAD = 12;  // keep cards this far inside the container edges
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(v, hi));
 
 /**
- * Category cards scattered in the empty hero space. Each one drifts freely on a
+ * Newspaper clippings scattered in the empty banner space, each taped to the
+ * page and carrying its section ink. Each one drifts freely on a
  * slow, looping path around its home anchor (a bounded "float", not a roam of the
  * whole screen), and reacts to the cursor — a magnetic pull + scale when it comes
  * near, bigger when it lands on top. Real buttons: clicking one opens that event.
@@ -190,11 +192,12 @@ export function FloatingCards({ cards, onOpen }: { cards: FloatCard[]; onOpen: (
             type="button"
             onClick={() => onOpen(c.id)}
             aria-label={`${c.category}: ${c.title}`}
-            className="pointer-events-auto block w-full cursor-pointer rounded-xl border bg-card/65 p-4 text-left shadow-[0_24px_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-md outline-none transition-shadow hover:shadow-[0_28px_70px_-28px_rgba(0,0,0,0.7)] focus-visible:ring-2 focus-visible:ring-accent"
-            style={{ borderColor: `hsl(${c.hue} / 0.35)` }}
+            className="clipping-tape pointer-events-auto relative block w-full cursor-pointer border border-foreground/70 bg-card px-4 pb-4 pt-5 text-left shadow-[0_18px_40px_-22px_hsl(0_0%_0%/0.45)] outline-none transition-shadow hover:shadow-[0_24px_50px_-20px_hsl(0_0%_0%/0.55)] focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <span className="text-eyebrow font-semibold" style={{ color: `hsl(${c.hue})` }}>{c.category}</span>
-            <p className="mt-2 line-clamp-2 font-display text-sm font-semibold leading-snug">{c.title}</p>
+            <span className="text-eyebrow block border-b border-border pb-2 text-[0.7rem]" style={{ color: `hsl(${c.hue})` }}>
+              {c.category}
+            </span>
+            <p className="mt-2 line-clamp-3 font-display text-[0.95rem] font-bold leading-snug">{c.title}</p>
           </button>
         </div>
       ))}

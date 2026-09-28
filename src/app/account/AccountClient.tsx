@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Loader2, LogOut, UserRound, BookmarkX, Send, CheckCircle2, Bell,
+  Loader2, LogOut, BookmarkX, Send, CheckCircle2, Bell, Trash2,
 } from 'lucide-react';
 import { useDb, useAuth } from '@/supabase';
 import { useSaved } from '@/context/SavedContext';
@@ -13,6 +13,9 @@ import { catHue } from '@/lib/categoryColor';
 import { eventSlug } from '@/lib/event-path';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from '@/components/ui/dialog';
 import { SiteNav } from '@/components/home/SiteNav';
 import { SiteFooter } from '@/components/home/SiteFooter';
 import { EventCard } from '@/components/home/EventCard';
@@ -143,159 +146,92 @@ export function AccountClient() {
     router.push('/');
   };
 
+  // ── Delete account (right to erasure) ─────────────────────────────────
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    const res = await fetch('/api/account/delete', { method: 'POST' });
+    if (!res.ok) {
+      setDeleting(false);
+      toast({ title: t.authErrorGeneric, variant: 'destructive' });
+      return;
+    }
+    await signOut();
+    toast({ title: t.deleteAccountDone });
+    router.replace('/');
+  };
+
   if (!profile) {
     return (
       <>
         <SiteNav />
-        <main className="container flex min-h-screen items-center justify-center">
+        <main className="container flex min-h-[60vh] items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </main>
       </>
     );
   }
 
+  const initial = (profile.display_name || user?.email || '?').trim().charAt(0).toUpperCase();
+  const savedCount = savedRows?.filter((r) => r.events).length ?? 0;
+  const fieldLabel = 'text-eyebrow mb-1.5 block';
+
   return (
     <>
       <SiteNav />
-      <main className="container min-h-screen py-28 md:py-32">
+      <main className="container py-8 md:py-12">
         {/* ── Header ─────────────────────────────────────────────────── */}
-        <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-6 border-b border-foreground pb-6">
+          <div className="flex items-center gap-5">
             {profile.avatar_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={profile.avatar_url}
                 alt=""
-                className="h-14 w-14 rounded-2xl border border-border object-cover"
+                className="h-16 w-16 border border-foreground object-cover md:h-20 md:w-20"
               />
             ) : (
-              <span className="grid h-14 w-14 place-items-center rounded-2xl border border-border bg-card">
-                <UserRound className="h-6 w-6 text-muted-foreground" />
+              <span className="grid h-16 w-16 place-items-center bg-foreground font-display text-3xl font-black text-background md:h-20 md:w-20 md:text-4xl">
+                {initial}
               </span>
             )}
-            <div>
-              <h1 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
+            <div className="min-w-0">
+              <p className="text-eyebrow text-accent">{t.accountTitle}</p>
+              <h1 className="mt-1 truncate font-display text-4xl font-black tracking-[-0.035em] md:text-6xl">
                 {profile.display_name || t.accountTitle}
               </h1>
-              <p className="text-sm text-muted-foreground">{user?.email}</p>
+              <p className="font-label mt-1 text-sm text-muted-foreground">{user?.email}</p>
             </div>
           </div>
           <Button variant="outline" onClick={handleSignOut}>
-            <LogOut className="mr-2 h-4 w-4" />
+            <LogOut className="h-4 w-4" />
             {t.signOut}
           </Button>
         </div>
 
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,380px)_1fr]">
-          {/* ── Profile column ─────────────────────────────────────────── */}
-          <div className="space-y-8">
-            <form
-              onSubmit={handleSaveProfile}
-              className="space-y-5 rounded-2xl border border-border bg-card p-6 md:p-8"
-            >
-              <h2 className="font-display text-xl font-semibold">{t.profileSection}</h2>
-
-              <div>
-                <label htmlFor="pf-name" className="mb-1.5 block text-sm font-medium">
-                  {t.displayName}
-                </label>
-                <Input id="pf-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="pf-age" className="mb-1.5 block text-sm font-medium">
-                    {t.ageLabel}
-                  </label>
-                  <Input
-                    id="pf-age"
-                    type="number"
-                    inputMode="numeric"
-                    min={10}
-                    max={100}
-                    value={age}
-                    onChange={(e) => setAge(e.target.value)}
-                    className="[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="pf-country" className="mb-1.5 block text-sm font-medium">
-                    {t.countryLabel}
-                  </label>
-                  <Input id="pf-country" value={country} onChange={(e) => setCountry(e.target.value)} />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="pf-interests" className="mb-1.5 block text-sm font-medium">
-                  {t.interestsLabel}
-                </label>
-                <Input
-                  id="pf-interests"
-                  value={interests}
-                  onChange={(e) => setInterests(e.target.value)}
-                  placeholder={t.interestsHint}
-                />
-              </div>
-
-              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-border px-4 py-3">
-                <span className="flex items-center gap-2 text-sm font-medium">
-                  <Bell className="h-4 w-4 text-accent" />
-                  {t.remindersToggle}
-                </span>
-                <input
-                  type="checkbox"
-                  checked={remindersEnabled}
-                  onChange={(e) => setRemindersEnabled(e.target.checked)}
-                  className="h-4 w-4 accent-[hsl(var(--accent))]"
-                />
-              </label>
-              <p className="text-xs text-muted-foreground">{t.remindersHint}</p>
-
-              <Button type="submit" className="w-full" disabled={saving}>
-                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {t.saveProfile}
-              </Button>
-            </form>
-
-            {/* ── Telegram ───────────────────────────────────────────── */}
-            <div className="space-y-4 rounded-2xl border border-border bg-card p-6 md:p-8">
-              <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
-                <Send className="h-5 w-5 text-accent" />
-                {t.telegramSection}
-              </h2>
-              {profile.telegram_chat_id ? (
-                <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2 className="h-4 w-4 text-accent" />
-                  {t.telegramConnected}
-                  {profile.telegram_username && (
-                    <span className="font-medium text-foreground">@{profile.telegram_username}</span>
-                  )}
-                </p>
-              ) : (
-                <>
-                  <p className="text-sm text-muted-foreground">{t.telegramConnectHint}</p>
-                  <TelegramConnectButton className="w-full sm:w-auto" />
-                </>
-              )}
-            </div>
-          </div>
-
+        <div className="mt-10 grid gap-12 lg:grid-cols-[minmax(0,1fr)_1px_24rem] lg:gap-12">
           {/* ── Saved opportunities ────────────────────────────────────── */}
-          <div>
-            <h2 className="mb-6 font-display text-xl font-semibold">{t.savedSection}</h2>
+          <section className="min-w-0">
+            <h2 className="flex items-baseline justify-between gap-4 border-b-2 border-foreground pb-2">
+              <span className="font-display text-3xl font-black tracking-[-0.02em] md:text-4xl">{t.savedSection}</span>
+              {savedRows !== null && <span className="font-label text-sm tabular-nums text-muted-foreground">{savedCount}</span>}
+            </h2>
             {savedRows === null ? (
               <div className="flex justify-center py-20">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : savedRows.length === 0 ? (
-              <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border py-20 text-center">
+              <div className="mt-6 flex flex-col items-center gap-4 border border-dashed border-foreground py-20 text-center">
                 <BookmarkX className="h-8 w-8 text-muted-foreground" />
-                <p className="text-muted-foreground">{t.noSaved}</p>
+                <p className="text-lg italic text-muted-foreground">{t.noSaved}</p>
                 <Button variant="outline" onClick={() => router.push('/#opportunities')}>
                   {t.browseCta}
                 </Button>
               </div>
             ) : (
-              <div className="grid gap-5 sm:grid-cols-2">
+              <div className="mt-6 grid gap-x-8 gap-y-10 sm:grid-cols-2">
                 {savedRows
                   .filter((r) => r.events)
                   .map((row) => (
@@ -311,10 +247,124 @@ export function AccountClient() {
                   ))}
               </div>
             )}
-          </div>
+          </section>
+
+          <span aria-hidden className="hidden bg-foreground lg:block" />
+
+          <aside className="space-y-12">
+            {/* ── Profile ──────────────────────────────────────────────── */}
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              <h2 className="text-eyebrow border-b-2 border-foreground pb-2">{t.profileSection}</h2>
+              <div>
+                <label htmlFor="pf-name" className={fieldLabel}>{t.displayName}</label>
+                <Input id="pf-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="pf-age" className={fieldLabel}>{t.ageLabel}</label>
+                  <Input
+                    id="pf-age"
+                    type="number"
+                    inputMode="numeric"
+                    min={13}
+                    max={100}
+                    value={age}
+                    onChange={(e) => setAge(e.target.value)}
+                    className="[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="pf-country" className={fieldLabel}>{t.countryLabel}</label>
+                  <Input id="pf-country" value={country} onChange={(e) => setCountry(e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="pf-interests" className={fieldLabel}>{t.interestsLabel}</label>
+                <Input
+                  id="pf-interests"
+                  value={interests}
+                  onChange={(e) => setInterests(e.target.value)}
+                  placeholder={t.interestsHint}
+                />
+              </div>
+
+              <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 border-y border-foreground py-3">
+                <span className="font-label flex items-center gap-2 text-[0.95rem] font-semibold">
+                  <Bell className="h-4 w-4 text-accent" />
+                  {t.remindersToggle}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={remindersEnabled}
+                  onChange={(e) => setRemindersEnabled(e.target.checked)}
+                  className="h-5 w-5 accent-[hsl(var(--foreground))]"
+                />
+              </label>
+              <p className="text-sm italic text-muted-foreground">{t.remindersHint}</p>
+
+              <Button type="submit" className="w-full" disabled={saving}>
+                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                {t.saveProfile}
+              </Button>
+            </form>
+
+            {/* ── Telegram ─────────────────────────────────────────────── */}
+            <div className="space-y-4">
+              <h2 className="text-eyebrow flex items-center gap-2 border-b-2 border-foreground pb-2">
+                <Send className="h-3.5 w-3.5" />
+                {t.telegramSection}
+              </h2>
+              {profile.telegram_chat_id ? (
+                <p className="flex items-center gap-2 italic text-muted-foreground">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-accent" />
+                  {t.telegramConnected}
+                  {profile.telegram_username && (
+                    <span className="font-semibold not-italic text-foreground">@{profile.telegram_username}</span>
+                  )}
+                </p>
+              ) : (
+                <>
+                  <p className="italic text-muted-foreground">{t.telegramConnectHint}</p>
+                  <TelegramConnectButton className="w-full" />
+                </>
+              )}
+            </div>
+
+            {/* ── Delete account ─────────────────────────────────────── */}
+            <div className="space-y-3 border border-destructive p-5">
+              <h2 className="text-eyebrow text-destructive">{t.deleteAccount}</h2>
+              <p className="text-sm italic leading-relaxed text-muted-foreground">{t.deleteAccountBody}</p>
+              <Button
+                variant="outline"
+                className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                onClick={() => setConfirmDelete(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                {t.deleteAccount}
+              </Button>
+            </div>
+          </aside>
         </div>
       </main>
-      <SiteFooter t={t} onCategory={() => router.push('/')} />
+      <SiteFooter t={t} />
+
+      <Dialog open={confirmDelete} onOpenChange={(o) => !deleting && setConfirmDelete(o)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-3xl font-black">{t.deleteAccountTitle}</DialogTitle>
+            <DialogDescription className="italic">{t.deleteAccountBody}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setConfirmDelete(false)} disabled={deleting}>
+              {t.cancel}
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              {t.deleteAccountConfirm}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

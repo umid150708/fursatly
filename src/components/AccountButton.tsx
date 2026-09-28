@@ -3,12 +3,11 @@
 import { UserRound } from 'lucide-react';
 import { useAuth } from '@/supabase';
 import { useLanguage } from '@/context/LanguageContext';
-import { Button } from '@/components/ui/button';
 
 /**
  * Nav entry point for accounts. Always links to /account — the middleware
- * bounces signed-out visitors to /auth?next=/account. Shows the avatar (or
- * an accent ring) once signed in.
+ * bounces signed-out visitors to /auth?next=/account. Signed in, it shows the
+ * avatar, or the reader's initial set in ink.
  */
 export function AccountButton() {
   const { user, isLoading } = useAuth();
@@ -17,29 +16,27 @@ export function AccountButton() {
   const avatar =
     (user?.user_metadata?.avatar_url as string | undefined) ??
     (user?.user_metadata?.picture as string | undefined);
+  const initial = (
+    (user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? ''
+  ).trim().charAt(0).toUpperCase();
 
   return (
-    <Button
-      asChild
-      variant="outline"
-      size="sm"
+    <a
+      href="/account"
       aria-label={t.accountTitle}
-      className={`h-10 w-10 rounded-xl border-border transition-colors hover:bg-secondary ${
-        user ? 'ring-1 ring-accent/50' : ''
+      title={t.accountTitle}
+      className={`grid h-10 w-10 place-items-center border border-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+        user ? 'bg-foreground text-background hover:bg-accent hover:text-accent-foreground' : 'hover:bg-foreground hover:text-background'
       }`}
     >
-      <a href="/account">
-        {user && avatar ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={avatar} alt="" className="h-5 w-5 rounded-md object-cover" />
-        ) : (
-          <UserRound
-            className={`h-4 w-4 ${user ? 'text-accent' : 'text-foreground'} ${
-              isLoading ? 'opacity-40' : ''
-            }`}
-          />
-        )}
-      </a>
-    </Button>
+      {user && avatar ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={avatar} alt="" className="h-full w-full object-cover" />
+      ) : user && initial ? (
+        <span className="font-display text-lg font-black leading-none">{initial}</span>
+      ) : (
+        <UserRound className={`h-4 w-4 ${isLoading ? 'opacity-40' : ''}`} />
+      )}
+    </a>
   );
 }
