@@ -244,6 +244,18 @@ export const translations = {
     remindNudgeTitle: 'Get deadline reminders',
     remindNudgeBody: "Connect Telegram and we'll message you 3 days and 1 day before this deadline.",
     remindArmed: "Reminders on — we'll message you on Telegram 3 days and 1 day before the deadline.",
+
+    // Gazette front page
+    mastheadTagline: 'Scholarships, competitions and programs — found, researched and translated every morning',
+    openNow: 'Open now',
+    inBrief: 'In brief',
+    readFull: 'Eligibility, tips and resources',
+    forecastTitle: 'Deadline forecast',
+    forecastThisWeek: 'This week',
+    forecastNextWeek: 'Next week',
+    forecastLater: 'Later',
+    onThisPage: 'Contents',
+    anyAge: 'Any age',
   },
 
   uz: {
@@ -487,6 +499,18 @@ export const translations = {
     remindNudgeTitle: 'Muddat eslatmalarini oling',
     remindNudgeBody: 'Telegramni ulang — muddatdan 3 kun va 1 kun oldin sizga xabar yuboramiz.',
     remindArmed: 'Eslatmalar yoqilgan — muddatdan 3 kun va 1 kun oldin Telegramda xabar yuboramiz.',
+
+    // Gazette front page
+    mastheadTagline: 'Grantlar, tanlovlar va dasturlar — har tong topiladi, o‘rganiladi va tarjima qilinadi',
+    openNow: 'Hozir ochiq',
+    inBrief: 'Qisqacha',
+    readFull: 'Talablar, maslahatlar va manbalar',
+    forecastTitle: 'Muddatlar prognozi',
+    forecastThisWeek: 'Shu hafta',
+    forecastNextWeek: 'Keyingi hafta',
+    forecastLater: 'Keyinroq',
+    onThisPage: 'Mundarija',
+    anyAge: 'Istalgan yosh',
   },
 
   ru: {
@@ -730,6 +754,18 @@ export const translations = {
     remindNudgeTitle: 'Получайте напоминания о дедлайнах',
     remindNudgeBody: 'Подключите Telegram — мы напишем вам за 3 дня и за 1 день до дедлайна.',
     remindArmed: 'Напоминания включены — мы напишем вам в Telegram за 3 дня и за 1 день до дедлайна.',
+
+    // Gazette front page
+    mastheadTagline: 'Стипендии, конкурсы и программы — находим, изучаем и переводим каждое утро',
+    openNow: 'Открыто сейчас',
+    inBrief: 'Коротко',
+    readFull: 'Требования, советы и материалы',
+    forecastTitle: 'Прогноз дедлайнов',
+    forecastThisWeek: 'На этой неделе',
+    forecastNextWeek: 'На следующей неделе',
+    forecastLater: 'Позже',
+    onThisPage: 'Содержание',
+    anyAge: 'Любой возраст',
   },
 };
 

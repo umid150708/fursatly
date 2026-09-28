@@ -1,13 +1,14 @@
 /**
- * First-visit defaults: dark theme + English. A saved preference always wins;
- * anything unknown/corrupt falls back to the defaults.
+ * First-visit defaults: light theme (the Gazette's morning edition) + English.
+ * A saved preference always wins; anything unknown/corrupt falls back to the
+ * defaults.
  */
 import { describe, it, expect } from 'vitest';
 import { resolveTheme, resolveLocale } from '../src/lib/preferences';
 
 describe('resolveTheme', () => {
-  it('defaults to dark when nothing is saved', () => {
-    expect(resolveTheme(null)).toBe('dark');
+  it('defaults to light when nothing is saved', () => {
+    expect(resolveTheme(null)).toBe('light');
   });
 
   it('honors a saved preference', () => {
@@ -15,9 +16,9 @@ describe('resolveTheme', () => {
     expect(resolveTheme('dark')).toBe('dark');
   });
 
-  it('falls back to dark on corrupt values', () => {
-    expect(resolveTheme('banana')).toBe('dark');
-    expect(resolveTheme('')).toBe('dark');
+  it('falls back to light on corrupt values', () => {
+    expect(resolveTheme('banana')).toBe('light');
+    expect(resolveTheme('')).toBe('light');
   });
 });
 

@@ -208,13 +208,13 @@ export function ThemeToggle() {
         size="sm"
         onClick={handle}
         aria-label="Toggle light and dark theme"
-        className="h-10 w-10 rounded-xl border-border transition-colors hover:bg-secondary"
+        className="h-10 w-10 p-0"
       >
         {/* Driven by the `dark` class rather than React state, so the right icon
             is on screen at first paint instead of after hydration. */}
         <span className="relative block h-4 w-4">
-          <Sun className="absolute inset-0 h-4 w-4 text-gold transition-all duration-700 -rotate-90 scale-0 opacity-0 dark:rotate-0 dark:scale-100 dark:opacity-100" />
-          <Moon className="absolute inset-0 h-4 w-4 text-foreground transition-all duration-700 rotate-0 scale-100 opacity-100 dark:rotate-90 dark:scale-0 dark:opacity-0" />
+          <Sun className="absolute inset-0 h-4 w-4 transition-all duration-700 -rotate-90 scale-0 opacity-0 dark:rotate-0 dark:scale-100 dark:opacity-100" />
+          <Moon className="absolute inset-0 h-4 w-4 transition-all duration-700 rotate-0 scale-100 opacity-100 dark:rotate-90 dark:scale-0 dark:opacity-0" />
         </span>
       </Button>
       <span role="status" aria-live="polite" className="sr-only">{status}</span>

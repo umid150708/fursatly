@@ -38,7 +38,7 @@ export function TelegramConnectButton({ className = '' }: { className?: string }
       type="button"
       onClick={connect}
       disabled={busy}
-      className={`inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#2AABEE] px-5 text-sm font-semibold text-white transition-all hover:bg-[#229ED9] hover:shadow-lg disabled:opacity-60 ${className}`}
+      className={`font-label inline-flex h-11 items-center justify-center gap-2 bg-foreground px-5 text-sm font-semibold uppercase tracking-[0.08em] text-background transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-60 ${className}`}
     >
       {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
       {t.telegramConnectCta}

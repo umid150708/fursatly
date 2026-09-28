@@ -1,9 +1,9 @@
 'use client';
 
 import type { CSSProperties, KeyboardEvent } from 'react';
-import { ArrowUpRight, MapPin, CalendarDays } from 'lucide-react';
 import { translateSource, translateLanguage, type Locale, type Dict } from '@/lib/translations';
 import { SaveButton } from '@/components/SaveButton';
+import { formatDate, daysUntil, daysLeftLabel } from '@/lib/dates';
 
 interface EventCardProps {
   event: any;
@@ -11,21 +11,25 @@ interface EventCardProps {
   locale: Locale;
   now: Date | null;
   onOpen: () => void;
-  /** Category jewel-tone as a bare HSL triple (e.g. "41 64% 45%"). */
+  /** Section ink as a CSS colour reference (e.g. "var(--cat-stem)"). */
   hue?: string;
+  /** Inside a section the section name is already the heading, so the kicker
+   *  carries the location instead. */
+  kicker?: 'category' | 'location';
 }
 
-const fmt = (d: Date) =>
-  `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
-
-/** Editorial opportunity card — monochrome base, per-category jewel accent. */
-export function EventCard({ event, t, locale, now, onOpen, hue }: EventCardProps) {
+/**
+ * One story in a section: a heavy rule on top, the section kicker in its ink,
+ * a serif headline, an italic dateline and a footer carrying the deadline and
+ * either the days left (closing soon) or the funding. No box — on newsprint a
+ * story is held together by its rules.
+ */
+export function EventCard({ event, t, locale, now, onOpen, hue, kicker = 'category' }: EventCardProps) {
   const funding: string | null = event.research_data?.funding_type ?? null;
   const title =
     (locale !== 'en' && event.research_data?.translations?.[locale]?.title) || event.title;
   const deadline = event.deadline ? new Date(event.deadline) : null;
-  const daysLeft =
-    deadline && now ? Math.ceil((deadline.getTime() - now.getTime()) / 86_400_000) : null;
+  const daysLeft = now ? daysUntil(event.deadline, now.getTime()) : null;
   const urgent = daysLeft !== null && daysLeft <= 7 && daysLeft > 0;
 
   // Root is a div-as-link (not <button>) so the SaveButton inside stays
@@ -37,6 +41,14 @@ export function EventCard({ event, t, locale, now, onOpen, hue }: EventCardProps
     }
   };
 
+  const tag = urgent
+    ? { text: daysLeftLabel(daysLeft, t), cls: 'text-urgent' }
+    : funding === 'Full'
+    ? { text: t.fullyFunded, cls: 'text-gold' }
+    : funding
+    ? { text: t.partial, cls: 'text-muted-foreground' }
+    : null;
+
   return (
     <div
       role="link"
@@ -44,46 +56,26 @@ export function EventCard({ event, t, locale, now, onOpen, hue }: EventCardProps
       onClick={onOpen}
       onKeyDown={handleKey}
       style={{ ['--hue' as any]: hue ?? 'var(--accent)' } as CSSProperties}
-      className="group flex h-full w-full cursor-pointer flex-col rounded-xl border border-border bg-card p-6 text-left transition-all duration-500 hover:-translate-y-1 hover:border-[hsl(var(--hue)/0.55)] hover:shadow-[0_20px_50px_-24px_hsl(var(--hue)/0.4)] md:p-7"
+      className="group flex h-full w-full cursor-pointer flex-col border-t-2 border-foreground pt-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background"
     >
-      <div className="mb-6 flex items-center justify-between">
-        <span className="text-eyebrow font-semibold text-[hsl(var(--hue))]">
-          {translateSource(event.source || 'Other', t)}
+      <div className="flex items-start justify-between gap-3">
+        <span className="text-eyebrow pt-1.5 text-[0.75rem] text-[hsl(var(--hue))]">
+          {kicker === 'location' && event.location ? event.location : translateSource(event.source || 'Other', t)}
         </span>
-        <div className="flex items-center gap-1.5">
-          {urgent ? (
-            <span className="text-eyebrow font-semibold text-urgent">
-              {daysLeft}{t.dLeft}
-            </span>
-          ) : funding ? (
-            <span className={`text-eyebrow font-semibold ${funding === 'Full' ? 'text-gold' : 'text-muted-foreground'}`}>
-              {funding === 'Full' ? t.fullyFunded : t.partial}
-            </span>
-          ) : null}
-          <SaveButton eventId={event.id} />
-        </div>
+        <SaveButton eventId={event.id} />
       </div>
 
-      <h3 className="mb-6 line-clamp-3 font-display text-xl font-semibold leading-tight tracking-tight transition-colors group-hover:text-[hsl(var(--hue))] md:text-[1.6rem]">
+      <h3 className="mt-1 line-clamp-4 font-display text-[1.35rem] font-extrabold leading-[1.15] tracking-tight decoration-1 underline-offset-4 group-hover:underline md:text-[1.5rem]">
         {title}
       </h3>
 
-      <div className="mt-auto space-y-2 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <MapPin className="h-3.5 w-3.5 shrink-0 text-[hsl(var(--hue))]" />
-          <span className="truncate">{event.location || '—'}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <CalendarDays className="h-3.5 w-3.5 shrink-0 text-[hsl(var(--hue))]" />
-          <span>{deadline ? fmt(deadline) : t.rolling}</span>
-        </div>
-      </div>
+      <p className="mt-2 line-clamp-1 text-[0.95rem] italic text-muted-foreground">
+        {[kicker === 'location' ? null : event.location, translateLanguage(event.language, t)].filter(Boolean).join(' · ') || '—'}
+      </p>
 
-      <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
-        <span className="text-eyebrow text-muted-foreground">
-          {translateLanguage(event.language, t)}
-        </span>
-        <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[hsl(var(--hue))]" />
+      <div className="font-label mt-auto flex items-center justify-between gap-3 border-t border-border pt-2.5 text-sm">
+        <span>{deadline ? formatDate(deadline, locale) : t.rolling}</span>
+        {tag && <span className={`font-semibold uppercase tracking-[0.06em] ${tag.cls}`}>{tag.text}</span>}
       </div>
     </div>
   );

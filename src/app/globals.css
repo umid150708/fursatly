@@ -2,49 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── The Gazette ─────────────────────────────────────────────────────────────
+   Fursatly as a daily newspaper: newsprint and ink, hairline and heavy rules,
+   square corners, one vermilion spot colour. Light is the "morning edition",
+   dark the "night edition". */
 @layer base {
   :root {
-    /* ── Monochrome base: warm off-white paper + ink ─────────────────────── */
     /* Both page backgrounds live here, unscoped, so the theme toggle can read
        the INCOMING one while the outgoing theme is still applied. */
     color-scheme: light;   /* native scrollbars / form controls follow the theme */
-    --bg-light: 45 18% 96%;
-    --bg-dark: 222 16% 8%;
+    --bg-light: 41 35% 93%;           /* newsprint  #f3efe6 */
+    --bg-dark: 30 10% 7%;             /* night ink  #141210 */
     --background: var(--bg-light);
-    --foreground: 220 9% 10%;
-    --card: 45 22% 98%;
-    --card-foreground: 220 9% 10%;
-    --popover: 45 22% 98%;
-    --popover-foreground: 220 9% 10%;
-    --primary: 220 9% 10%;            /* ink — primary actions */
-    --primary-foreground: 45 22% 97%;
-    --secondary: 44 12% 91%;          /* light grey surface */
-    --secondary-foreground: 220 9% 10%;
-    --muted: 44 10% 90%;
-    --muted-foreground: 220 6% 42%;
-    --accent: 186 78% 26%;            /* atlas accent — deep teal */
-    --accent-foreground: 45 30% 97%;
-    --gold: 41 64% 47%;               /* second accent — the logo's gold */
-    --destructive: 0 72% 46%;
+    --foreground: 0 0% 7%;            /* ink        #111111 */
+    --card: 43 47% 97%;               /* fresh paper — inputs, clippings, dialogs */
+    --card-foreground: 0 0% 7%;
+    --popover: 43 47% 97%;
+    --popover-foreground: 0 0% 7%;
+    --primary: 0 0% 7%;               /* ink — primary actions */
+    --primary-foreground: 41 35% 95%;
+    --secondary: 40 24% 88%;          /* a shade darker than the page — hover wells */
+    --secondary-foreground: 0 0% 7%;
+    --muted: 40 20% 87%;
+    --muted-foreground: 37 8% 32%;    /* caption ink #57524a, ~7:1 on newsprint */
+    --accent: 7 74% 45%;              /* vermilion spot colour #c8321e */
+    --accent-foreground: 41 35% 96%;
+    --gold: 38 70% 34%;               /* saved / funded — a dark ochre that reads as text */
+    --destructive: 0 72% 42%;
     --destructive-foreground: 0 0% 98%;
-    --border: 40 8% 85%;
-    --input: 40 8% 85%;
-    --ring: 186 78% 26%;
-    --radius: 0.5rem;
+    --border: 42 19% 77%;             /* hairline rule #cfc8b8 */
+    --input: 0 0% 7%;                 /* form fields are ruled in ink */
+    --ring: 7 74% 45%;
+    --radius: 0rem;                   /* newsprint has no rounded corners */
+    --tape: 44 60% 82%;               /* the strip of tape holding a clipping */
 
-    /* ── Category hues — Uzbek jewel tones, ≥4.5:1 as text on --background ── */
-    --cat-scholarships: 186 74% 30%;  /* teal */
-    --cat-competitions: 41 64% 33%;   /* gold */
-    --cat-summer-programs: 24 74% 38%; /* amber */
-    --cat-research: 244 42% 56%;      /* indigo */
-    --cat-volunteer: 158 46% 33%;     /* emerald */
-    --cat-stem: 208 68% 42%;          /* blue */
-    --cat-internships: 220 14% 44%;   /* slate */
-    --cat-workshops: 344 54% 48%;     /* pomegranate */
-    --cat-other: 220 10% 43%;
+    /* ── Section inks — one per category, all ≥4.5:1 as text on newsprint ── */
+    --cat-scholarships: 212 60% 32%;   /* ink blue */
+    --cat-competitions: 8 68% 36%;     /* brick */
+    --cat-summer-programs: 26 80% 30%; /* burnt orange */
+    --cat-research: 262 38% 42%;       /* plum */
+    --cat-volunteer: 150 48% 25%;      /* forest */
+    --cat-stem: 192 72% 25%;           /* teal ink */
+    --cat-internships: 30 12% 33%;     /* sepia */
+    --cat-workshops: 334 58% 36%;      /* magenta ink */
+    --cat-other: 30 6% 36%;
 
-    /* ── Extra design tokens ─────────────────────────────────────────────── */
-    --urgent: 30 82% 50%;             /* warm amber — urgency ("closing soon") */
+    --urgent: 7 74% 40%;               /* "closing soon" — vermilion, a touch deeper for small text */
     --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
     --dur-fast: 0.4s;
@@ -53,41 +56,41 @@
   }
 
   .dark {
-    /* ── Cool graphite night mode — silver + chrome-cyan (sample-inspired) ── */
+    /* Night edition — warm black stock, cream ink, a lighter vermilion. */
     color-scheme: dark;
-    --background: var(--bg-dark);     /* cool graphite, faintly blue */
-    --foreground: 210 16% 90%;        /* cool silver */
-    --card: 222 15% 11%;
-    --card-foreground: 210 16% 90%;
-    --popover: 222 15% 11%;
-    --popover-foreground: 210 16% 90%;
-    --primary: 210 16% 90%;
-    --primary-foreground: 222 16% 8%;
-    --secondary: 222 12% 16%;
-    --secondary-foreground: 210 16% 90%;
-    --muted: 222 12% 16%;
-    --muted-foreground: 214 10% 60%;
-    --accent: 190 80% 52%;            /* chrome cyan */
-    --accent-foreground: 222 16% 8%;
-    --gold: 40 52% 66%;               /* soft platinum-gold */
-    --destructive: 0 70% 55%;
+    --background: var(--bg-dark);
+    --foreground: 40 25% 88%;
+    --card: 30 8% 10%;
+    --card-foreground: 40 25% 88%;
+    --popover: 30 8% 10%;
+    --popover-foreground: 40 25% 88%;
+    --primary: 40 25% 88%;
+    --primary-foreground: 30 10% 7%;
+    --secondary: 30 7% 14%;
+    --secondary-foreground: 40 25% 88%;
+    --muted: 30 7% 14%;
+    --muted-foreground: 38 10% 64%;
+    --accent: 9 90% 64%;
+    --accent-foreground: 30 10% 7%;
+    --gold: 40 60% 62%;
+    --destructive: 0 75% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 218 13% 21%;
-    --input: 218 13% 21%;
-    --ring: 190 80% 52%;
+    --border: 30 6% 22%;
+    --input: 38 12% 60%;
+    --ring: 9 90% 64%;
+    --tape: 40 12% 34%;
 
-    /* Lighter, softer tonal variants of the category hues for dark surfaces */
-    --cat-scholarships: 186 60% 52%;
-    --cat-competitions: 41 70% 58%;
-    --cat-summer-programs: 24 85% 62%;
-    --cat-research: 244 65% 74%;
-    --cat-volunteer: 158 45% 55%;
-    --cat-stem: 208 75% 62%;
-    --cat-internships: 220 16% 66%;
-    --cat-workshops: 344 70% 68%;
-    --cat-other: 220 10% 62%;
+    --cat-scholarships: 212 70% 72%;
+    --cat-competitions: 10 85% 70%;
+    --cat-summer-programs: 30 85% 66%;
+    --cat-research: 262 65% 78%;
+    --cat-volunteer: 150 45% 60%;
+    --cat-stem: 188 60% 60%;
+    --cat-internships: 35 14% 68%;
+    --cat-workshops: 334 70% 74%;
+    --cat-other: 35 8% 64%;
 
-    --urgent: 28 82% 60%;
+    --urgent: 9 90% 64%;
   }
 }
 
@@ -101,17 +104,21 @@
   }
   body {
     @apply text-foreground;
-    background: transparent; /* the fixed SiteBackground provides the atmosphere */
-    font-family: var(--font-body), system-ui, -apple-system, sans-serif;
+    background: transparent; /* the fixed SiteBackground provides the paper */
+    font-family: var(--font-serif), Georgia, 'Times New Roman', serif;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    font-kerning: normal;
     transition: color var(--dur-fast) var(--ease-out-expo);
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display), var(--font-body), sans-serif;
-    font-weight: 600;
+    font-family: var(--font-serif), Georgia, serif;
+    font-weight: 800;
     letter-spacing: -0.02em;
+    text-wrap: balance;
   }
+  p { text-wrap: pretty; }
+  button, input, select, textarea { font-family: inherit; }
   ::selection {
     background: hsl(var(--accent));
     color: hsl(var(--accent-foreground));
@@ -120,10 +127,10 @@
 
 @layer utilities {
   /* Font aliases (legacy markup uses .font-headline/.font-body) */
-  .font-display, .font-headline { font-family: var(--font-display), system-ui, sans-serif; }
-  .font-body { font-family: var(--font-body), system-ui, sans-serif; }
+  .font-display, .font-headline, .font-body { font-family: var(--font-serif), Georgia, serif; }
+  .font-label { font-family: var(--font-label), 'Arial Narrow', system-ui, sans-serif; }
 
-  /* Atlas accent helpers */
+  /* Accent helpers */
   .text-urgent { color: hsl(var(--urgent)); }
   .bg-urgent   { background-color: hsl(var(--urgent)); }
   .border-urgent { border-color: hsl(var(--urgent)); }
@@ -131,29 +138,41 @@
   .bg-gold   { background-color: hsl(var(--gold)); }
   .border-gold { border-color: hsl(var(--gold)); }
 
-  /* Per-category accent — driven by the --hue custom property set inline */
+  /* Per-category section ink — driven by the --hue custom property set inline */
   .cat-accent { color: hsl(var(--hue, var(--accent))); }
-  .cat-border:hover { border-color: hsl(var(--hue, var(--accent)) / 0.5); }
 
-  /* Fluid display sizes */
-  .text-hero     { font-size: clamp(2.75rem, 9vw, 9rem);  line-height: 0.95; letter-spacing: -0.03em; }
-  .text-display  { font-size: clamp(2rem, 5.5vw, 4.75rem); line-height: 1.0;  letter-spacing: -0.025em; }
-  .text-eyebrow  { font-size: 0.75rem; letter-spacing: 0.28em; text-transform: uppercase; }
-
-  /* Film grain overlay */
-  .grain::after {
-    content: "";
-    position: absolute; inset: 0; z-index: 1;
-    pointer-events: none; opacity: 0.05; mix-blend-mode: multiply;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* Type scale */
+  .text-masthead { font-size: clamp(3.5rem, 13vw, 10rem); line-height: 0.86; letter-spacing: -0.05em; font-weight: 900; }
+  .text-hero     { font-size: clamp(2.6rem, 7vw, 6.25rem); line-height: 0.95; letter-spacing: -0.035em; font-weight: 900; }
+  .text-display  { font-size: clamp(2rem, 4.6vw, 3.75rem); line-height: 1.0;  letter-spacing: -0.03em; font-weight: 900; }
+  /* Small-caps label: kickers, datelines, section names, buttons */
+  .text-eyebrow  {
+    font-family: var(--font-label), 'Arial Narrow', system-ui, sans-serif;
+    font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
   }
 
-  /* Suzani whisper — a single thin motif divider line */
-  .suzani-rule {
-    height: 1px;
-    background-image: repeating-linear-gradient(90deg,
-      hsl(var(--accent) / 0.5) 0 6px, transparent 6px 14px);
+  /* Rules — the newspaper's only ornament */
+  .rule-double { border-top: 3px solid hsl(var(--foreground)); border-bottom: 1px solid hsl(var(--foreground)); height: 7px; }
+  .rule-heavy  { border-top: 3px solid hsl(var(--foreground)); }
+
+  /* Drop cap on the first letter of a lead paragraph */
+  .dropcap::first-letter {
+    float: left;
+    font-size: 3.7em;
+    line-height: 0.8;
+    font-weight: 900;
+    padding: 0.08em 0.1em 0 0;
   }
+
+  /* Halftone dot screen — stands in for press photography */
+  .halftone {
+    background-image: radial-gradient(hsl(var(--foreground) / 0.22) 1.1px, transparent 1.4px);
+    background-size: 10px 10px;
+  }
+
+  /* Two-column reading text on wide screens */
+  .columns-news { column-gap: 2rem; }
+  @media (min-width: 768px) { .columns-news { column-count: 2; } }
 
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -164,145 +183,34 @@
   .scrollbar-thin { scrollbar-width: thin; scrollbar-color: hsl(var(--border)) transparent; }
   .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-  .scrollbar-thin::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 9999px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: hsl(var(--border)); }
   .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.5); }
 }
 
-/* ── Scroll-reveal gating ──────────────────────────────────────────────────
-   Elements are hidden ONLY when the root opts into full motion (set before
-   paint by the inline script in layout.tsx). On reduced-motion / weak devices
-   the flag is never set, so [data-reveal] stays fully visible — no JS needed. */
-:root[data-motion="full"] [data-reveal] {
-  opacity: 0;
-  will-change: opacity, transform;
+/* ── Paper ─────────────────────────────────────────────────────────────────
+   A faint fibre grain over the newsprint, fixed behind everything. */
+.paper-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.06;
+  mix-blend-mode: multiply;
 }
-@media (prefers-reduced-motion: reduce) {
-  [data-reveal] { opacity: 1 !important; transform: none !important; }
-}
+.dark .paper-grain { opacity: 0.08; mix-blend-mode: screen; }
 
-/* ── Marquee ───────────────────────────────────────────────────────────── */
-@keyframes marquee {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
-.animate-marquee {
-  animation: marquee 40s linear infinite;
-  will-change: transform;
-}
-.animate-marquee:hover { animation-play-state: paused; }
-@media (prefers-reduced-motion: reduce) {
-  .animate-marquee { animation: none; }
-}
-
-/* Split-text kinetic headline — words start clipped below and rise into place.
-   Pure CSS, gated by the full-motion flag; staggered via the --i index var. */
-:root[data-motion="full"] .split-line {
-  transform: translateY(110%);
-  animation: line-rise 1s var(--ease-out-expo) both;
-  animation-delay: calc(var(--split-delay, 0s) + var(--i, 0) * 0.07s);
-}
-@keyframes line-rise { to { transform: translateY(0); } }
-
-/* CSS mesh-gradient hero (base layer + weak-device fallback for the WebGL shader)
-
-   Each bloom is its own layer so the drift can run as a `transform`. It used to
-   be one element animating `background-position` across a 180%-sized stack —
-   a property the compositor can't animate, so Chrome repainted the full-viewport
-   hero on every frame, continuously, for as long as the hero was on screen.
-
-   The geometry is unchanged. Every layer is inset -40%, i.e. exactly the 1.8x
-   box the old `background-size: 180%` painted into, so each gradient's own
-   `at x% y%` still resolves against the same area. The keyframes below are the
-   old background-position pairs converted to the equivalent translation:
-   a background-position of p% offsets the tile by -0.8E x p%, and the layer
-   already starts 0.4E up and left, so the translate is (0.4E - 0.8E x p) / 1.8E.
-   Same motion, same look, no repaint. */
-.gradient-mesh { background: hsl(var(--background)); overflow: hidden; }
-.mesh-layer {
+/* ── Clippings — the floating cards in the front-page banner ───────────────
+   A strip of tape holds each one to the page. */
+.clipping-tape::before {
+  content: "";
   position: absolute;
-  inset: -40%;
-  background-repeat: no-repeat;
-  animation-duration: 24s;
-  animation-timing-function: var(--ease-in-out-quart);
-  animation-iteration-count: infinite;
-  animation-direction: alternate;
-}
-.mesh-a {
-  background-image: radial-gradient(60% 55% at 18% 22%, hsl(var(--accent) / 0.16), transparent 60%);
-  animation-name: meshdrift-a;
-}
-.mesh-b {
-  background-image: radial-gradient(48% 48% at 86% 18%, hsl(var(--urgent) / 0.09), transparent 55%);
-  animation-name: meshdrift-b;
-}
-.mesh-c {
-  background-image: radial-gradient(72% 72% at 72% 92%, hsl(var(--accent) / 0.10), transparent 62%);
-  animation-name: meshdrift-c;
-}
-@keyframes meshdrift-a {
-  from { transform: translate3d(22.22%, 22.22%, 0); }
-  to   { transform: translate3d(9.78%, 14.22%, 0); }
-}
-@keyframes meshdrift-b {
-  from { transform: translate3d(-22.22%, 22.22%, 0); }
-  to   { transform: translate3d(-5.33%, 7.11%, 0); }
-}
-@keyframes meshdrift-c {
-  from { transform: translate3d(-22.22%, -22.22%, 0); }
-  to   { transform: translate3d(3.56%, -8%, 0); }
-}
-/* Reduced motion: hold the layers at the opening frame, still composited. */
-@media (prefers-reduced-motion: reduce) {
-  .mesh-layer { animation: none; }
-  .mesh-a { transform: translate3d(22.22%, 22.22%, 0); }
-  .mesh-b { transform: translate3d(-22.22%, 22.22%, 0); }
-  .mesh-c { transform: translate3d(-22.22%, -22.22%, 0); }
+  top: -10px;
+  left: 50%;
+  width: 72px;
+  height: 20px;
+  transform: translateX(-50%) rotate(-3deg);
+  background: hsl(var(--tape) / 0.75);
+  box-shadow: 0 1px 1px hsl(0 0% 0% / 0.08);
 }
 
 @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
-
-/* Vertical grid lines (night mode hero) */
-.grid-lines {
-  background-image: repeating-linear-gradient(90deg, hsl(var(--border) / 0.55) 0 1px, transparent 1px 8vw);
-}
-
-/* ── Site-wide atmospheric background ──────────────────────────────────────
-   Topographic contour rings + soft accent glows over the base colour. Subtle
-   in light, more dramatic in dark. Readable — everything sits faintly on top. */
-.site-atmos {
-  background:
-    repeating-radial-gradient(circle at 80% 16%, transparent 0 47px, hsl(var(--foreground) / 0.05) 47px 48px),
-    repeating-radial-gradient(circle at 16% 84%, transparent 0 55px, hsl(var(--foreground) / 0.042) 55px 56px),
-    radial-gradient(46% 40% at 8% 4%,   hsl(var(--accent) / 0.10), transparent 60%),
-    radial-gradient(42% 38% at 92% 12%, hsl(var(--gold)   / 0.07), transparent 60%),
-    radial-gradient(60% 55% at 74% 92%, hsl(var(--accent) / 0.08), transparent 62%),
-    hsl(var(--background));
-}
-.dark .site-atmos {
-  background:
-    repeating-radial-gradient(circle at 80% 16%, transparent 0 47px, hsl(210 40% 80% / 0.10) 47px 48px),
-    repeating-radial-gradient(circle at 16% 84%, transparent 0 55px, hsl(210 40% 80% / 0.08) 55px 56px),
-    radial-gradient(48% 42% at 8% 4%,   hsl(var(--accent) / 0.16), transparent 60%),
-    radial-gradient(44% 40% at 92% 12%, hsl(var(--gold)   / 0.10), transparent 60%),
-    radial-gradient(64% 58% at 74% 92%, hsl(var(--accent) / 0.12), transparent 62%),
-    hsl(var(--background));
-}
-
-/* Fine film grain as a fixed overlay */
-.site-grain {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: 0.05;
-  mix-blend-mode: overlay;
-}
-.dark .site-grain { opacity: 0.09; }
-
-/* Gentle floating drift for the hero cards */
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-14px); }
-}
-.animate-float { animation: float 7s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .animate-float { animation: none; } }
 
 /* Circular theme reveal (View Transitions). The new snapshot is wiped in over
    the old one, so the page's real content changes as the edge passes it. Kill
@@ -321,12 +229,10 @@
    and set before the snapshot is taken so both captures match. Targeted rather
    than a universal selector: `* { ... }` costs a full-document style recalc on
    the way in and again on the way out. */
-html.theme-sweep .site-grain,
-html.theme-sweep .grain::after { display: none; }
+html.theme-sweep .paper-grain { display: none; }
 html.theme-sweep [class*="backdrop-blur"] {
   backdrop-filter: none;
 }
-html.theme-sweep .animate-float { animation-play-state: paused; }
 
 /* The real cost of a theme change is that flipping `dark` on <html> invalidates
    the whole document, so Chrome re-rasters the ENTIRE scrollable page, not just

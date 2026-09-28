@@ -1,11 +1,23 @@
 import { ImageResponse } from 'next/og';
+import { gazetteFonts, OG } from '@/lib/og-fonts';
 
-/** Site-wide Open Graph card (homepage, /auth, /account link previews). */
+/** Site-wide Open Graph card (homepage, /auth, /account link previews):
+ *  the Gazette masthead on newsprint. */
 export const alt = 'Fursatly — opportunities for Central Asian students';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
-export default function OgImage() {
+const TAGLINE = 'Scholarships, competitions and programs — found, researched and translated every morning';
+const STRIP = 'For the students of Central Asia';
+
+export default async function OgImage() {
+  const fonts = await gazetteFonts({
+    headline: 'Fursatly.',
+    body: TAGLINE,
+    label: `${STRIP} fursatly.uz · EN UZ RU`.toUpperCase(),
+  });
+  const label = { fontFamily: 'Fira Sans Condensed', fontWeight: 600, letterSpacing: 3, textTransform: 'uppercase' as const };
+
   return new ImageResponse(
     (
       <div
@@ -14,23 +26,31 @@ export default function OgImage() {
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 28,
-          backgroundColor: 'hsl(222 22% 8%)',
-          backgroundImage:
-            'radial-gradient(circle at 20% 15%, hsl(174 62% 50% / 0.25), transparent 50%), radial-gradient(circle at 80% 85%, hsl(43 85% 60% / 0.22), transparent 50%)',
-          color: 'white',
-          fontFamily: 'sans-serif',
+          padding: '48px 64px',
+          backgroundColor: OG.paper,
+          color: OG.ink,
+          fontFamily: 'Literata',
         }}
       >
-        <div style={{ display: 'flex', fontSize: 92, fontWeight: 700, letterSpacing: -2 }}>Fursatly</div>
-        <div style={{ display: 'flex', fontSize: 34, color: 'hsl(220 12% 72%)', maxWidth: 900, textAlign: 'center' }}>
-          Scholarships, competitions and programs for Central Asian students — researched, translated, in one place.
+        <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 14, borderBottom: `2px solid ${OG.ink}`, fontSize: 22, ...label }}>
+          <span>{STRIP}</span>
+          <span>EN · UZ · RU</span>
         </div>
-        <div style={{ display: 'flex', fontSize: 28, color: 'hsl(174 62% 50%)', marginTop: 12 }}>fursatly.uz</div>
+        <div style={{ display: 'flex', flex: 1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 26 }}>
+          <div style={{ display: 'flex', fontSize: 200, fontWeight: 900, letterSpacing: -9, lineHeight: 1 }}>
+            Fursatly<span style={{ color: OG.vermilion }}>.</span>
+          </div>
+          <div style={{ display: 'flex', fontSize: 32, fontWeight: 400, color: OG.caption, maxWidth: 920, textAlign: 'center', lineHeight: 1.35 }}>
+            {TAGLINE}
+          </div>
+        </div>
+        <div style={{ display: 'flex', borderTop: `5px solid ${OG.ink}`, paddingTop: 4 }}>
+          <div style={{ display: 'flex', flex: 1, borderTop: `2px solid ${OG.ink}`, paddingTop: 14, justifyContent: 'center', fontSize: 24, color: OG.vermilion, ...label }}>
+            fursatly.uz
+          </div>
+        </div>
       </div>
     ),
-    size,
+    { ...size, fonts },
   );
 }
