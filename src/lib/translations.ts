@@ -69,7 +69,7 @@ export const translations = {
     footerCookies: 'Cookie Policy',
     footerAbout: 'About Us',
     footerRights: 'All rights reserved.',
-    footerTagline: 'Built for the youth of Central Asia',
+    footerTagline: 'No borders. Only deadlines.',
 
     // Legal pages & notices
     legalUpdated: 'Last updated',
@@ -140,9 +140,9 @@ export const translations = {
     dLeft: 'd',
 
     // Homepage sections
-    heroKicker: 'For the students of Central Asia',
+    heroKicker: 'No borders. Only deadlines.',
     scroll: 'Scroll',
-    missionLead: 'Our mission',
+    missionLead: 'From the editors',
     missionTitle: "Opportunity shouldn't depend on where you were born.",
     missionBody: 'Every year thousands of scholarships and programs go unclaimed — not for lack of talent, but because no one knew they existed. Fursatly finds them, researches them, and puts them in your language.',
     valuesLead: 'Why Fursatly',
@@ -151,7 +151,7 @@ export const translations = {
     backToTop: 'Back to top',
 
     // Why Fursatly
-    whyFursatly: 'Why Fursatly?',
+    whyFursatly: 'How we work',
     pipelineStart: 'Thousands of raw listings',
     pipelineEnd: 'Ready for you',
     pipelineVia: 'AI reads & filters',
@@ -324,7 +324,7 @@ export const translations = {
     footerCookies: 'Cookie siyosati',
     footerAbout: 'Biz haqimizda',
     footerRights: 'Barcha huquqlar himoyalangan.',
-    footerTagline: 'O\'zbekiston yoshlari uchun tayyorlandi',
+    footerTagline: 'Chegara yo\'q. Faqat muddat bor.',
 
     // Legal pages & notices
     legalUpdated: 'Oxirgi yangilanish',
@@ -395,9 +395,9 @@ export const translations = {
     dLeft: 'kun',
 
     // Homepage sections
-    heroKicker: 'Markaziy Osiyo talabalari uchun',
+    heroKicker: 'Chegara yo\'q. Faqat muddat bor.',
     scroll: 'Pastga',
-    missionLead: 'Bizning maqsad',
+    missionLead: 'Tahririyatdan',
     missionTitle: 'Imkoniyat siz qayerda tug\'ilganingizga bog\'liq bo\'lmasligi kerak.',
     missionBody: 'Har yili minglab grantlar va dasturlar egasiz qoladi — iste\'dod yetishmagani uchun emas, balki ular haqida hech kim bilmagani uchun. Fursatly ularni topadi, o\'rganadi va sizning tilingizga o\'giradi.',
     valuesLead: 'Nega Fursatly',
@@ -406,7 +406,7 @@ export const translations = {
     backToTop: 'Yuqoriga',
 
     // Why Fursatly
-    whyFursatly: 'Nima uchun Fursatly?',
+    whyFursatly: 'Qanday ishlaymiz',
     pipelineStart: 'Minglab xom e\'lonlar',
     pipelineEnd: 'Siz uchun tayyor',
     pipelineVia: 'AI o\'qiydi va saralaydi',
@@ -579,7 +579,7 @@ export const translations = {
     footerCookies: 'Политика Cookie',
     footerAbout: 'О нас',
     footerRights: 'Все права защищены.',
-    footerTagline: 'Создано для молодёжи Центральной Азии',
+    footerTagline: 'Без границ. Только дедлайны.',
 
     // Legal pages & notices
     legalUpdated: 'Последнее обновление',
@@ -650,9 +650,9 @@ export const translations = {
     dLeft: 'дн.',
 
     // Homepage sections
-    heroKicker: 'Для студентов Центральной Азии',
+    heroKicker: 'Без границ. Только дедлайны.',
     scroll: 'Листайте',
-    missionLead: 'Наша миссия',
+    missionLead: 'От редакции',
     missionTitle: 'Возможности не должны зависеть от того, где ты родился.',
     missionBody: 'Каждый год тысячи стипендий и программ остаются невостребованными — не из-за нехватки талантов, а потому что о них никто не узнал. Fursatly находит их, изучает и переводит на твой язык.',
     valuesLead: 'Почему Fursatly',
@@ -661,7 +661,7 @@ export const translations = {
     backToTop: 'Наверх',
 
     // Why Fursatly
-    whyFursatly: 'Почему Fursatly?',
+    whyFursatly: 'Как мы работаем',
     pipelineStart: 'Тысячи сырых объявлений',
     pipelineEnd: 'Готово для вас',
     pipelineVia: 'ИИ читает и отбирает',
