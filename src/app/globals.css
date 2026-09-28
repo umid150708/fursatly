@@ -59,15 +59,15 @@
     /* Night edition — warm black stock, cream ink, a lighter vermilion. */
     color-scheme: dark;
     --background: var(--bg-dark);
-    --foreground: 40 25% 88%;
+    --foreground: 40 16% 79%;
     --card: 30 8% 10%;
-    --card-foreground: 40 25% 88%;
+    --card-foreground: 40 16% 79%;
     --popover: 30 8% 10%;
-    --popover-foreground: 40 25% 88%;
-    --primary: 40 25% 88%;
+    --popover-foreground: 40 16% 79%;
+    --primary: 40 16% 79%;
     --primary-foreground: 30 10% 7%;
     --secondary: 30 7% 14%;
-    --secondary-foreground: 40 25% 88%;
+    --secondary-foreground: 40 16% 79%;
     --muted: 30 7% 14%;
     --muted-foreground: 38 10% 64%;
     --accent: 9 90% 64%;
@@ -75,19 +75,19 @@
     --gold: 40 60% 62%;
     --destructive: 0 75% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 30 6% 22%;
+    --border: 30 6% 38%;
     --input: 38 12% 60%;
     --ring: 9 90% 64%;
     --tape: 40 12% 34%;
 
-    --cat-scholarships: 212 70% 72%;
-    --cat-competitions: 10 85% 70%;
-    --cat-summer-programs: 30 85% 66%;
-    --cat-research: 262 65% 78%;
-    --cat-volunteer: 150 45% 60%;
-    --cat-stem: 188 60% 60%;
+    --cat-scholarships: 212 32% 70%;
+    --cat-competitions: 10 38% 70%;
+    --cat-summer-programs: 30 38% 66%;
+    --cat-research: 262 28% 76%;
+    --cat-volunteer: 150 26% 62%;
+    --cat-stem: 188 30% 62%;
     --cat-internships: 35 14% 68%;
-    --cat-workshops: 334 70% 74%;
+    --cat-workshops: 334 30% 72%;
     --cat-other: 35 8% 64%;
 
     --urgent: 9 90% 64%;
@@ -194,7 +194,7 @@
   opacity: 0.06;
   mix-blend-mode: multiply;
 }
-.dark .paper-grain { opacity: 0.08; mix-blend-mode: screen; }
+.dark .paper-grain { opacity: 0.035; mix-blend-mode: screen; }
 
 /* ── Clippings — the floating cards in the front-page banner ───────────────
    A strip of tape holds each one to the page. */
