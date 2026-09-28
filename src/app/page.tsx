@@ -64,7 +64,13 @@ async function fetchLeadDetail(supabase: Db, id: string): Promise<LeadDetail | n
 
 export default async function Page() {
   const renderedAt = Date.now();
-  const supabase = db();
+  let supabase: Db;
+  try {
+    supabase = db();
+  } catch {
+    // No client (missing env): ship the page empty and let the client fetch.
+    return <HomeClient initialEvents={null} renderedAt={renderedAt} leadDetail={null} />;
+  }
   const initialEvents = await fetchInitialEvents(supabase);
   const lead = initialEvents ? pickLead(initialEvents, renderedAt) : null;
   const leadDetail = lead ? await fetchLeadDetail(supabase, lead.id) : null;
