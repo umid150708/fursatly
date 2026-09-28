@@ -52,20 +52,20 @@ export function TelegramRemindHint({ eventId }: { eventId: string }) {
 
   if (chatId) {
     return (
-      <p className="mt-4 flex items-start gap-2 text-sm text-muted-foreground">
-        <BellRing className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+      <p className="mt-4 flex items-start gap-2 italic text-muted-foreground">
+        <BellRing className="mt-1 h-4 w-4 shrink-0 text-accent" />
         {t.remindArmed}
       </p>
     );
   }
 
   return (
-    <div className="mt-4 rounded-xl border border-accent/30 bg-accent/5 p-4">
-      <p className="flex items-center gap-2 font-display text-sm font-semibold">
+    <div className="mt-4 border border-foreground p-4 md:p-5">
+      <p className="flex items-center gap-2 font-display text-lg font-bold">
         <Bell className="h-4 w-4 text-accent" />
         {t.remindNudgeTitle}
       </p>
-      <p className="mb-3 mt-1 text-sm text-muted-foreground">{t.remindNudgeBody}</p>
+      <p className="mb-4 mt-1 italic text-muted-foreground">{t.remindNudgeBody}</p>
       <TelegramConnectButton />
     </div>
   );

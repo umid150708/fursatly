@@ -12,9 +12,9 @@ type ThemeContextType = {
 };
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: 'dark',
+  theme: 'light',
   toggleTheme: () => {},
-  isDark: true,
+  isDark: false,
 });
 
 /* localStorage throws — it does not just return null — when site data is
@@ -31,7 +31,7 @@ function writeStored(theme: Theme) {
  *  before React exists, so <html> — not React state — is the source of truth.
  *  Reading it back keeps state, DOM and rapid clicks from drifting apart. */
 function currentTheme(): Theme {
-  if (typeof document === 'undefined') return 'dark'; // SSR: matches the probe's default
+  if (typeof document === 'undefined') return 'light'; // SSR: matches the probe's default
   return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
 }
 
@@ -46,7 +46,7 @@ function applyTheme(theme: Theme) {
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Seeded from the DOM so the very first client render already knows the real
-  // theme — it used to start 'dark' for everyone and correct itself after
+  // theme — it used to start on one fixed theme for everyone and correct itself after
   // hydration, which flashed the wrong toggle icon at light-theme visitors.
   const [theme, setTheme] = useState<Theme>(currentTheme);
 

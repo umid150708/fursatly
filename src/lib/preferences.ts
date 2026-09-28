@@ -1,14 +1,15 @@
 import type { Locale } from './translations';
 
 /**
- * First-visit defaults: dark theme + English. A saved preference always wins;
- * unknown/corrupt values fall back to the defaults. The pre-paint theme probe
- * in layout.tsx inlines the same rule as a string — keep them in sync.
+ * First-visit defaults: light theme (the Gazette's morning edition) + English.
+ * A saved preference always wins; unknown/corrupt values fall back to the
+ * defaults. The pre-paint theme probe in layout.tsx inlines the same rule as a
+ * string — keep them in sync.
  */
 export type Theme = 'light' | 'dark';
 
 export function resolveTheme(saved: string | null): Theme {
-  return saved === 'light' || saved === 'dark' ? saved : 'dark';
+  return saved === 'light' || saved === 'dark' ? saved : 'light';
 }
 
 export function resolveLocale(saved: string | null): Locale {

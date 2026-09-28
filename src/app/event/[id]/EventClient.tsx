@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo, type CSSProperties, type ElementType } from 'react';
+import React, { useEffect, useState, useMemo, type CSSProperties } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useDb } from '@/supabase';
 import { useLanguage } from '@/context/LanguageContext';
@@ -8,26 +8,14 @@ import { translations, translateSource, translateLanguage } from '@/lib/translat
 import { Button } from '@/components/ui/button';
 import { SiteNav } from '@/components/home/SiteNav';
 import { SaveButton } from '@/components/SaveButton';
-import { MentorPanel } from '@/components/mentor/MentorPanel';
+import { MentorPanel, OPEN_MENTOR_EVENT } from '@/components/mentor/MentorPanel';
 import { TelegramRemindHint } from '@/components/TelegramRemindHint';
 import { LEGAL_EMAIL } from '@/lib/legal/types';
 import { isUuid } from '@/lib/event-path';
+import { formatDate, formatAges, daysUntil, daysLeftLabel } from '@/lib/dates';
 import { SiteFooter } from '@/components/home/SiteFooter';
-import { Reveal } from '@/components/motion/Reveal';
 import { catHue } from '@/lib/categoryColor';
-import {
-  MapPin,
-  Calendar,
-  User,
-  Languages,
-  ArrowLeft,
-  Globe,
-  BookOpen,
-  Video,
-  CheckCircle2,
-  Loader2,
-  ExternalLink,
-} from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Loader2, MessageCircle, Play } from 'lucide-react';
 
 /** Pull a display string from a research item that may be a string or an object. */
 const itemText = (x: any): string =>
@@ -80,39 +68,24 @@ function mapResearch(researchData: any) {
   };
 }
 
-/** Card wrapper for the list sections — matches the homepage's bordered surface,
- *  with the per-category hue inherited from the page root via the --hue var. */
-function InfoCard({
-  icon: Icon,
-  label,
-  children,
-}: {
-  icon: ElementType;
-  label: string;
-  children: React.ReactNode;
-}) {
+/** A section of the article: a heavy rule, a serif heading, then the body. */
+function ArticleSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
-      <h3 className="mb-6 flex items-center gap-3 font-display text-lg font-semibold tracking-tight md:text-xl">
-        <Icon className="h-5 w-5 shrink-0 text-[hsl(var(--hue))]" />
-        {label}
-      </h3>
+    <section className="mt-14">
+      <h2 className="border-b-2 border-foreground pb-2 font-display text-3xl font-black tracking-[-0.02em] md:text-4xl">
+        {title}
+      </h2>
       {children}
     </section>
   );
 }
 
-/** A labelled fact row in the sidebar quick-details card. */
-function Fact({ icon: Icon, label, value }: { icon: ElementType; label: string; value: string }) {
+/** One row of the "Quick details" box: label left, value right, dotted rule. */
+function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center gap-4">
-      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border bg-background">
-        <Icon className="h-5 w-5 text-[hsl(var(--hue))]" />
-      </span>
-      <div className="min-w-0">
-        <p className="text-eyebrow text-muted-foreground">{label}</p>
-        <p className="truncate font-display font-semibold">{value}</p>
-      </div>
+    <div className="flex items-baseline justify-between gap-4 border-b border-dotted border-muted-foreground py-3">
+      <dt className="font-label text-[0.95rem] text-muted-foreground">{label}</dt>
+      <dd className="text-right text-lg font-bold leading-snug">{value}</dd>
     </div>
   );
 }
@@ -204,7 +177,7 @@ export default function EventClient({ initialEvent }: { initialEvent: any | null
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-accent" />
+        <Loader2 className="h-10 w-10 animate-spin" />
       </div>
     );
   }
@@ -213,8 +186,9 @@ export default function EventClient({ initialEvent }: { initialEvent: any | null
     return (
       <div className="flex min-h-screen flex-col">
         <SiteNav />
-        <main className="container flex flex-1 flex-col items-center justify-center gap-6 pt-28 text-center">
-          <h1 className="text-display font-display font-semibold">{t.eventNotFound}</h1>
+        <main className="container flex flex-1 flex-col items-center justify-center gap-6 py-24 text-center">
+          <p className="text-eyebrow text-accent">404</p>
+          <h1 className="text-display">{t.eventNotFound}</h1>
           <Button onClick={() => router.push('/')}>{t.goHome}</Button>
         </main>
       </div>
@@ -224,23 +198,11 @@ export default function EventClient({ initialEvent }: { initialEvent: any | null
   const hue = catHue(event.source);
   const title = event.research_data?.translations?.[locale]?.title || event.title;
 
-  const daysLeft = event.deadline
-    ? Math.ceil((new Date(event.deadline).getTime() - Date.now()) / 86_400_000)
-    : null;
+  const daysLeft = daysUntil(event.deadline, Date.now());
   const urgent = daysLeft != null && daysLeft >= 0 && daysLeft <= 7;
+  const passed = daysLeft != null && daysLeft < 0;
 
-  const countdown =
-    daysLeft == null || daysLeft < 0
-      ? null
-      : daysLeft === 0
-      ? (t.deadlineToday || 'Closes today')
-      : daysLeft === 1
-      ? (t.deadline1Day || '1 day left')
-      : `${daysLeft} ${t.daysLeft || 'days left'}`;
-
-  const deadlineText = event.deadline
-    ? `${String(new Date(event.deadline).getDate()).padStart(2, '0')}/${String(new Date(event.deadline).getMonth() + 1).padStart(2, '0')}/${new Date(event.deadline).getFullYear()}`
-    : t.rolling;
+  const deadlineText = event.deadline ? formatDate(event.deadline, locale) : t.rolling;
 
   const cleanLocation = (event.location && !/\bnull\b|\bnone\b|\bundefined\b/i.test(event.location)) ? event.location : '—';
   const cleanLanguage = (event.language && !/\bnull\b|\bnone\b|\bundefined\b/i.test(event.language)) ? translateLanguage(event.language, t) : '—';
@@ -250,252 +212,255 @@ export default function EventClient({ initialEvent }: { initialEvent: any | null
     ? t.prepResources
     : t.extraInfo;
 
+  const funded = event.research_data?.funding_type === 'Full';
+  const ages = formatAges(event.age_min, event.age_max, t.years, t.anyAge);
+
+  const listText = 'text-[1.05rem] leading-relaxed md:text-lg';
+
   return (
     <div className="flex min-h-screen flex-col" style={{ ['--hue' as any]: hue } as CSSProperties}>
       <SiteNav />
 
-      <main className="flex-1 pb-24 pt-28 md:pt-32">
-        <div className="container">
-          {/* Back link */}
-          <button
-            onClick={() => router.back()}
-            className="mb-8 inline-flex items-center gap-2 text-eyebrow text-muted-foreground transition-colors hover:text-[hsl(var(--hue))]"
-          >
-            <ArrowLeft className="h-4 w-4" /> {t.backToOpportunities}
-          </button>
+      <main className="container flex-1 pb-8 pt-6 md:pt-8">
+        <button
+          onClick={() => router.back()}
+          className="text-eyebrow inline-flex min-h-11 items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" /> {t.backToOpportunities}
+        </button>
 
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-3 lg:gap-14">
-            {/* ── Main column ─────────────────────────────────────────── */}
-            <div className="space-y-10 md:space-y-12 lg:col-span-2">
-              {/* Hero */}
-              <Reveal>
-                <header className="grain relative overflow-hidden rounded-2xl border border-border bg-card p-7 sm:p-9 md:p-12">
-                  {/* Category-hue glow */}
-                  <div
-                    className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full blur-3xl"
-                    style={{ background: `hsl(var(--hue) / 0.16)` }}
-                    aria-hidden
-                  />
-                  <div className="relative">
-                    <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-                      <span className="text-eyebrow font-semibold text-[hsl(var(--hue))]">
-                        {translateSource(event.source || 'Other', t)}
-                      </span>
-                      {countdown && (
-                        <span className={`inline-flex items-center gap-1.5 text-eyebrow font-semibold ${urgent ? 'text-urgent' : 'text-muted-foreground'}`}>
-                          <Calendar className="h-3.5 w-3.5" /> {countdown}
-                        </span>
-                      )}
-                    </div>
+        <div className="mt-4 grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,1fr)_1px_21rem] lg:gap-12 xl:grid-cols-[minmax(0,1fr)_1px_23rem]">
+          {/* ── The article ─────────────────────────────────────────── */}
+          <article className="min-w-0">
+            <p className="text-eyebrow text-[hsl(var(--hue))]">
+              {[translateSource(event.source || 'Other', t), funded ? t.fullyFunded : null, cleanLocation !== '—' ? cleanLocation : null]
+                .filter(Boolean)
+                .join(' · ')}
+            </p>
 
-                    <h1 className="max-w-3xl font-display text-3xl font-semibold leading-[1.05] tracking-tight md:text-5xl lg:text-[3.5rem]">
-                      {title}
-                    </h1>
+            <h1 className="mt-3 max-w-4xl font-display text-[2.6rem] font-black leading-[0.98] tracking-[-0.035em] md:text-6xl xl:text-7xl">
+              {title}
+            </h1>
 
-                    {event.research_data?.organisation && (
-                      <p className="mt-5 text-base text-muted-foreground md:text-lg">
-                        {t.organisedBy || 'Organised by'}{' '}
-                        <span className="font-semibold text-foreground">{event.research_data.organisation}</span>
-                      </p>
-                    )}
+            {event.research_data?.organisation && (
+              <p className="mt-5 text-lg italic text-muted-foreground md:text-xl">
+                {t.organisedBy || 'Organised by'}{' '}
+                <span className="font-semibold not-italic text-foreground">{event.research_data.organisation}</span>
+              </p>
+            )}
 
-                    <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-6 text-eyebrow text-muted-foreground">
-                      {event.location && (
-                        <span className="inline-flex items-center gap-1.5">
-                          <MapPin className="h-3.5 w-3.5 text-[hsl(var(--hue))]" /> {event.location}
-                        </span>
-                      )}
-                      {event.language && (
-                        <span className="inline-flex items-center gap-1.5">
-                          <Languages className="h-3.5 w-3.5 text-[hsl(var(--hue))]" /> {translateLanguage(event.language, t)}
-                        </span>
-                      )}
-                      {(event.age_min || event.age_max) && (
-                        <span className="inline-flex items-center gap-1.5">
-                          <User className="h-3.5 w-3.5 text-[hsl(var(--hue))]" /> {event.age_min ?? '?'}–{event.age_max ?? '?'}
-                        </span>
-                      )}
-                    </div>
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-y border-foreground py-3">
+              <p className="font-label text-[0.95rem] text-muted-foreground">
+                {[cleanLocation !== '—' ? cleanLocation : null, cleanLanguage !== '—' ? cleanLanguage : null, ages, `${t.deadlineLabel}: ${deadlineText}`]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+              <SaveButton eventId={event.id} size="lg" />
+            </div>
+            <TelegramRemindHint eventId={event.id} />
 
-                    <div className="mt-6">
-                      <SaveButton eventId={event.id} size="lg" />
-                      <TelegramRemindHint eventId={event.id} />
-                    </div>
-                  </div>
-                </header>
-              </Reveal>
-
-              {/* Overview */}
-              <Reveal>
-                <section className="space-y-5">
-                  <h2 className="text-eyebrow text-muted-foreground">{t.overview}</h2>
-                  <p className="whitespace-pre-wrap text-lg leading-relaxed text-muted-foreground md:text-xl">
-                    {research?.extendedDescription || event.description}
-                  </p>
-                </section>
-              </Reveal>
-
-              {research ? (
-                <>
-                  {research.keyDetails?.length > 0 && (
-                    <Reveal>
-                      <InfoCard icon={CheckCircle2} label={t.keyDetails}>
-                        <ul className="space-y-4">
-                          {research.keyDetails.map((detail: any, idx: number) => (
-                            <li key={idx} className="flex items-start gap-3 text-base leading-relaxed md:text-lg">
-                              <span className="mt-1 font-bold text-[hsl(var(--hue))]">→</span>
-                              {itemText(detail)}
-                            </li>
-                          ))}
-                        </ul>
-                      </InfoCard>
-                    </Reveal>
+            {/* Phones: the countdown and the apply link up front, not under the article */}
+            <div className="mt-5 flex items-stretch gap-3 lg:hidden">
+              <span className="halftone flex shrink-0 items-center border border-foreground px-2">
+                <span className="flex items-baseline gap-1.5 bg-background px-2 py-1">
+                  {daysLeft != null && daysLeft > 1 ? (
+                    <>
+                      <span className={`font-display text-3xl font-black leading-none ${urgent ? 'text-urgent' : ''}`}>{daysLeft}</span>
+                      <span className="text-eyebrow text-[0.65rem] leading-tight">{t.daysLeft}</span>
+                    </>
+                  ) : (
+                    <span className={`text-eyebrow ${urgent ? 'text-urgent' : ''}`}>
+                      {daysLeft == null ? t.rolling : passed ? deadlineText : daysLeftLabel(daysLeft, t)}
+                    </span>
                   )}
-
-                  {research.benefits?.length > 0 && (
-                    <Reveal>
-                      <InfoCard icon={CheckCircle2} label={t.keyBenefits}>
-                        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                          {research.benefits.map((benefit: any, idx: number) => (
-                            <li key={idx} className="flex items-start gap-3 text-base leading-relaxed md:text-lg">
-                              <span className="mt-0.5 font-bold text-[hsl(var(--hue))]">•</span>
-                              {itemText(benefit)}
-                            </li>
-                          ))}
-                        </ul>
-                      </InfoCard>
-                    </Reveal>
-                  )}
-
-                  {research.eligibility?.length > 0 && (
-                    <Reveal>
-                      <InfoCard icon={User} label={t.eligibility}>
-                        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                          {research.eligibility.map((item: any, idx: number) => (
-                            <li key={idx} className="flex items-start gap-3 text-base leading-relaxed md:text-lg">
-                              <span className="mt-0.5 font-bold text-[hsl(var(--hue))]">•</span>
-                              {itemText(item)}
-                            </li>
-                          ))}
-                        </ul>
-                      </InfoCard>
-                    </Reveal>
-                  )}
-
-                  {research.resources?.length > 0 && (
-                    <Reveal>
-                      <section className="space-y-6">
-                        <h3 className="flex items-center gap-3 font-display text-lg font-semibold tracking-tight md:text-xl">
-                          <BookOpen className="h-5 w-5 text-[hsl(var(--hue))]" /> {resourcesLabel}
-                        </h3>
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                          {research.resources.map((res: any, idx: number) => {
-                            const href = safeHref(res.url);
-                            if (!href) return null; // unlinkable resource — don't render a dead card
-                            const isVideo = res.type === 'Video' ||
-                              href.includes('youtube.com') || href.includes('youtu.be');
-                            const ytId = isVideo
-                              ? (href.match(/[?&]v=([^&]+)/)?.[1] || href.match(/youtu\.be\/([^?]+)/)?.[1])
-                              : null;
-                            return isVideo ? (
-                              <a
-                                key={idx}
-                                href={href}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group overflow-hidden rounded-xl border border-border bg-card transition-all duration-500 hover:-translate-y-1 hover:border-[hsl(var(--hue)/0.55)]"
-                              >
-                                {ytId && (
-                                  <div className="relative aspect-video w-full overflow-hidden">
-                                    <img
-                                      src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`}
-                                      alt={res.title}
-                                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                    />
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/25 transition-colors group-hover:bg-black/40">
-                                      <span className="grid h-14 w-14 place-items-center rounded-full bg-red-600 shadow-lg">
-                                        <Video className="ml-0.5 h-6 w-6 text-white" />
-                                      </span>
-                                    </div>
-                                  </div>
-                                )}
-                                <div className="p-5">
-                                  <div className="mb-2 flex items-start justify-between">
-                                    <span className="text-eyebrow font-semibold text-red-500">{res.type}</span>
-                                    <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                                  </div>
-                                  <h4 className="line-clamp-2 font-display font-semibold leading-snug transition-colors group-hover:text-[hsl(var(--hue))]">
-                                    {res.title}
-                                  </h4>
-                                  {res.channel && <p className="mt-1 text-sm text-muted-foreground">{res.channel}</p>}
-                                </div>
-                              </a>
-                            ) : (
-                              <a
-                                key={idx}
-                                href={href}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group flex flex-col rounded-xl border border-border bg-card p-6 transition-all duration-500 hover:-translate-y-1 hover:border-[hsl(var(--hue)/0.55)]"
-                              >
-                                <div className="mb-4 flex items-start justify-between">
-                                  <span className="text-eyebrow font-semibold text-muted-foreground">{res.type}</span>
-                                  <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                                </div>
-                                <h4 className="font-display text-lg font-semibold leading-snug transition-colors group-hover:text-[hsl(var(--hue))]">
-                                  {res.title}
-                                </h4>
-                              </a>
-                            );
-                          })}
-                        </div>
-                      </section>
-                    </Reveal>
-                  )}
-                </>
-              ) : null}
+                </span>
+              </span>
+              {applyHref && (
+                <a
+                  href={applyHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-label flex min-h-12 flex-1 items-center justify-center gap-2 bg-foreground px-4 text-sm font-semibold uppercase tracking-[0.08em] text-background"
+                >
+                  {research?.applyLabel || t.officialWebsite} <ArrowUpRight className="h-4 w-4 shrink-0" />
+                </a>
+              )}
             </div>
 
-            {/* ── Sidebar ─────────────────────────────────────────────── */}
-            <aside>
-              <div className="sticky top-24 space-y-6 rounded-2xl border border-border bg-card p-6 md:p-8">
-                <h3 className="text-eyebrow text-muted-foreground">{t.quickDetails}</h3>
+            {/* Overview */}
+            <section className="mt-8">
+              <h2 className="sr-only">{t.overview}</h2>
+              <p className="dropcap columns-news whitespace-pre-wrap text-lg leading-relaxed md:text-[1.2rem]">
+                {research?.extendedDescription || event.description}
+              </p>
+            </section>
 
-                <div className="space-y-5">
-                  <Fact icon={MapPin} label={t.locationLabel} value={cleanLocation} />
-                  <Fact icon={Calendar} label={t.deadlineLabel} value={deadlineText} />
-                  <Fact icon={User} label={t.ageGroup} value={`${event.age_min} – ${event.age_max} ${t.years}`} />
-                  <Fact icon={Languages} label={t.languageLabel} value={cleanLanguage} />
-                </div>
+            {research ? (
+              <>
+                {research.keyDetails?.length > 0 && (
+                  <ArticleSection title={t.keyDetails}>
+                    <ol>
+                      {research.keyDetails.map((detail: any, idx: number) => (
+                        <li key={idx} className={`grid grid-cols-[2.75rem_1fr] gap-3 border-b border-border py-4 ${listText}`}>
+                          <span className="font-display text-3xl font-black leading-none text-[hsl(var(--hue))]">{idx + 1}</span>
+                          <span>{itemText(detail)}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </ArticleSection>
+                )}
 
+                {(research.benefits?.length > 0 || research.eligibility?.length > 0) && (
+                  <section className="rule-heavy mt-14 grid gap-10 pt-5 md:grid-cols-2 md:gap-12">
+                    {research.benefits?.length > 0 && (
+                      <div>
+                        <h2 className="text-eyebrow text-[0.9rem]">{t.keyBenefits}</h2>
+                        <ul className="mt-4 space-y-4">
+                          {research.benefits.map((benefit: any, idx: number) => (
+                            <li key={idx} className={`italic ${listText}`}>“{itemText(benefit)}”</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {research.eligibility?.length > 0 && (
+                      <div>
+                        <h2 className="text-eyebrow text-[0.9rem]">{t.eligibility}</h2>
+                        <ul className="mt-4 space-y-3">
+                          {research.eligibility.map((item: any, idx: number) => (
+                            <li key={idx} className={`grid grid-cols-[1.5rem_1fr] gap-2 ${listText}`}>
+                              <span aria-hidden className="mt-[0.4em] h-3.5 w-3.5 border-[1.5px] border-foreground" />
+                              <span>{itemText(item)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </section>
+                )}
+
+                {research.resources?.length > 0 && (
+                  <ArticleSection title={resourcesLabel}>
+                    <ul>
+                      {research.resources.map((res: any, idx: number) => {
+                        const href = safeHref(res.url);
+                        if (!href) return null; // unlinkable resource — don't render a dead link
+                        const isVideo = res.type === 'Video' ||
+                          href.includes('youtube.com') || href.includes('youtu.be');
+                        const ytId = isVideo
+                          ? (href.match(/[?&]v=([^&]+)/)?.[1] || href.match(/youtu\.be\/([^?]+)/)?.[1])
+                          : null;
+                        return (
+                          <li key={idx} className="border-b border-border">
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="group grid grid-cols-[7.5rem_1fr] items-center gap-4 py-4 sm:grid-cols-[10rem_1fr] sm:gap-5"
+                            >
+                              <span className="relative block aspect-video overflow-hidden border border-foreground">
+                                {ytId ? (
+                                  // Press-photo treatment: greyscale until hovered.
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
+                                    alt=""
+                                    loading="lazy"
+                                    className="h-full w-full object-cover grayscale transition duration-500 group-hover:grayscale-0"
+                                  />
+                                ) : (
+                                  <span className="halftone block h-full w-full" />
+                                )}
+                                <span className="absolute inset-0 grid place-items-center">
+                                  <span className="grid h-9 w-9 place-items-center bg-foreground text-background">
+                                    {isVideo ? <Play className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+                                  </span>
+                                </span>
+                              </span>
+                              <span className="min-w-0">
+                                <span className="text-eyebrow block text-[0.7rem] text-muted-foreground">
+                                  {res.type}{res.channel ? ` · ${res.channel}` : ''}
+                                </span>
+                                <span className="mt-1 line-clamp-3 block font-display text-lg font-bold leading-snug decoration-1 underline-offset-4 group-hover:underline md:text-xl">
+                                  {res.title}
+                                </span>
+                              </span>
+                            </a>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </ArticleSection>
+                )}
+              </>
+            ) : null}
+          </article>
+
+          <span aria-hidden className="hidden bg-foreground lg:block" />
+
+          {/* ── Sidebar ─────────────────────────────────────────────── */}
+          <aside>
+            <div className="space-y-8 lg:sticky lg:top-24">
+              <div className="halftone flex h-44 items-center justify-center border border-foreground">
+                <span className="flex items-center gap-3 bg-background px-4 py-2.5">
+                  {daysLeft != null && daysLeft > 1 ? (
+                    <>
+                      <span className={`font-display text-7xl font-black leading-none tracking-[-0.05em] ${urgent ? 'text-urgent' : ''}`}>
+                        {daysLeft}
+                      </span>
+                      <span className="text-eyebrow max-w-[6rem] leading-tight">{t.daysLeft}</span>
+                    </>
+                  ) : (
+                    <span className={`text-eyebrow text-xl ${urgent ? 'text-urgent' : ''}`}>
+                      {daysLeft == null ? t.rolling : passed ? deadlineText : daysLeftLabel(daysLeft, t)}
+                    </span>
+                  )}
+                </span>
+              </div>
+
+              <div className="rule-heavy pt-3">
+                <h2 className="text-eyebrow">{t.quickDetails}</h2>
+                <dl className="mt-2">
+                  <Fact label={t.locationLabel} value={cleanLocation} />
+                  <Fact label={t.deadlineLabel} value={deadlineText} />
+                  <Fact label={t.ageGroup} value={ages} />
+                  <Fact label={t.languageLabel} value={cleanLanguage} />
+                  {event.research_data?.funding_type && (
+                    <Fact label={t.fundingCoverage} value={funded ? t.fullyFunded : t.partial} />
+                  )}
+                </dl>
                 {applyHref && (
                   <a
                     href={applyHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.02]"
+                    className="font-label mt-6 flex h-14 w-full items-center justify-center gap-2 bg-foreground px-6 text-base font-semibold uppercase tracking-[0.08em] text-background transition-colors hover:bg-accent hover:text-accent-foreground"
                   >
-                    <Globe className="h-4 w-4" />
-                    {research?.applyLabel || t.officialWebsite}
+                    {research?.applyLabel || t.officialWebsite} <ArrowUpRight className="h-4 w-4" />
                   </a>
                 )}
-
-                <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new Event(OPEN_MENTOR_EVENT))}
+                  className="font-label mt-3 hidden h-14 w-full items-center justify-center gap-2 border border-foreground px-6 text-base font-semibold uppercase tracking-[0.08em] transition-colors hover:bg-foreground hover:text-background lg:flex"
+                >
+                  <MessageCircle className="h-4 w-4" /> {t.mentorTitle}
+                </button>
+                <p className="mt-4 text-sm italic leading-relaxed text-muted-foreground">
                   {t.eventSourceNotice}{' '}
                   <a
                     href={`mailto:${LEGAL_EMAIL}?subject=${encodeURIComponent(`Fursatly: ${event.title}`)}`}
-                    className="underline underline-offset-2 hover:text-foreground"
+                    className="not-italic underline underline-offset-2 hover:text-foreground"
                   >
                     {t.eventReportLink}
                   </a>
                 </p>
               </div>
-            </aside>
-          </div>
+            </div>
+          </aside>
         </div>
       </main>
 
-      <SiteFooter t={t} onCategory={() => router.push('/')} />
+      <SiteFooter t={t} />
       <MentorPanel eventId={event.id} />
     </div>
   );
