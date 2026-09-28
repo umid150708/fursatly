@@ -2,110 +2,134 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Wordmark } from '@/components/brand/Wordmark';
-import { DoppiIcon } from '@/components/brand/DoppiIcon';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { AccountButton } from '@/components/AccountButton';
+import { useLanguage } from '@/context/LanguageContext';
+import { SECTIONS, sectionHref } from '@/components/home/sections';
+import { formatDateline } from '@/lib/dates';
+
+interface SiteNavProps {
+  /** `front` prints the full masthead above the section bar (home page only). */
+  variant?: 'front' | 'inner';
+  /** Home page: the section bar filters in place instead of linking. */
+  activeSection?: string | null;
+  onSection?: (id: string | null) => void;
+}
 
 /**
- * Scroll-reactive nav: transparent over the hero, condenses + goes solid once
- * you scroll, hides on scroll-down and reveals on scroll-up, and carries a
- * teal→gold scroll-progress line. The doppi emblem is the brand mark.
+ * The paper's head: a dateline strip, the masthead (front page only), and a
+ * sticky section bar carrying the nameplate, the sections and the controls,
+ * with a vermilion reading-progress rule along its foot. On the front page the
+ * small nameplate only joins the bar once the big masthead has scrolled away.
  */
-export function SiteNav() {
-  const [scrolled, setScrolled] = useState(false);
-  const [hidden, setHidden] = useState(false);
-  const barRef = useRef<HTMLDivElement>(null);
+export function SiteNav({ variant = 'inner', activeSection = null, onSection }: SiteNavProps) {
+  const { t, locale } = useLanguage();
+  const [dateline, setDateline] = useState('');
+  const [stuck, setStuck] = useState(variant === 'inner');
+  const mastRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
 
-  // rAF-polled scroll state — robust to Lenis (reads the real scrollY each
-  // frame). Progress is written straight to the DOM to avoid per-frame renders;
-  // React state only flips on the scrolled/hidden thresholds.
+  // Client-only: the server HTML is built ahead of time (ISR) and in English,
+  // so a server-rendered date would be stale and in the wrong language.
+  useEffect(() => { setDateline(formatDateline(new Date(), locale)); }, [locale]);
+
   useEffect(() => {
-    let raf = 0;
-    let last = window.scrollY;
-    let curScrolled = false;
-    let curHidden = false;
+    if (variant !== 'front' || !mastRef.current) return;
+    const io = new IntersectionObserver(([e]) => setStuck(!e.isIntersecting));
+    io.observe(mastRef.current);
+    return () => io.disconnect();
+  }, [variant]);
 
-    // The scrollable distance is CACHED, not read per frame. Reading
-    // `documentElement.scrollHeight` forces a synchronous layout of the whole
-    // document, and on the homepage — 12,000px tall, ~2,500 nodes — that
-    // measured 14.6ms median (51ms worst) whenever anything else had dirtied
-    // layout that frame. At a 16.7ms budget the progress bar alone was eating
-    // the frame. The value only changes when the page is re-laid-out, so a
-    // ResizeObserver refreshes it then instead.
+  // Reading progress. The scrollable distance is cached and refreshed by a
+  // ResizeObserver: reading scrollHeight on every scroll event forces a layout
+  // of the whole page, which on the home page cost most of a frame.
+  useEffect(() => {
+    const bar = progressRef.current;
+    if (!bar) return;
     let max = 0;
     const measure = () => { max = document.documentElement.scrollHeight - window.innerHeight; };
-    measure();
-
-    const ro = new ResizeObserver(measure);
-    ro.observe(document.body);
-    window.addEventListener('resize', measure);
-
-    const tick = () => {
-      const y = window.scrollY;
-      if (barRef.current) barRef.current.style.transform = `scaleX(${max > 0 ? Math.min(1, y / max) : 0})`;
-
-      const nextScrolled = y > 40;
-      if (nextScrolled !== curScrolled) { curScrolled = nextScrolled; setScrolled(nextScrolled); }
-
-      let nextHidden = curHidden;
-      if (y > 320 && y > last + 4) nextHidden = true;        // scrolling down
-      else if (y < last - 4 || y < 320) nextHidden = false;  // scrolling up / near top
-      if (nextHidden !== curHidden) { curHidden = nextHidden; setHidden(nextHidden); }
-
-      last = y;
-      raf = requestAnimationFrame(tick);
+    const paint = () => {
+      bar.style.transform = `scaleX(${max > 0 ? Math.min(1, window.scrollY / max) : 0})`;
     };
-    raf = requestAnimationFrame(tick);
-
+    measure();
+    paint();
+    const ro = new ResizeObserver(() => { measure(); paint(); });
+    ro.observe(document.body);
+    window.addEventListener('scroll', paint, { passive: true });
+    window.addEventListener('resize', measure);
     return () => {
-      cancelAnimationFrame(raf);
       ro.disconnect();
+      window.removeEventListener('scroll', paint);
       window.removeEventListener('resize', measure);
     };
   }, []);
 
+  const sectionLinks = (className: string) =>
+    SECTIONS.map(({ id, labelKey }) => {
+      const active = activeSection === id;
+      const cls = `${className} ${active ? 'text-accent underline decoration-2 underline-offset-[6px]' : 'hover:text-accent'}`;
+      return onSection ? (
+        <button key={id} type="button" aria-pressed={active} onClick={() => onSection(active ? null : id)} className={cls}>
+          {t[labelKey]}
+        </button>
+      ) : (
+        <a key={id} href={sectionHref(id)} className={cls}>
+          {t[labelKey]}
+        </a>
+      );
+    });
+
+  const linkCls = 'text-eyebrow shrink-0 whitespace-nowrap transition-colors';
+
   return (
-    <header
-      className={`fixed inset-x-0 top-0 z-50 transition-transform duration-500 ease-out ${
-        hidden ? '-translate-y-full' : 'translate-y-0'
-      }`}
-    >
-      {/* scroll progress line */}
-      <div
-        ref={barRef}
-        className="absolute inset-x-0 top-0 h-[2px] origin-left scale-x-0 bg-gradient-to-r from-accent via-gold to-accent"
-        aria-hidden
-      />
-      <div
-        className={`transition-colors duration-500 ${
-          scrolled ? 'border-b border-border bg-background/80 backdrop-blur-md' : 'border-b border-transparent'
-        }`}
-      >
-        <div
-          className={`container flex items-center justify-between transition-[height] duration-500 ${
-            scrolled ? 'h-14' : 'h-20'
-          }`}
-        >
-          <a href="/" aria-label="Fursatly home" className="group flex items-center gap-3">
-            <span
-              className={`grid shrink-0 place-items-center rounded-xl bg-[#0e1522] ring-1 ring-gold/40 transition-all duration-500 group-hover:ring-gold/70 ${
-                scrolled ? 'h-9 w-9' : 'h-11 w-11'
-              }`}
-            >
-              <DoppiIcon className={scrolled ? 'h-6 w-6' : 'h-7 w-7'} />
-            </span>
-            <span className={`transition-all duration-500 ${scrolled ? 'text-lg' : 'text-2xl'}`}>
-              <Wordmark />
-            </span>
-          </a>
-          <div className="flex items-center gap-1 md:gap-2">
-            <ThemeToggle />
-            <LanguageSwitcher />
-            <AccountButton />
+    <>
+      <header className="container">
+        <div className="flex h-10 items-center justify-between gap-4 border-b border-foreground">
+          <span className="text-eyebrow text-[0.75rem]">{dateline}</span>
+          <span className="text-eyebrow hidden text-[0.75rem] sm:inline">{t.heroKicker}</span>
+        </div>
+        {variant === 'front' && (
+          <div ref={mastRef} className="py-6 text-center md:py-9">
+            <a href="/" aria-label="Fursatly" className="inline-block">
+              <Wordmark className="text-masthead" />
+            </a>
+            <p className="mx-auto mt-6 max-w-2xl text-base italic leading-snug text-muted-foreground md:mt-9 md:text-lg">
+              {t.mastheadTagline}
+            </p>
+          </div>
+        )}
+      </header>
+
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm">
+        <div className="container">
+          {variant === 'front' && <div className="rule-double" aria-hidden />}
+          <div className="flex h-14 items-center gap-5 border-b border-foreground xl:gap-7">
+            {stuck && (
+              <a href="/" aria-label="Fursatly" className="shrink-0 text-2xl motion-safe:animate-in motion-safe:fade-in">
+                <Wordmark />
+              </a>
+            )}
+            <nav aria-label={t.footerPlatform} className="no-scrollbar hidden min-w-0 flex-1 items-center gap-5 overflow-x-auto xl:flex">
+              {sectionLinks(`${linkCls} py-2`)}
+            </nav>
+            <div className="ml-auto flex shrink-0 items-center gap-2">
+              <LanguageSwitcher />
+              <ThemeToggle />
+              <AccountButton />
+            </div>
           </div>
         </div>
+        <div ref={progressRef} aria-hidden className="h-[2px] origin-left scale-x-0 bg-accent" />
       </div>
-    </header>
+
+      {/* Below xl the sections get their own row, which scrolls sideways and
+          stays out of the sticky bar so it does not eat a phone's screen. */}
+      <nav aria-label={t.footerPlatform} className="container xl:hidden">
+        <div className="no-scrollbar flex gap-5 overflow-x-auto border-b border-border">
+          {sectionLinks(`${linkCls} py-3`)}
+        </div>
+      </nav>
+    </>
   );
 }

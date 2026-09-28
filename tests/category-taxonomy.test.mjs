@@ -77,12 +77,43 @@ describe('catHue', () => {
 // ── WCAG contrast: category colors are used as text in both themes ──────────
 const css = readFileSync(new URL('../src/app/globals.css', import.meta.url), 'utf8');
 
-/** Extract `--name: H S% L%;` triples from a CSS block matched by `blockRe`. */
-function varsIn(blockRe) {
+/** Raw `--name: <value>;` declarations from a CSS block matched by `blockRe`. */
+function rawVarsIn(blockRe) {
   const block = css.match(blockRe)?.[0] ?? '';
   const out = {};
-  for (const m of block.matchAll(/--([\w-]+):\s*([\d.]+)\s+([\d.]+)%\s+([\d.]+)%/g)) {
-    out[m[1]] = [Number(m[2]), Number(m[3]), Number(m[4])];
+  for (const m of block.matchAll(/--([\w-]+):\s*([^;]+);/g)) out[m[1]] = m[2].trim();
+  return out;
+}
+
+/** `:root` declarations, the fallback scope for any `var()` a theme block references. */
+const ROOT_RAW = rawVarsIn(/:root\s*{[^}]+}/);
+
+/**
+ * Extract `--name: H S% L%;` triples from a CSS block matched by `blockRe`,
+ * following one or more levels of `var()` indirection.
+ *
+ * `--background` is declared as `var(--bg-light)` / `var(--bg-dark)` so the theme
+ * toggle can read the incoming background while the outgoing theme is still
+ * applied (see globals.css). A parser that only matched literal triples silently
+ * dropped it, which left the contrast assertions below comparing against
+ * `undefined` instead of failing loudly.
+ */
+function varsIn(blockRe) {
+  const raw = rawVarsIn(blockRe);
+  const resolve = (value, depth = 0) => {
+    if (depth > 4) return null; // cyclic or pathological var() chain
+    const ref = /^var\(\s*--([\w-]+)\s*\)$/.exec(value);
+    if (ref) {
+      const next = raw[ref[1]] ?? ROOT_RAW[ref[1]];
+      return next ? resolve(next, depth + 1) : null;
+    }
+    const t = /^([\d.]+)\s+([\d.]+)%\s+([\d.]+)%/.exec(value);
+    return t ? [Number(t[1]), Number(t[2]), Number(t[3])] : null;
+  };
+  const out = {};
+  for (const [name, value] of Object.entries(raw)) {
+    const triple = resolve(value);
+    if (triple) out[name] = triple;
   }
   return out;
 }

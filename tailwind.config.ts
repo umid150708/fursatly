@@ -15,9 +15,10 @@ export default {
     },
     extend: {
       fontFamily: {
-        display:  ['var(--font-display)', 'system-ui', 'sans-serif'],
-        headline: ['var(--font-display)', 'system-ui', 'sans-serif'],
-        body:     ['var(--font-body)', 'system-ui', 'sans-serif'],
+        display:  ['var(--font-serif)', 'Georgia', 'serif'],
+        headline: ['var(--font-serif)', 'Georgia', 'serif'],
+        body:     ['var(--font-serif)', 'Georgia', 'serif'],
+        label:    ['var(--font-label)', 'Arial Narrow', 'system-ui', 'sans-serif'],
         code:     ['monospace'],
       },
       colors: {
