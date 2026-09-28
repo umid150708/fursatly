@@ -30,3 +30,23 @@ describe('editorial voice', () => {
     expect(og).toContain("const STRIP = 'No borders. Only deadlines.';");
   });
 });
+
+// Anything a visitor or a link preview shows. The mentor's system prompt and
+// README.md may still name the audience: neither is displayed.
+const PLACE = /central asia|markaziy osiyo|центральн\S*\s+ази/iu;
+
+describe('no region on display', () => {
+  it('no translation string names a region', () => {
+    for (const [loc, dict] of Object.entries(translations)) {
+      for (const [k, v] of Object.entries(dict)) {
+        expect(String(v), `${loc}.${k}`).not.toMatch(PLACE);
+      }
+    }
+  });
+
+  it('page metadata, per-event descriptions and the share card name no region', () => {
+    for (const f of ['../src/app/layout.tsx', '../src/lib/event-meta.ts', '../src/app/opengraph-image.tsx']) {
+      expect(readFileSync(new URL(f, import.meta.url), 'utf8'), f).not.toMatch(PLACE);
+    }
+  });
+});
