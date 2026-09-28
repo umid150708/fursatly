@@ -60,7 +60,7 @@ export const translations = {
     catWorkshops: 'Workshops',
 
     // Footer
-    footerDesc: 'Connecting young people across Central Asia with scholarships, competitions, and opportunities.',
+    footerDesc: 'Scholarships, competitions and programs from around the world — found, researched and put in your language.',
     footerPlatform: 'Platform',
     footerBrowse: 'Browse Opportunities',
     footerLegal: 'Legal',
@@ -315,7 +315,7 @@ export const translations = {
     catWorkshops: 'Seminarlar',
 
     // Footer
-    footerDesc: 'O\'zbekiston va Markaziy Osiyo yoshlari uchun eng yaxshi imkoniyatlarni to\'playmiz.',
+    footerDesc: 'Dunyo bo\'ylab grantlar, musobaqalar va dasturlarni topamiz, o\'rganamiz va tilingizga o\'giramiz.',
     footerPlatform: 'Platforma',
     footerBrowse: 'Imkoniyatlarni ko\'rish',
     footerLegal: 'Huquqiy',
@@ -570,7 +570,7 @@ export const translations = {
     catWorkshops: 'Семинары',
 
     // Footer
-    footerDesc: 'Соединяем молодёжь Центральной Азии со стипендиями, конкурсами и возможностями.',
+    footerDesc: 'Стипендии, конкурсы и программы со всего мира — находим, изучаем и переводим на твой язык.',
     footerPlatform: 'Платформа',
     footerBrowse: 'Все возможности',
     footerLegal: 'Правовая информация',
