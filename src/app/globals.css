@@ -171,8 +171,6 @@
   }
 
   /* Two-column reading text on wide screens */
-  .columns-news { column-gap: 2rem; }
-  @media (min-width: 768px) { .columns-news { column-count: 2; } }
 
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
