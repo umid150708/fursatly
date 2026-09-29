@@ -420,7 +420,7 @@ export default function HomeClient({
   const frontPage = front && (
     <section className="container py-8 md:py-12">
       <div className="grid gap-12 lg:grid-cols-[15rem_1px_minmax(0,1fr)_1px_15rem] lg:gap-8 xl:grid-cols-[17rem_1px_minmax(0,1fr)_1px_17rem]">
-        <aside className="order-2 lg:order-none">
+        <aside className="order-2 lg:order-none dark:bg-card dark:px-4 dark:py-4">
           <h2 className="text-eyebrow flex items-center justify-between border-b-2 border-foreground pb-2 text-urgent">
             <span>{t.closingSoon}</span>
             <span className="tabular-nums text-muted-foreground">{front.forecast.thisWeek}</span>
@@ -439,7 +439,7 @@ export default function HomeClient({
                         <span className="text-eyebrow mt-1 text-[0.7rem] text-muted-foreground">{MONTHS[locale][d.getMonth()]}</span>
                       </span>
                       <span className="min-w-0">
-                        <span className="line-clamp-3 font-bold leading-snug decoration-1 underline-offset-4 group-hover:underline">{titleOf(e, locale)}</span>
+                        <span className="line-clamp-3 font-bold leading-snug decoration-1 underline-offset-4 group-hover:underline dark:font-semibold dark:text-foreground/90">{titleOf(e, locale)}</span>
                         <span className="font-label mt-1 block truncate text-sm text-muted-foreground">{e.location || '—'}</span>
                       </span>
                     </Link>
@@ -450,7 +450,7 @@ export default function HomeClient({
           )}
         </aside>
 
-        <span aria-hidden className="hidden bg-foreground lg:block" />
+        <span aria-hidden className="hidden bg-foreground dark:bg-border lg:block" />
 
         {lead ? (
           <article className="order-1 min-w-0 lg:order-none">
@@ -461,7 +461,7 @@ export default function HomeClient({
                 lead.location,
               ].filter(Boolean).join(' · ')}
             </p>
-            <h2 className="mt-3 font-display text-[2.4rem] font-black leading-[0.98] tracking-[-0.03em] md:text-6xl">
+            <h2 className="mt-3 font-display text-[2.4rem] font-black leading-[0.98] tracking-[-0.03em] md:text-6xl lg:text-5xl xl:text-6xl">
               <Link href={href(lead)} className="decoration-2 underline-offset-8 hover:underline">{titleOf(lead, locale)}</Link>
             </h2>
             <p className="mt-4 text-lg italic text-muted-foreground md:text-xl">
@@ -512,9 +512,9 @@ export default function HomeClient({
           <div className="order-1 lg:order-none" />
         )}
 
-        <span aria-hidden className="hidden bg-foreground lg:block" />
+        <span aria-hidden className="hidden bg-foreground dark:bg-border lg:block" />
 
-        <aside className="order-3 lg:order-none">
+        <aside className="order-3 lg:order-none dark:bg-card dark:px-4 dark:py-4">
           <h2 className="text-eyebrow border-b-2 border-foreground pb-2">{t.inBrief}</h2>
           <ul>
             {front.brief.map((e) => (
@@ -523,7 +523,7 @@ export default function HomeClient({
                   <span className="text-eyebrow block text-[0.7rem]" style={{ color: `hsl(${catHue(e.source)})` }}>
                     {translateSource(e.source || 'Other', t)}{e.location ? ` · ${e.location}` : ''}
                   </span>
-                  <span className="mt-1.5 block font-display text-xl font-bold leading-tight decoration-1 underline-offset-4 group-hover:underline">
+                  <span className="mt-1.5 block font-display text-xl font-bold leading-tight decoration-1 underline-offset-4 group-hover:underline dark:font-semibold dark:text-foreground/90">
                     {titleOf(e, locale)}
                   </span>
                   <span className="mt-1.5 block text-[0.95rem] italic text-muted-foreground">
