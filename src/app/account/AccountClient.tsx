@@ -231,7 +231,7 @@ export function AccountClient() {
                 </Button>
               </div>
             ) : (
-              <div className="mt-6 grid gap-x-8 gap-y-10 sm:grid-cols-2">
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 md:gap-5">
                 {savedRows
                   .filter((r) => r.events)
                   .map((row) => (
