@@ -9,6 +9,7 @@ import {
   DEFAULT_PREFERENCES,
   PreferenceStore,
   accountPreferences,
+  authStep,
   type Preferences,
 } from '@/lib/preferences';
 import type { Locale } from '@/lib/translations';
@@ -39,19 +40,19 @@ export function PreferencesSync() {
 
   useEffect(() => {
     if (isLoading) return;
+    const store = PreferenceStore.browser();
     const id = user?.id ?? null;
     // Once per sign-in, not per user object: token refreshes and our own saves
     // hand back a new one, and re-applying it could undo a change made since.
-    if (id === appliedFor.current) return;
+    const step = authStep(appliedFor.current, id, store.readAccount() !== null);
     appliedFor.current = id;
 
-    const store = PreferenceStore.browser();
-    if (user) {
+    if (step === 'apply-account' && user) {
       const saved = accountPreferences(user.user_metadata);
       store.writeAccount(saved);
       show(saved);
-    } else if (store.readAccount()) {
-      // Signed out here, or the session lapsed: back to what every visitor sees.
+    } else if (step === 'reset') {
+      // Signed out, or the session lapsed: back to what every visitor sees.
       store.forgetAll();
       show(DEFAULT_PREFERENCES);
     }
@@ -84,8 +85,8 @@ export function usePreferences() {
   const keep = useCallback((change: Partial<Preferences>) => {
     const toAccount = PreferenceStore.browser().save(change, user !== null);
     if (!toAccount) return;
-    // The device copy is already written, so this device stays right even if
-    // the save fails; the next sign-in takes whatever the account holds.
+    // The device copy is already written, so this page stays right even if the
+    // save fails; the next page load goes back to whatever the account holds.
     const warn = (why: unknown) => console.warn('[preferences] not saved to the account:', why);
     db.auth.updateUser({ data: { preferences: toAccount } }).then(
       ({ error }) => { if (error) warn(error.message); },
