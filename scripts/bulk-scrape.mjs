@@ -14,6 +14,7 @@ import { load } from 'cheerio';
 import { createClient } from '@supabase/supabase-js';
 import { loadEnv, groqKeys } from './lib/env.mjs';
 import { GroqClient, parseJSON } from './lib/groq.mjs';
+import { findDuplicate } from '../src/pipeline/dedupe.mjs';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -193,23 +194,20 @@ async function ingestPost(text, stats) {
     return `dry_run: "${extracted.title}" (apply: ${extracted.apply_url ?? 'none'})`;
   }
 
-  // Deduplicate
-  const { data: existing } = await supabase
-    .from('events')
-    .select('id')
-    .ilike('title', extracted.title.trim())
-    .limit(1);
-
-  if (existing?.length) {
-    stats.duplicates++;
-    return 'duplicate';
-  }
-
   // Parse deadline
   let deadlineIso = null;
   if (extracted.deadline) {
     const d = new Date(extracted.deadline);
     if (!isNaN(d.getTime())) deadlineIso = d.toISOString();
+  }
+
+  // Deduplicate against every stored listing (curly quotes, years, subtitles —
+  // see src/pipeline/dedupe.mjs). Re-read each time so rows inserted earlier in
+  // this run count too.
+  const { data: known } = await supabase.from('events').select('id, title, deadline').limit(5000);
+  if (findDuplicate({ title: extracted.title, deadline: deadlineIso }, known ?? [])) {
+    stats.duplicates++;
+    return 'duplicate';
   }
 
   // Append apply_url to description so enrichment finds it without extra Groq lookups

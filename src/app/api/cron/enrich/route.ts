@@ -81,6 +81,9 @@ export async function GET(request: Request) {
   for (const e of queueEvents ?? []) {
     if (candidates.length >= BATCH_SIZE) break;
     const rd: any = e.research_data;
+    // Retired duplicates (scripts/dedupe-events.mjs) are inactive on purpose;
+    // enriching them would switch them back on.
+    if (rd?.duplicate_of) continue;
     const attempts = rd?._attempts ?? 0;
     if (attempts >= MAX_ATTEMPTS) continue;
     candidates.push({ ...e, kind: 'queue' });
