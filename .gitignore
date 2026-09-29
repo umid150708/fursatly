@@ -16,6 +16,8 @@ coverage/
 # Environment & secrets — NEVER commit
 .env
 .env.*
+# Public build defaults only (NEXT_PUBLIC_*); pinned by tests/env-defaults.test.ts
+!.env.production
 *.pem
 .env.local
 .env.development.local
