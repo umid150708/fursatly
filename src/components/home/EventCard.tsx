@@ -19,10 +19,12 @@ interface EventCardProps {
 }
 
 /**
- * One story in a section: a heavy rule on top, the section kicker in its ink,
- * a serif headline, an italic dateline and a footer carrying the deadline and
- * either the days left (closing soon) or the funding. No box — on newsprint a
- * story is held together by its rules.
+ * One story in a section, cut out as a clipping: a closed ink frame on fresh
+ * paper, the section kicker in its ink, a serif headline, an italic dateline
+ * and a footer band carrying the deadline and either the days left (closing
+ * soon) or the funding. Readers lost track of where one story ended when cards
+ * were held together by rules alone, so the frame closes all four sides and
+ * the footer sits inside it, never in the gap between two stories.
  */
 export function EventCard({ event, t, locale, now, onOpen, hue, kicker = 'category' }: EventCardProps) {
   const funding: string | null = event.research_data?.funding_type ?? null;
@@ -56,7 +58,7 @@ export function EventCard({ event, t, locale, now, onOpen, hue, kicker = 'catego
       onClick={onOpen}
       onKeyDown={handleKey}
       style={{ ['--hue' as any]: hue ?? 'var(--accent)' } as CSSProperties}
-      className="group flex h-full w-full cursor-pointer flex-col border-t-2 border-foreground pt-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background"
+      className="group flex h-full w-full cursor-pointer flex-col border border-foreground/45 bg-card px-4 pt-3 text-left outline-none transition-colors hover:border-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background"
     >
       <div className="flex items-start justify-between gap-3">
         <span className="text-eyebrow pt-1.5 text-[0.75rem] text-[hsl(var(--hue))]">
@@ -69,11 +71,11 @@ export function EventCard({ event, t, locale, now, onOpen, hue, kicker = 'catego
         {title}
       </h3>
 
-      <p className="mt-2 line-clamp-1 text-[0.95rem] italic text-muted-foreground">
+      <p className="mb-4 mt-2 line-clamp-1 text-[0.95rem] italic text-muted-foreground">
         {[kicker === 'location' ? null : event.location, translateLanguage(event.language, t)].filter(Boolean).join(' · ') || '—'}
       </p>
 
-      <div className="font-label mt-auto flex items-center justify-between gap-3 border-t border-border pt-2.5 text-sm">
+      <div className="font-label -mx-4 mt-auto flex items-center justify-between gap-3 border-t border-border bg-muted/50 px-4 py-2.5 text-sm">
         <span>{deadline ? formatDate(deadline, locale) : t.rolling}</span>
         {tag && <span className={`font-semibold uppercase tracking-[0.06em] ${tag.cls}`}>{tag.text}</span>}
       </div>

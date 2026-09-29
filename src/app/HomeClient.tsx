@@ -332,7 +332,7 @@ export default function HomeClient({
   );
 
   const storyGrid = (events: any[], kicker: 'category' | 'location' = 'category') => (
-    <div className="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-4">
       {events.map((event) => (
         <EventCard
           key={event.id}
@@ -493,7 +493,7 @@ export default function HomeClient({
               {t.readFull} <ArrowRight className="h-4 w-4" />
             </Link>
             {front.secondary.length > 0 && (
-              <div className="mt-8 grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2">
+              <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-5">
                 {front.secondary.map((e) => (
                   <EventCard
                     key={e.id}
