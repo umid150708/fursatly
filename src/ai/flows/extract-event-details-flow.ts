@@ -90,6 +90,9 @@ Rules:
 
 - is_valid_opportunity = FALSE in ANY of these cases (this is the rejection list — be strict):
   • The post is a commercial ad or paid promotion (selling a course, a bot, a service, a product, "earn money", referral codes, signup bonuses, affiliate links, "10 000 so'm bonus", "to'lov qilinadi" for content/work, etc.).
+  • The post is an admission or enrolment campaign for one university, college, school or learning centre: open days, "qabul davom etmoqda" / "admission is open", or a tuition discount called a grant ("20% grant for all applicants", "100% grant-based education"). A grant every applicant gets is a discount, not a scholarship.
+  • The post sells help with an opportunity instead of being one: paid courses, SAT/IELTS preparation, mentorship or consulting for a scholarship (e.g. "Türkiye Scholarships mentorship"), webinars or marathons that funnel into a paid product.
+  • The post is a pay-to-attend summit, forum, camp or trip run by a commercial organiser, including "travel scholarships" whose Gold/Silver "grants" only reduce the fee.
   • The post is recruiting people to another Telegram channel/group/bot for information ("kanalga qo'shiling", "join our channel for the list", "PDF olish uchun kanalga qo'shiling", "join the group to receive…", channel-invite links like t.me/+xxxxxxxx, t.me/joinchat/, bot links like t.me/SomethingBot). The opportunity content must be IN THIS POST — not behind a channel-join wall.
   • The post is a self-promotion or membership pitch for the channel itself, a meetup, a paid mentorship program, content-creator gigs, freelance/side-hustle offers, or any "follow us / subscribe / join to learn more" hook.
   • The post is purely informational — a list of deadlines, a roundup of multiple opportunities, news, motivational text, study tips, university rankings, "TOP-10" lists, exam tips — without a single specific opportunity described in this post that a student can apply to directly.

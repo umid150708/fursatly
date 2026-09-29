@@ -1,8 +1,8 @@
 /**
  * The enrich cron's queue: listings still waiting for their first enrichment.
  *
- * Retired duplicates and listings that failed MAX_ATTEMPTS times also sit in
- * the table as inactive rows. Filtering them out after a small oldest-first
+ * Retired duplicates, rejected adverts (research_data.rejected) and listings
+ * that failed MAX_ATTEMPTS times also sit in the table as inactive rows. Filtering them out after a small oldest-first
  * LIMIT starved the queue: the six oldest inactive rows were all skippable, so
  * the cron answered "Nothing to do" while new listings waited behind them.
  * Filtering happens in SQL, before the limit.
@@ -17,6 +17,7 @@ export function enrichQueueQuery(supabase: SupabaseClient, limit: number) {
     .select('id, title, research_data')
     .eq('is_active', false)
     .is('research_data->>duplicate_of', null)
+    .is('research_data->>rejected', null)
     .or(`research_data->_attempts.is.null,research_data->_attempts.lt.${MAX_ATTEMPTS}`)
     .order('created_at', { ascending: true })
     .limit(limit);

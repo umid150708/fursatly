@@ -19,7 +19,8 @@ export const fetchEventByParam = cache(
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         { auth: { persistSession: false } },
       );
-      const query = supabase.from('events').select('*');
+      // Adverts taken down (research_data.rejected) answer 404, even from old links.
+      const query = supabase.from('events').select('*').is('research_data->>rejected', null);
       const { data, error } = await (
         isUuid(param) ? query.eq('id', param) : query.eq('research_data->>slug', param)
       ).maybeSingle();
