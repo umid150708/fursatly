@@ -17,12 +17,12 @@ afterEach(() => {
 });
 
 describe('GeminiClient', () => {
-  it('asks for a model new keys can use, with thinking off', async () => {
+  it('asks for a model every key can use quickly, with thinking off', async () => {
     const fetchMock = vi.fn().mockResolvedValue(okResponse());
     vi.stubGlobal('fetch', fetchMock);
     expect(await new GeminiClient(['test-key']).call('hi', 8)).toBe('ok');
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toContain('/models/gemini-3.5-flash:generateContent');
+    expect(url).toContain('/models/gemini-3.6-flash:generateContent');
     expect(JSON.parse(init.body).generationConfig.thinkingConfig).toEqual({ thinkingBudget: 0 });
   });
 

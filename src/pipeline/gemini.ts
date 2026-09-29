@@ -6,15 +6,16 @@
  * tick. This is the "work as a group, don't hit limits" safety net: total daily
  * capacity becomes Groq (6 keys) + Gemini (4 keys).
  *
- * Model: gemini-3.5-flash with thinking disabled (thinkingBudget: 0) — keeps the
+ * Model: gemini-3.6-flash with thinking disabled (thinkingBudget: 0) — keeps the
  * free-tier output budget for the actual JSON answer and cuts latency. Google no
- * longer serves gemini-2.5-flash to newly issued keys, so a fresh key 404'd on it.
+ * longer serves gemini-2.5-flash to newly issued keys, and on 30 Sep 2026
+ * gemini-3.5-flash took 8–27s per answer on every key; 3.6 answered in ~1s.
  *
  * Serverless-friendly (Vercel 60s cap): on 429/error, hop to the next key
  * immediately rather than sleeping.
  */
 
-const GEMINI_MODEL     = 'gemini-3.5-flash';
+const GEMINI_MODEL     = 'gemini-3.6-flash';
 const RPM_TARGET       = 12;                             // conservative per-key pacing
 const MIN_KEY_INTERVAL = Math.ceil(60_000 / RPM_TARGET); // ~5s between calls to SAME key
 
