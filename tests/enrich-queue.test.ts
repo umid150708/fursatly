@@ -7,9 +7,10 @@ describe('enrichQueueQuery', () => {
   const url = new URL((enrichQueueQuery(createClient('http://db.test', 'anon'), 6) as any).url);
   const params = url.searchParams;
 
-  it('skips retired duplicates and exhausted listings before limiting', () => {
+  it('skips retired duplicates, rejected adverts and exhausted listings before limiting', () => {
     expect(params.get('is_active')).toBe('eq.false');
     expect(params.get('research_data->>duplicate_of')).toBe('is.null');
+    expect(params.get('research_data->>rejected')).toBe('is.null');
     expect(params.get('or')).toBe(
       `(research_data->_attempts.is.null,research_data->_attempts.lt.${MAX_ATTEMPTS})`,
     );
