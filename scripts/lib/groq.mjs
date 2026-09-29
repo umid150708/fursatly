@@ -7,7 +7,7 @@
  * why this is a separate class, not shared with the app.
  */
 
-const MODEL            = 'llama-3.3-70b-versatile';
+const MODEL            = 'qwen/qwen3.8-27b'; // same model as src/pipeline/groq.ts
 const RPM_TARGET       = 20;
 const MIN_KEY_INTERVAL = Math.ceil(60_000 / RPM_TARGET); // 3 000 ms between calls per key
 const BACKOFF_429_MS   = 62_000;                         // full per-minute window reset
@@ -43,6 +43,7 @@ export class GroqClient {
             messages: [{ role: 'user', content: prompt }],
             max_tokens: maxTokens,
             temperature: 0.2,
+            reasoning_effort: 'none',
           }),
           signal: AbortSignal.timeout(25_000),
         });
