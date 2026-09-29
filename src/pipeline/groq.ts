@@ -1,8 +1,10 @@
 /**
  * Groq client — 6-key rotation, serverless-friendly rate-limit handling.
- * Single model: llama-3.3-70b-versatile for every call.
+ * Single model: qwen/qwen3.8-27b for every call, with reasoning off so the whole
+ * max_tokens budget goes to the answer (llama-3.3-70b-versatile was retired and
+ * now 404s on every key).
  *
- * "Groq" is the inference provider; the model it runs is Meta's Llama-3.3-70B.
+ * "Groq" is the inference provider; the model it runs is Alibaba's Qwen.
  *
  * Capacity (free tier, per key): 30 RPM, ~12 000 TPM, ~100 K tokens/day.
  * With 6 keys: ~600 K tokens/day total.
@@ -17,7 +19,7 @@
 
 import { gemini } from './gemini';
 
-const GROQ_MODEL       = 'llama-3.3-70b-versatile';
+const GROQ_MODEL       = 'qwen/qwen3.8-27b';
 const RPM_TARGET       = 20;                             // 67% of the 30 RPM hard limit
 const MIN_KEY_INTERVAL = Math.ceil(60_000 / RPM_TARGET); // 3 000 ms between calls to SAME key
 
@@ -57,6 +59,7 @@ export class GroqClient {
             messages: [{ role: 'user', content: prompt }],
             max_tokens: maxTokens,
             temperature: 0.2,
+            reasoning_effort: 'none',
           }),
           signal: AbortSignal.timeout(15_000),
         });
