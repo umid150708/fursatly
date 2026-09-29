@@ -48,6 +48,7 @@ or corrupt values at any layer are ignored.
 - `src/lib/preferences.ts` (pure, tested)
   - `resolveTheme` / `resolveLocale` / `isTheme` / `isLocale` — validation.
   - `accountPreferences(metadata)` — the sanitised `preferences` from a user's metadata.
+  - `authStep(previous, current, hasAccountCopy)` — none / apply-account / reset.
   - `PreferenceStore` — wraps injected `localStorage` / `sessionStorage` (either may be
     missing or throw): `load()`, `save(change, signedIn)`, `readAccount()`,
     `writeAccount()`, `forgetAll()`, `dropLegacy()`.
@@ -71,7 +72,11 @@ or corrupt values at any layer are ignored.
 ### Errors
 
 A failed `updateUser` (offline, expired token) logs a warning; the change stays on
-screen and in the local copy. The next sign-in takes the account's value.
+screen for this page. The next page load goes back to the account's value — the
+account is the source of truth.
+
+Sign-out is decided per tab (`authStep`): every open tab hears it and resets,
+even when another tab has already cleared the shared account copy.
 
 ## Testing
 

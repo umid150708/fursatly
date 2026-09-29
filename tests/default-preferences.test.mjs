@@ -10,6 +10,7 @@ import {
   accountPreferences,
   PreferenceStore,
   themeProbeScript,
+  authStep,
   ACCOUNT_PREFS_KEY,
 } from '../src/lib/preferences';
 
@@ -154,6 +155,37 @@ describe('signing out', () => {
     expect(b.store.readAccount()).toBeNull();
     expect(b.store.load()).toEqual(DEFAULTS);
     expect(newTab(b).load()).toEqual(DEFAULTS);
+  });
+});
+
+describe('authStep', () => {
+  const ID = 'user-1';
+
+  it('does nothing for a guest', () => {
+    expect(authStep(undefined, null, false)).toBe('none');
+    expect(authStep(null, null, false)).toBe('none');
+  });
+
+  it("applies the account's choice on sign-in, on load and when the account changes", () => {
+    expect(authStep(null, ID, false)).toBe('apply-account');
+    expect(authStep(undefined, ID, true)).toBe('apply-account');
+    expect(authStep('user-0', ID, true)).toBe('apply-account');
+  });
+
+  it('ignores the same user again (token refresh, our own save)', () => {
+    expect(authStep(ID, ID, true)).toBe('none');
+  });
+
+  it('resets on sign-out', () => {
+    expect(authStep(ID, null, true)).toBe('reset');
+  });
+
+  it('resets on sign-out even after another tab already cleared the shared copy', () => {
+    expect(authStep(ID, null, false)).toBe('reset');
+  });
+
+  it('resets on load when a copy is left from a session that lapsed', () => {
+    expect(authStep(undefined, null, true)).toBe('reset');
   });
 });
 

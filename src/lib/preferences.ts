@@ -51,6 +51,26 @@ export function accountPreferences(metadata: unknown): Partial<Preferences> {
   return sanitize((metadata as { preferences?: unknown } | null | undefined)?.preferences);
 }
 
+export type AuthStep = 'none' | 'apply-account' | 'reset';
+
+/**
+ * What to do when auth settles on `current` (a user id, or null when signed
+ * out). `previous` is the id handled last time — undefined before the first.
+ *
+ * A sign-out resets whether or not the shared account copy is still there:
+ * every open tab hears it, and whichever tab handles it first clears the copy
+ * for all of them. A copy with nobody signed in is a session that lapsed.
+ */
+export function authStep(
+  previous: string | null | undefined,
+  current: string | null,
+  hasAccountCopy: boolean,
+): AuthStep {
+  if (current === previous) return 'none';
+  if (current) return 'apply-account';
+  return typeof previous === 'string' || hasAccountCopy ? 'reset' : 'none';
+}
+
 type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
 /**
