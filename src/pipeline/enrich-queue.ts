@@ -14,7 +14,7 @@ export const MAX_ATTEMPTS = 3;
 export function enrichQueueQuery(supabase: SupabaseClient, limit: number) {
   return supabase
     .from('events')
-    .select('id, title, research_data')
+    .select('id, title, created_at, research_data')
     .eq('is_active', false)
     .is('research_data->>duplicate_of', null)
     .is('research_data->>rejected', null)
