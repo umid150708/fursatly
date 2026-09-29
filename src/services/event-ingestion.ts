@@ -15,6 +15,7 @@ import { extractEventDetails } from '@/ai/flows/extract-event-details-flow';
 import { createClient } from '@supabase/supabase-js';
 import { findDuplicate } from '@/pipeline/dedupe.mjs';
 import { resolveDeadlineYear } from '@/lib/dates';
+import { paidPromotionMarker } from '@/pipeline/promo.mjs';
 
 function db() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.startsWith('ey') ||
@@ -39,6 +40,14 @@ export async function ingestEventFromText(rawText: string): Promise<string | nul
     .trim();
   if (stripped.length < 120) {
     console.log(`[Ingest] 🛑 Skipping post — too thin (${stripped.length} chars of real content)`);
+    return null;
+  }
+
+  // Paid placements (utm_source=telegram_paid, Google Ads click ids, #reklama)
+  // read like opportunities to the model; nobody pays Fursatly to list them.
+  const promo = paidPromotionMarker(rawText);
+  if (promo) {
+    console.log(`[Ingest] 🛑 Skipping post — paid promotion (${promo})`);
     return null;
   }
 

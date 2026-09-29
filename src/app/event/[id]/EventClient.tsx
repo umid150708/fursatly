@@ -155,7 +155,7 @@ export default function EventClient({ initialEvent }: { initialEvent: any | null
 
       // The route param is either a clean slug or a legacy UUID — resolve both.
       const param = String(id);
-      const query = supabase.from('events').select('*');
+      const query = supabase.from('events').select('*').is('research_data->>rejected', null);
       const { data } = await (
         isUuid(param) ? query.eq('id', param) : query.eq('research_data->>slug', param)
       ).single();

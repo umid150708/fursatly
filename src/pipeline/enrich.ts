@@ -91,6 +91,9 @@ export async function enrichEvent(eventId: string): Promise<void> {
   if (fetchErr || !event) throw new Error(`Event ${eventId} not found`);
 
   const existing = (event.research_data ?? {}) as Partial<ResearchData>;
+  // A listing taken down as an advert (research_data.rejected) must never be
+  // switched back on, whichever path asked for its enrichment.
+  if ((existing as { rejected?: string }).rejected) return;
 
   // ── Step 1: Research (throws on failure → caller handles retry) ────────────
   const raw      = await callLLM(researchPrompt(event.title, event.description ?? ''), 900);
