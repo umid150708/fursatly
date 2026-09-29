@@ -99,7 +99,7 @@ export function SiteFooter({ t, onCategory }: SiteFooterProps) {
       </div>
 
       <Dialog open={!!legal} onOpenChange={() => setLegal(null)}>
-        <DialogContent className="max-h-[80vh] max-w-lg overflow-y-auto">
+        <DialogContent data-lenis-prevent className="max-h-[80vh] max-w-lg overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display text-3xl font-black">{legal && LEGAL_CONTENT[legal].title}</DialogTitle>
           </DialogHeader>

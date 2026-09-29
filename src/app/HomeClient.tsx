@@ -392,7 +392,7 @@ export default function HomeClient({
                     <span className="font-semibold tabular-nums text-foreground">{filteredEvents.length}</span> {t.resultsLabel}
                   </p>
                 </SheetHeader>
-                <div className="flex-1 overflow-y-auto px-6 py-6">
+                <div data-lenis-prevent className="flex-1 overflow-y-auto px-6 py-6">
                   {renderFilterPanel()}
                 </div>
                 <div className="flex items-center gap-3 border-t border-foreground p-4">
