@@ -1,19 +1,20 @@
 /**
- * Gemini fallback client — 3-key rotation.
+ * Gemini fallback client — 4-key rotation.
  *
  * Used ONLY when every Groq key is throttled (see callLLM in ./groq.ts), so the
  * enrichment/extraction pipeline degrades to Gemini instead of failing the cron
  * tick. This is the "work as a group, don't hit limits" safety net: total daily
- * capacity becomes Groq (6 keys) + Gemini (3 keys).
+ * capacity becomes Groq (6 keys) + Gemini (4 keys).
  *
- * Model: gemini-2.5-flash with thinking disabled (thinkingBudget: 0) — keeps the
- * free-tier output budget for the actual JSON answer and cuts latency.
+ * Model: gemini-3.5-flash with thinking disabled (thinkingBudget: 0) — keeps the
+ * free-tier output budget for the actual JSON answer and cuts latency. Google no
+ * longer serves gemini-2.5-flash to newly issued keys, so a fresh key 404'd on it.
  *
  * Serverless-friendly (Vercel 60s cap): on 429/error, hop to the next key
  * immediately rather than sleeping.
  */
 
-const GEMINI_MODEL     = 'gemini-2.5-flash';
+const GEMINI_MODEL     = 'gemini-3.5-flash';
 const RPM_TARGET       = 12;                             // conservative per-key pacing
 const MIN_KEY_INTERVAL = Math.ceil(60_000 / RPM_TARGET); // ~5s between calls to SAME key
 
@@ -80,11 +81,12 @@ export class GeminiClient {
   }
 }
 
-/** Shared serverless instance, keyed from GEMINI_API_KEY(_2/_3). */
+/** Shared serverless instance, keyed from GEMINI_API_KEY(_2/_3/_4). */
 export const gemini = new GeminiClient(
   [
     process.env.GEMINI_API_KEY,
     process.env.GEMINI_API_KEY_2,
     process.env.GEMINI_API_KEY_3,
+    process.env.GEMINI_API_KEY_4,
   ].filter(Boolean) as string[],
 );
