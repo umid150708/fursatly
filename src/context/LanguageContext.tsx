@@ -2,10 +2,12 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Locale, translations } from '@/lib/translations';
-import { resolveLocale } from '@/lib/preferences';
+import { PreferenceStore } from '@/lib/preferences';
 
 type LanguageContextType = {
   locale: Locale;
+  /** Shows a language without keeping it — the switcher goes through
+   *  usePreferences(), which does. */
   setLocale: (locale: Locale) => void;
   t: typeof translations.en;
   isMounted: boolean;
@@ -19,20 +21,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setIsMounted(true);
-    setLocale(resolveLocale(localStorage.getItem('fursatly_locale')));
+    setLocale(PreferenceStore.browser().load().locale);
   }, []);
-
-  const handleSetLocale = (newLocale: Locale) => {
-    setLocale(newLocale);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('fursatly_locale', newLocale);
-    }
-  };
 
   const t = translations[locale];
 
   return (
-    <LanguageContext.Provider value={{ locale, setLocale: handleSetLocale, t, isMounted }}>
+    <LanguageContext.Provider value={{ locale, setLocale, t, isMounted }}>
       {children}
     </LanguageContext.Provider>
   );

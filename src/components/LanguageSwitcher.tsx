@@ -1,6 +1,7 @@
 "use client";
 
 import { useLanguage } from '@/context/LanguageContext';
+import { usePreferences } from '@/context/PreferencesSync';
 
 const options: { id: 'uz' | 'en' | 'ru'; label: string }[] = [
   { id: 'uz', label: "O'zbekcha" },
@@ -15,7 +16,8 @@ const options: { id: 'uz' | 'en' | 'ru'; label: string }[] = [
  * never claims the wrong language.
  */
 export function LanguageSwitcher() {
-  const { locale, setLocale, isMounted } = useLanguage();
+  const { locale, isMounted } = useLanguage();
+  const { setLocale } = usePreferences();
 
   return (
     <div role="group" aria-label="Language" className="flex h-10 items-stretch border border-foreground">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useTheme } from '@/context/ThemeContext';
+import { usePreferences } from '@/context/PreferencesSync';
 import { Button } from '@/components/ui/button';
 import { Sun, Moon } from 'lucide-react';
 
@@ -71,7 +71,7 @@ function sweepRadii(w: number, h: number, cx: number, cy: number, end: number): 
 }
 
 export function ThemeToggle() {
-  const { toggleTheme } = useTheme();
+  const { toggleTheme } = usePreferences();
   const ref = useRef<HTMLButtonElement>(null);
   const busy = useRef(false);
   const alive = useRef(true);
