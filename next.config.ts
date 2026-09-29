@@ -22,7 +22,10 @@ const securityHeaders = [
     // X-Frame-Options + nosniff + frame-ancestors carry most of the load.
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com",
+      // telegram.org serves the login widget on /auth, which embeds its sign-in
+      // iframe from oauth.telegram.org — without both the button never renders.
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://telegram.org",
+      "frame-src https://oauth.telegram.org",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: blob: https:",
       "font-src 'self' https://fonts.gstatic.com data:",

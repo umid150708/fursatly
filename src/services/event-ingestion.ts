@@ -13,6 +13,7 @@
 
 import { extractEventDetails } from '@/ai/flows/extract-event-details-flow';
 import { createClient } from '@supabase/supabase-js';
+import { findDuplicate } from '@/pipeline/dedupe.mjs';
 
 function db() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.startsWith('ey') ||
@@ -92,25 +93,28 @@ export async function ingestEventFromText(rawText: string): Promise<string | nul
 
   const supabase = db();
 
-  // ── Step 2: Deduplicate by title (case-insensitive) ─────────────────────────
-  const { data: existing, error: dupError } = await supabase
-    .from('events')
-    .select('id')
-    .ilike('title', extracted.title.trim())
-    .limit(1);
-
-  if (dupError) throw new Error(`Dup check failed: ${dupError.message}`);
-
-  if (existing && existing.length > 0) {
-    console.log(`[Ingest] 🛑 Duplicate: "${extracted.title}"`);
-    return null;
-  }
-
-  // ── Step 3: Parse deadline ──────────────────────────────────────────────────
+  // ── Step 2: Parse deadline ──────────────────────────────────────────────────
   let deadlineIso: string | null = null;
   if (extracted.deadline) {
     const d = new Date(extracted.deadline);
     if (!isNaN(d.getTime())) deadlineIso = d.toISOString();
+  }
+
+  // ── Step 3: Deduplicate against every stored listing ───────────────────────
+  // Channels re-post the same opportunity with a curly apostrophe, an added
+  // year or a subtitle; findDuplicate normalises all of those (see dedupe.mjs).
+  // The table holds a few hundred rows, so comparing in memory is cheap.
+  const { data: known, error: dupError } = await supabase
+    .from('events')
+    .select('id, title, deadline')
+    .limit(5000);
+
+  if (dupError) throw new Error(`Dup check failed: ${dupError.message}`);
+
+  const duplicate = findDuplicate({ title: extracted.title, deadline: deadlineIso }, known ?? []);
+  if (duplicate) {
+    console.log(`[Ingest] 🛑 Duplicate: "${extracted.title}" ≈ "${duplicate.title}"`);
+    return null;
   }
 
   // ── Step 4: Embed apply_url in description so enrichment gets it for free ───
