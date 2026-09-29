@@ -19,13 +19,13 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { enrichEvent } from '@/pipeline/enrich';
+import { enrichQueueQuery, MAX_ATTEMPTS } from '@/pipeline/enrich-queue';
 
 // Vercel: extend the serverless timeout to the Hobby-plan max (60s).
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
 const BATCH_SIZE   = 2;   // events processed in parallel per invocation
-const MAX_ATTEMPTS = 3;
 
 function db() {
   return createClient(
@@ -53,12 +53,7 @@ export async function GET(request: Request) {
   const supabase = db();
 
   // Priority 1: events still in queue (never enriched)
-  const { data: queueEvents } = await supabase
-    .from('events')
-    .select('id, title, research_data')
-    .eq('is_active', false)
-    .order('created_at', { ascending: true })
-    .limit(BATCH_SIZE * 3);
+  const { data: queueEvents } = await enrichQueueQuery(supabase, BATCH_SIZE * 3);
 
   // Priority 2: active events missing Russian translations (backfill)
   const { data: activeMissingRu } = await supabase

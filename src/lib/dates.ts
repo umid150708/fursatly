@@ -61,6 +61,29 @@ export function deadlineMs(iso: string | null | undefined): number {
   return Date.parse(/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso : `${iso}Z`);
 }
 
+/**
+ * The deadline to store for a scraped post. Posts often give "25-oktabr" with no
+ * year, and the extraction model guesses one; a guess in the past would file a
+ * live listing as expired and slip past the duplicate check as another edition.
+ * A past date whose year the post never mentions moves to the next time that
+ * month and day come round. A year the post does state is kept.
+ */
+export function resolveDeadlineYear(deadline: string, postText: string, now: Date): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(deadline);
+  if (!m) return deadline;
+  const [, year, month, day] = m;
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const at = (y: number) => Date.UTC(y, Number(month) - 1, Number(day));
+  if (at(Number(year)) >= today || postText.includes(year)) return deadline;
+
+  for (let y = now.getUTCFullYear(); y <= now.getUTCFullYear() + 4; y++) {
+    const d = new Date(at(y));
+    if (d.getUTCDate() !== Number(day)) continue; // 29 February in a common year
+    if (d.getTime() >= today) return `${y}-${month}-${day}${deadline.slice(10)}`;
+  }
+  return deadline;
+}
+
 /** Whole days until a deadline (ceil), or null when there is none. */
 export function daysUntil(iso: string | null | undefined, now: number): number | null {
   const ms = deadlineMs(iso);
