@@ -29,7 +29,7 @@ const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE
 
 const { data: rows, error } = await supabase
   .from('events')
-  .select('id, title, deadline, created_at, research_data')
+  .select('id, title, deadline, created_at, description, research_data')
   .eq('is_active', true)
   .order('created_at', { ascending: true })
   .limit(5000);
@@ -38,6 +38,11 @@ if (error) { console.error(error.message); process.exit(1); }
 /** Days between two deadlines; null when either is missing. */
 const gapDays = (a, b) =>
   a && b ? Math.abs(Date.parse(String(a).slice(0, 10)) - Date.parse(String(b).slice(0, 10))) / 86_400_000 : null;
+
+// The post's own link, as ingestion compares it (see event-ingestion.ts).
+for (const row of rows) {
+  row.urls = [...String(row.description ?? '').matchAll(/🔗\s*(\S+)/g)].map((m) => m[1]);
+}
 
 const kept = [];
 const dupes = [];
