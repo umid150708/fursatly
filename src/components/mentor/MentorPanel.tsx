@@ -184,6 +184,7 @@ export function MentorPanel({ eventId }: { eventId: string }) {
             ref={listRef}
             role="log"
             aria-live="polite"
+            data-lenis-prevent
             className="scrollbar-thin flex-1 space-y-3 overflow-y-auto p-4"
           >
             {messages.length === 0 && (
