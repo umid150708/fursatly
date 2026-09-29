@@ -89,7 +89,7 @@ export const groq = new GroqClient(
 
 /**
  * Primary LLM entry point for the whole pipeline. Tries Groq (6 keys); if every
- * Groq key is throttled, falls back to Gemini (3 keys) so a cron tick degrades
+ * Groq key is throttled, falls back to Gemini (4 keys) so a cron tick degrades
  * gracefully instead of failing. Throws only when BOTH providers are exhausted.
  */
 export async function callLLM(prompt: string, maxTokens = 800): Promise<string> {
