@@ -159,3 +159,35 @@ describe('category color contrast (WCAG AA, 4.5:1 as text)', () => {
     });
   }
 });
+
+// ── Night edition: calm by measurement, not by eye ──────────────────────────
+// Measured on the live site (2026-09-28): hairlines at 1.61:1 grouped nothing,
+// near-white display type glared at 14.6:1, nine category hues at up to 85%
+// saturation read as a rainbow, and screen-blended grain shimmered.
+describe('night edition (dark) stays calm', () => {
+  const dark = varsIn(/\.dark\s*{[^}]+}/);
+  const bg = dark.background;
+
+  it('hairlines (--border) reach 3:1 against the page — WCAG 1.4.11', () => {
+    const ratio = contrast(dark.border, bg);
+    expect(ratio, `--border ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(3);
+  });
+
+  it('display ink (--foreground) stays at or below 12:1 so large type does not glare', () => {
+    const ratio = contrast(dark.foreground, bg);
+    expect(ratio, `--foreground ${ratio.toFixed(2)}:1`).toBeLessThanOrEqual(12);
+  });
+
+  it('category hues are calm: saturation at most 40%', () => {
+    for (const [name, [, s]] of Object.entries(dark)) {
+      if (!name.startsWith('cat-')) continue;
+      expect(s, `--${name} saturation`).toBeLessThanOrEqual(40);
+    }
+  });
+
+  it('paper grain is faint: opacity at most 0.04', () => {
+    const m = css.match(/\.dark\s+\.paper-grain\s*{[^}]*opacity:\s*([\d.]+)/);
+    expect(m, '.dark .paper-grain rule').toBeTruthy();
+    expect(Number(m[1])).toBeLessThanOrEqual(0.04);
+  });
+});

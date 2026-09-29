@@ -3,12 +3,12 @@ import { gazetteFonts, OG } from '@/lib/og-fonts';
 
 /** Site-wide Open Graph card (homepage, /auth, /account link previews):
  *  the Gazette masthead on newsprint. */
-export const alt = 'Fursatly — opportunities for Central Asian students';
+export const alt = 'Fursatly — scholarships, competitions and programs from around the world';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 const TAGLINE = 'Scholarships, competitions and programs — found, researched and translated every morning';
-const STRIP = 'For the students of Central Asia';
+const STRIP = 'No borders. Only deadlines.';
 
 export default async function OgImage() {
   const fonts = await gazetteFonts({

@@ -290,7 +290,7 @@ export default function EventClient({ initialEvent }: { initialEvent: any | null
             {/* Overview */}
             <section className="mt-8">
               <h2 className="sr-only">{t.overview}</h2>
-              <p className="dropcap columns-news whitespace-pre-wrap text-lg leading-relaxed md:text-[1.2rem]">
+              <p className="dropcap max-w-[65ch] whitespace-pre-wrap text-lg leading-relaxed md:text-[1.2rem]">
                 {research?.extendedDescription || event.description}
               </p>
             </section>
