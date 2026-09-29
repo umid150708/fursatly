@@ -22,7 +22,7 @@ export function metaDescription(row: EventMetaRow): string {
   const raw =
     (row.research_data?.extendedDescription ?? '').trim() ||
     (row.description ?? '').trim() ||
-    `Discover scholarships, competitions and programs for Central Asian students on ${SITE}.`;
+    `Discover scholarships, competitions and programs from around the world on ${SITE}.`;
 
   const flat = raw.replace(/\s+/g, ' ').trim();
   if (flat.length <= MAX_DESCRIPTION) return flat;

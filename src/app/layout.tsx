@@ -44,13 +44,13 @@ const label = Fira_Sans_Condensed({
 export const metadata: Metadata = {
   metadataBase: new URL('https://fursatly.uz'),
   title: 'Fursatly — Unlock Your Future',
-  description: 'AI-curated scholarships, competitions, fellowships and programs for Central Asian students. Every opportunity, researched and translated.',
+  description: 'AI-curated scholarships, competitions, fellowships and programs from around the world. Every opportunity, researched and translated.',
   icons: { icon: '/icon.png', apple: '/icon.png' },
   openGraph: {
     siteName: 'Fursatly',
     type: 'website',
     title: 'Fursatly — Unlock Your Future',
-    description: 'AI-curated scholarships, competitions, fellowships and programs for Central Asian students.',
+    description: 'AI-curated scholarships, competitions, fellowships and programs from around the world.',
   },
 };
 

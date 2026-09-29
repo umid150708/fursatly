@@ -487,7 +487,7 @@ export default function HomeClient({
               </span>
             </Link>
             {leadSummary && (
-              <p className="dropcap columns-news mt-6 text-[1.05rem] leading-relaxed">{leadSummary}</p>
+              <p className="dropcap mt-6 max-w-[65ch] text-[1.05rem] leading-relaxed">{leadSummary}</p>
             )}
             <Link href={href(lead)} className="text-eyebrow mt-5 inline-flex min-h-11 items-center gap-2 transition-colors hover:text-accent">
               {t.readFull} <ArrowRight className="h-4 w-4" />
@@ -650,7 +650,7 @@ export default function HomeClient({
           <h2 className="mt-4 font-display text-4xl font-black italic leading-[1.02] tracking-[-0.03em] md:text-6xl">
             {t.missionTitle}
           </h2>
-          <p className="dropcap columns-news mt-7 text-lg leading-relaxed">{t.missionBody}</p>
+          <p className="dropcap mt-7 max-w-[65ch] text-lg leading-relaxed">{t.missionBody}</p>
         </div>
         <span aria-hidden className="hidden bg-foreground lg:block" />
         <div>
