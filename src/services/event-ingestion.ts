@@ -14,6 +14,7 @@
 import { extractEventDetails } from '@/ai/flows/extract-event-details-flow';
 import { createClient } from '@supabase/supabase-js';
 import { findDuplicate } from '@/pipeline/dedupe.mjs';
+import { resolveDeadlineYear } from '@/lib/dates';
 
 function db() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.startsWith('ey') ||
@@ -96,7 +97,7 @@ export async function ingestEventFromText(rawText: string): Promise<string | nul
   // ── Step 2: Parse deadline ──────────────────────────────────────────────────
   let deadlineIso: string | null = null;
   if (extracted.deadline) {
-    const d = new Date(extracted.deadline);
+    const d = new Date(resolveDeadlineYear(extracted.deadline, rawText, new Date()));
     if (!isNaN(d.getTime())) deadlineIso = d.toISOString();
   }
 
