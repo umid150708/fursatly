@@ -170,8 +170,6 @@
     background-size: 10px 10px;
   }
 
-  /* Two-column reading text on wide screens */
-
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
