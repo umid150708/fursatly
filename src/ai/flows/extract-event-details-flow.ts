@@ -2,7 +2,7 @@
 /**
  * @fileOverview Extracts structured event data from raw Telegram post text.
  *
- * Uses Groq (llama-3.3-70b-versatile) with key rotation and OpenRouter fallback.
+ * Uses Groq (qwen/qwen3.8-27b) with key rotation and Gemini fallback.
  * Gemini / Genkit removed entirely — all quota was exhausted.
  *
  * URLs and contact info are pre-extracted from the raw post text for free (regex),
