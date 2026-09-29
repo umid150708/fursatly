@@ -58,7 +58,9 @@ function extractContactInfo(text: string): string[] {
   return [...found];
 }
 
-const EXTRACTION_PROMPT = (text: string, contactInfo: string[]) => `You are an event extraction engine for Fursatly, an opportunity platform for Uzbek students.
+const EXTRACTION_PROMPT = (text: string, contactInfo: string[], today: string) => `You are an event extraction engine for Fursatly, an opportunity platform for Uzbek students.
+
+Today is ${today}.
 
 Extract structured data from this Telegram post. Return ONLY valid JSON — no markdown, no explanation.
 ${contactInfo.length > 0 ? `
@@ -105,7 +107,7 @@ Rules:
   If is_valid_opportunity is false, set apply_url to null.
 - title: use original if present, otherwise write a short factual title — NEVER marketing language
 - location: country or city if clearly stated, otherwise "International" or "Online"
-- deadline: ISO date (YYYY-MM-DD) ONLY if explicitly stated in the post — otherwise null
+- deadline: ISO date (YYYY-MM-DD) ONLY if explicitly stated in the post — otherwise null. If the post gives a day and month but no year, use the next such date on or after today
 - age.min / age.max: only if explicitly stated — otherwise null
 - language: the language the event itself is conducted in, not the post language
 - category: pick the single best match from the allowed list
@@ -118,6 +120,7 @@ export async function extractEventDetails(
   input: ExtractEventDetailsInput,
 ): Promise<ExtractEventDetailsOutput> {
   const contactInfo = extractContactInfo(input.text);
-  const raw = await callLLM(EXTRACTION_PROMPT(input.text, contactInfo), 600);
+  const today = new Date().toISOString().slice(0, 10);
+  const raw = await callLLM(EXTRACTION_PROMPT(input.text, contactInfo, today), 600);
   return parseJSON<ExtractEventDetailsOutput>(raw);
 }
