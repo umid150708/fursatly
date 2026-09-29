@@ -13,7 +13,8 @@
 
 import { extractEventDetails } from '@/ai/flows/extract-event-details-flow';
 import { createClient } from '@supabase/supabase-js';
-import { findDuplicate } from '@/pipeline/dedupe.mjs';
+import { findDuplicate, suspectDuplicates, sameListingPrompt, isSameListing } from '@/pipeline/dedupe.mjs';
+import { callLLM } from '@/pipeline/groq';
 import { resolveDeadlineYear } from '@/lib/dates';
 import { paidPromotionMarker } from '@/pipeline/promo.mjs';
 
@@ -114,14 +115,40 @@ export async function ingestEventFromText(rawText: string): Promise<string | nul
   // Channels re-post the same opportunity with a curly apostrophe, an added
   // year or a subtitle; findDuplicate normalises all of those (see dedupe.mjs).
   // The table holds a few hundred rows, so comparing in memory is cheap.
-  const { data: known, error: dupError } = await supabase
+  // Each stored post keeps its own link after "🔗" in the description (Step 4);
+  // enrichment's officialWebsite is a guess and can be a shared contact page.
+  const { data: rows, error: dupError } = await supabase
     .from('events')
-    .select('id, title, deadline')
+    .select('id, title, deadline, description')
     .limit(5000);
 
   if (dupError) throw new Error(`Dup check failed: ${dupError.message}`);
 
-  const duplicate = findDuplicate({ title: extracted.title, deadline: deadlineIso }, known ?? []);
+  const applyUrl = (extracted as any).apply_url?.trim() || null;
+  const known = (rows ?? []).map((r) => ({
+    ...r,
+    urls: [...String(r.description ?? '').matchAll(/🔗\s*(\S+)/g)].map((m) => m[1]),
+  }));
+  const candidate = {
+    title: extracted.title,
+    deadline: deadlineIso,
+    description: extracted.description,
+    urls: applyUrl ? [applyUrl] : [],
+  };
+
+  let duplicate = findDuplicate(candidate, known);
+  // Same deadline day and a distinctive shared name ("United World Colleges
+  // (UWC)" / "UWC International Baccalaureate…"): one short model question each.
+  for (const suspect of duplicate ? [] : suspectDuplicates(candidate, known)) {
+    try {
+      if (isSameListing(await callLLM(sameListingPrompt(candidate, suspect), 5))) {
+        duplicate = suspect;
+        break;
+      }
+    } catch {
+      // No answer is not a yes: keep the listing rather than drop a real one.
+    }
+  }
   if (duplicate) {
     console.log(`[Ingest] 🛑 Duplicate: "${extracted.title}" ≈ "${duplicate.title}"`);
     return null;
@@ -131,7 +158,6 @@ export async function ingestEventFromText(rawText: string): Promise<string | nul
   // The URL was extracted from the raw post text (no extra Groq call) and passed
   // through the extraction prompt. Appending it to description ensures the enrich
   // step can use it directly for officialWebsite without any external lookup.
-  const applyUrl = (extracted as any).apply_url?.trim() || null;
   const descriptionWithUrl = applyUrl
     ? `${extracted.description}\n\n🔗 ${applyUrl}`
     : extracted.description;
