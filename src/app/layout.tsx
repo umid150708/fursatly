@@ -3,6 +3,8 @@ import { Literata, Fira_Sans_Condensed } from 'next/font/google';
 import './globals.css';
 import { LanguageProvider } from '@/context/LanguageContext';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { PreferencesSync } from '@/context/PreferencesSync';
+import { themeProbeScript } from '@/lib/preferences';
 import { Toaster } from '@/components/ui/toaster';
 import { SupabaseClientProvider, AuthProvider } from '@/supabase';
 import { SavedProvider } from '@/context/SavedContext';
@@ -54,23 +56,18 @@ export const metadata: Metadata = {
   },
 };
 
-/* Apply the theme BEFORE first paint. Light — the morning edition — is the
-   default for first-time visitors; a saved "dark" preference wins. Mirrors
-   resolveTheme() in src/lib/preferences.ts — keep the two in sync. */
-const themeProbe = `(function(){try{
-  var dark=localStorage.getItem('fursatly_theme')==='dark';
-  if(dark)document.documentElement.classList.add('dark');
-  /* Browser chrome on mobile, corrected before first paint. Hexes mirror
-     --bg-light / --bg-dark in globals.css — keep the three in sync. */
-  if(dark){var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#141210');}
-}catch(e){}})();`;
+/* Apply the theme BEFORE first paint. English + light is what every visitor
+   opens with; only a signed-in account's saved choice, or one made earlier in
+   this tab, turns it dark. The script comes from src/lib/preferences.ts, next to
+   the rule it mirrors. */
+const themeProbe = themeProbeScript();
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning className={`${serif.variable} ${label.variable}`}>
       <head>
-        {/* Light is the first-visit default; the probe below rewrites this when a
-            dark preference is saved, and ThemeContext keeps it current after. */}
+        {/* Light is the default; the probe below rewrites this when the visitor
+            should see dark, and ThemeContext keeps it current after. */}
         <meta name="theme-color" content="#f3efe6" />
         <script dangerouslySetInnerHTML={{ __html: themeProbe }} />
       </head>
@@ -81,6 +78,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <AuthProvider>
               <SavedProvider>
                 <LanguageProvider>
+                  <PreferencesSync />
                   <MotionConfigProvider>
                     <SmoothScrollProvider>
                       {children}
