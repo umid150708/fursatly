@@ -24,7 +24,15 @@ export class GeminiClient {
   private readonly lastCallAt: number[];
   private keyIdx = 0;
 
-  constructor(private readonly keys: string[], private readonly model = GEMINI_MODEL) {
+  /**
+   * `timeoutMs` bounds one request; `budgetMs` bounds the whole call across key
+   * hops. The mentor passes short ones so a slow Gemini gives way to Groq.
+   */
+  constructor(
+    private readonly keys: string[],
+    private readonly model = GEMINI_MODEL,
+    private readonly limits: { timeoutMs?: number; budgetMs?: number } = {},
+  ) {
     this.lastCallAt = keys.map(() => 0);
   }
 
@@ -36,7 +44,9 @@ export class GeminiClient {
   async call(prompt: string, maxTokens = 800): Promise<string> {
     if (!this.keys.length) throw new Error('No Gemini keys configured');
 
-    for (let attempt = 0; attempt < this.keys.length; attempt++) {
+    const timeoutMs = this.limits.timeoutMs ?? 20_000;
+    const deadline = Date.now() + (this.limits.budgetMs ?? Infinity);
+    for (let attempt = 0; attempt < this.keys.length && Date.now() < deadline; attempt++) {
       const idx = this.keyIdx % this.keys.length;
       this.keyIdx++;
 
@@ -59,7 +69,7 @@ export class GeminiClient {
                 thinkingConfig: { thinkingBudget: 0 },
               },
             }),
-            signal: AbortSignal.timeout(20_000),
+            signal: AbortSignal.timeout(Math.max(1, Math.min(timeoutMs, deadline - Date.now()))),
           },
         );
       } catch (err) {
@@ -81,12 +91,14 @@ export class GeminiClient {
   }
 }
 
-/** Shared serverless instance, keyed from GEMINI_API_KEY(_2/_3/_4). */
-export const gemini = new GeminiClient(
+/** GEMINI_API_KEY(_2/_3/_4), the ones that are set. */
+export const geminiKeys = (): string[] =>
   [
     process.env.GEMINI_API_KEY,
     process.env.GEMINI_API_KEY_2,
     process.env.GEMINI_API_KEY_3,
     process.env.GEMINI_API_KEY_4,
-  ].filter(Boolean) as string[],
-);
+  ].filter(Boolean) as string[];
+
+/** Shared serverless instance for the pipeline. */
+export const gemini = new GeminiClient(geminiKeys());
