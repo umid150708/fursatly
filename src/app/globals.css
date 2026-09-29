@@ -169,6 +169,10 @@
     background-image: radial-gradient(hsl(var(--foreground) / 0.22) 1.1px, transparent 1.4px);
     background-size: 10px 10px;
   }
+  /* On black stock a bright dot screen reads as noise, not as a photo. */
+  .dark .halftone {
+    background-image: radial-gradient(hsl(var(--foreground) / 0.09) 1.1px, transparent 1.4px);
+  }
 
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
