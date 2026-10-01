@@ -8,6 +8,7 @@ The scheduled task `fursatly-daily-agent` follows this every morning. Design: `d
 - Repo: `~/Desktop/Coding projects/Fursatly`. Secrets are in `.env.local`: Supabase URL and service key, CRON_SECRET, Gemini/Groq keys, TELEGRAM_BOT_TOKEN, OWNER_TELEGRAM_CHAT_ID.
 - Vercel: `~/.local/bin/vercel` (logged in; add `--scope team_9PeOgM7qhYAYDQUICbchGVIr`). Project `prj_69Jx8MDClTLVwzaMxha7UyXQVfzZ`. Token in `~/Library/Application Support/com.vercel.cli/auth.json` for the REST API. Never print it.
 - GitHub: `gh` (repo umid150708/fursatly). Pushing to `main` deploys production.
+- Google Search Console: `node scripts/search-console.mjs status|submit|inspect <url>` acts as the service account `fursatly-seo@fursatly-search.iam.gserviceaccount.com` through gcloud impersonation (no key file).
 - Crons by hand: `curl -H "Authorization: Bearer $CRON_SECRET" https://fursatly.uz/api/cron/<scrape|enrich|health>`. Put the secret in the header, never in the URL.
 
 ## 1. Report
@@ -71,6 +72,7 @@ If a real duplicate slipped past, add its pattern to `src/pipeline/dedupe.mjs` w
 If the checks still fail after two honest attempts, don't merge. Tell Umid what broke and link the branch.
 
 ## 4. Finish
+- `node scripts/indexnow.mjs` pushes pages changed in the last 2 days to Bing and Yandex. Weekly (Mondays), also run `node scripts/search-console.mjs status`: if the sitemap shows errors or the homepage reads anything other than indexed after mid-October 2026, find out why.
 - `node scripts/watchdog.mjs --mark-reviewed`, but only after every new listing and suspect was handled.
 - Append one line to `~/.fursatly-watchdog/log.md`: `YYYY-MM-DD — found … — fixed … — notified: yes/no`.
 - Only if something is still wrong or needs Umid: `node scripts/notify-owner.mjs "<1–3 short lines: what's wrong, what you tried, what he must do>"`.
