@@ -1,7 +1,9 @@
+import type { Metadata } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import HomeClient, { type LeadDetail } from './HomeClient';
 import { EVENT_LIST_SELECT, mapEventListRow } from '@/lib/event-list';
 import { pickLead } from '@/lib/front-page';
+import { siteJsonLd, jsonLdScript } from '@/lib/site-schema';
 
 /**
  * Server half of the homepage. Fetches the trimmed events list at build/ISR
@@ -18,6 +20,12 @@ import { pickLead } from '@/lib/front-page';
  * client falls back exactly as it did before.
  */
 export const revalidate = 300;
+
+// The homepage's one address. Without it the www host and stray query strings
+// (?utm_…, ?ref=…) read to Google as separate copies of the front page.
+export const metadata: Metadata = { alternates: { canonical: '/' } };
+
+const siteSchema = jsonLdScript(siteJsonLd());
 
 function db() {
   return createClient(
@@ -69,10 +77,20 @@ export default async function Page() {
     supabase = db();
   } catch {
     // No client (missing env): ship the page empty and let the client fetch.
-    return <HomeClient initialEvents={null} renderedAt={renderedAt} leadDetail={null} />;
+    return (
+      <>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: siteSchema }} />
+        <HomeClient initialEvents={null} renderedAt={renderedAt} leadDetail={null} />
+      </>
+    );
   }
   const initialEvents = await fetchInitialEvents(supabase);
   const lead = initialEvents ? pickLead(initialEvents, renderedAt) : null;
   const leadDetail = lead ? await fetchLeadDetail(supabase, lead.id) : null;
-  return <HomeClient initialEvents={initialEvents} renderedAt={renderedAt} leadDetail={leadDetail} />;
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: siteSchema }} />
+      <HomeClient initialEvents={initialEvents} renderedAt={renderedAt} leadDetail={leadDetail} />
+    </>
+  );
 }

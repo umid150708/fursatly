@@ -48,6 +48,10 @@ export const metadata: Metadata = {
   title: 'Fursatly — Unlock Your Future',
   description: 'AI-curated scholarships, competitions, fellowships and programs from around the world. Every opportunity, researched and translated.',
   icons: { icon: '/icon.png', apple: '/icon.png' },
+  // Search Console ownership of https://fursatly.uz/, held by the
+  // fursatly-seo service account (GCP project fursatly-search). Google
+  // re-checks it, so removing this tag unverifies the site.
+  verification: { google: 'hW_ZGLfT7M4aMp9s5LRQxgQbZkI3HVKCVQ9_CLFUgxw' },
   openGraph: {
     siteName: 'Fursatly',
     type: 'website',
