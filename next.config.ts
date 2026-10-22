@@ -46,6 +46,10 @@ const nextConfig: NextConfig = {
   // Don't advertise the Next.js version in response headers
   poweredByHeader: false,
 
+  // GramJS (channel posts as the user account) pulls in Node-only optional
+  // deps; load it from node_modules at runtime instead of bundling it.
+  serverExternalPackages: ['telegram'],
+
   // Apply security headers to every route
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }];
