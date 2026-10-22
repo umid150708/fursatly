@@ -41,7 +41,16 @@ Post to the channel as Umid's Premium account through MTProto (GramJS,
    reports `via: 'user' | 'bot'`.
 3. **Crons**: `broadcast` and `digest` replace their copy-pasted `fetch` sender
    with `ChannelSender`. `dry=1` is unchanged.
-4. **Session**: a dedicated authorization made for the server (QR-login
+4. **Layout (design C, picked from 3 mockups):** emoji + English title, then a
+   `<blockquote>` box with money · location/age/language · deadline, then one
+   hook line per language (a missing translation is skipped, not filled with
+   English), then `#Tag #Fursatly`. No links in the text: `postButtons(ev)`
+   gives Apply/Details as inline URL buttons. User accounts can't attach
+   buttons, so after the user posts, the bot (a channel admin with
+   `can_edit_messages`) adds them with `editMessageReplyMarkup`. If that
+   fails, the user account edits the links into the text (`buttonsAsLinks`).
+   The bot fallback post sends the buttons directly.
+5. **Session**: a dedicated authorization made for the server (QR-login
    accepted from the existing local Telethon session), so it can be revoked
    on its own in Settings → Devices. It's stored as a sensitive Vercel env var
    and never committed.

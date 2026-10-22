@@ -25,7 +25,7 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { buildPost, isPostable, detailsUrl } from '@/lib/channel-post';
+import { buildPost, postButtons, isPostable, detailsUrl } from '@/lib/channel-post';
 import { ChannelSender } from '@/lib/channel-sender';
 
 export const maxDuration = 60;
@@ -83,14 +83,14 @@ export async function GET(request: Request) {
   if (dry) {
     return NextResponse.json({
       ok: true, dry: true, channel: CHANNEL, count: candidates.length,
-      posts: candidates.map((e) => ({ id: e.id, title: e.title, preview: detailsUrl(e), text: buildPost(e) })),
+      posts: candidates.map((e) => ({ id: e.id, title: e.title, preview: detailsUrl(e), text: buildPost(e), buttons: postButtons(e) })),
     });
   }
 
   const sender = new ChannelSender(CHANNEL);
   const results: any[] = [];
   for (const ev of candidates) {
-    const sent = await sender.send(buildPost(ev));
+    const sent = await sender.send(buildPost(ev), postButtons(ev));
     if (sent.ok) {
       await supabase
         .from('events')

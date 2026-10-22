@@ -6,6 +6,7 @@ const gram = vi.hoisted(() => ({
   connect: vi.fn(),
   sendMessage: vi.fn(),
   getInputEntity: vi.fn(),
+  editMessage: vi.fn(),
   destroy: vi.fn(),
 }));
 vi.mock('telegram', () => ({
@@ -33,7 +34,10 @@ beforeEach(() => {
   vi.stubGlobal('fetch', fetchMock);
 });
 
-const botText = () => JSON.parse(fetchMock.mock.calls[0][1].body).text;
+const botBody = (i = 0) => JSON.parse(fetchMock.mock.calls[i][1].body);
+const botText = () => botBody().text;
+const BUTTONS = [{ text: 'Apply', url: 'https://a.uz' }, { text: 'Details', url: 'https://d.uz' }];
+const KEYBOARD = { inline_keyboard: [[{ text: 'Apply', url: 'https://a.uz' }, { text: 'Details', url: 'https://d.uz' }]] };
 
 describe('ChannelSender', () => {
   it('posts as the user account, premium emoji intact, when a session is configured', async () => {
@@ -88,6 +92,33 @@ describe('ChannelSender', () => {
   it('reports a clear error when neither path is configured', async () => {
     const s = new ChannelSender('@fursatly', {});
     expect(await s.send(PREMIUM)).toEqual({ ok: false, via: 'bot', error: 'TELEGRAM_BOT_TOKEN not configured' });
+  });
+
+  it('has the bot attach buttons to the post the user account made', async () => {
+    gram.sendMessage.mockResolvedValue({ id: 42 });
+    const s = new ChannelSender('@fursatly', USER_ENV);
+    expect(await s.send(PREMIUM, BUTTONS)).toEqual({ ok: true, via: 'user' });
+    expect(fetchMock.mock.calls[0][0]).toBe('https://api.telegram.org/botbot-token/editMessageReplyMarkup');
+    expect(botBody()).toEqual({ chat_id: '@fursatly', message_id: 42, reply_markup: KEYBOARD });
+    expect(gram.editMessage).not.toHaveBeenCalled();
+  });
+
+  it('writes the links into the post when the bot can\'t attach buttons', async () => {
+    gram.sendMessage.mockResolvedValue({ id: 42 });
+    fetchMock.mockResolvedValue(new Response('{"ok":false,"description":"not enough rights"}', { status: 400 }));
+    const s = new ChannelSender('@fursatly', USER_ENV);
+    expect(await s.send(PREMIUM, BUTTONS)).toEqual({ ok: true, via: 'user' });
+    expect(gram.editMessage).toHaveBeenCalledWith({ peer: 'fursatly' }, expect.objectContaining({
+      message: 42,
+      text: `${PREMIUM}\n\n<a href="https://a.uz">Apply</a>\n<a href="https://d.uz">Details</a>`,
+      parseMode: 'html',
+    }));
+  });
+
+  it('sends the buttons with the bot fallback post', async () => {
+    const s = new ChannelSender('@fursatly', { TELEGRAM_BOT_TOKEN: 'bot-token' });
+    await s.send(PREMIUM, BUTTONS);
+    expect(botBody().reply_markup).toEqual(KEYBOARD);
   });
 
   it('close() tears down the user client', async () => {
