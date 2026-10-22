@@ -29,7 +29,8 @@
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "tailwind-merge": "^3.0.1",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "telegram": "2.26.22"
   },
   "devDependencies": {
     "@types/node": "^20.19.43",

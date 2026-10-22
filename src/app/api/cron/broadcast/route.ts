@@ -6,15 +6,17 @@
  * assembled from the already-enriched + translated DB fields (no LLM calls).
  * Post formatting lives in src/lib/channel-post.ts (unit-tested).
  *
- * Each post carries a large link preview of the event's fursatly.uz page, so
- * the channel card shows the branded OG image (category color, deadline).
+ * Posts carry animated premium emoji, so they go out as Umid's Premium user
+ * account; the bot is the fallback (see src/lib/channel-sender.ts).
  *
  * Prioritises soonest-deadline (still-open) opportunities and never reposts —
  * a `research_data.postedToTelegramAt` stamp marks what's already gone out.
  * Unenriched events are skipped until the enrich cron finishes them.
  *
  * Config:
- *   TELEGRAM_BOT_TOKEN  (required) — a bot that is ADMIN of the channel
+ *   TELEGRAM_BOT_TOKEN  (required) — a bot that is ADMIN of the channel; the fallback sender
+ *   TELEGRAM_USER_SESSION + TELEGRAM_API_ID + TELEGRAM_API_HASH (optional) —
+ *                       post as the Premium user account, premium emoji intact
  *   TELEGRAM_CHANNEL    (optional) — @handle or numeric id; default "@fursatly"
  *
  * Auth matches the other crons: Bearer <CRON_SECRET> header or ?secret=<CRON_SECRET>.
@@ -23,7 +25,8 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { buildPost, isPostable, detailsUrl } from '@/lib/channel-post';
+import { buildPost, postButtons, isPostable, detailsUrl } from '@/lib/channel-post';
+import { ChannelSender } from '@/lib/channel-sender';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -38,25 +41,6 @@ function db() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { persistSession: false } },
   );
-}
-
-async function sendPost(token: string, text: string): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: CHANNEL,
-      text,
-      parse_mode: 'HTML',
-      // No link preview — the post carries its own formatting; the big OG card
-      // was redundant with the text and pushed the CTA off-screen.
-      link_preview_options: { is_disabled: true },
-    }),
-    signal: AbortSignal.timeout(15_000),
-  });
-  if (res.ok) return { ok: true };
-  const body = await res.json().catch(() => ({}));
-  return { ok: false, error: body.description || `HTTP ${res.status}` };
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -99,24 +83,26 @@ export async function GET(request: Request) {
   if (dry) {
     return NextResponse.json({
       ok: true, dry: true, channel: CHANNEL, count: candidates.length,
-      posts: candidates.map((e) => ({ id: e.id, title: e.title, preview: detailsUrl(e), text: buildPost(e) })),
+      posts: candidates.map((e) => ({ id: e.id, title: e.title, preview: detailsUrl(e), text: buildPost(e), buttons: postButtons(e) })),
     });
   }
 
+  const sender = new ChannelSender(CHANNEL);
   const results: any[] = [];
   for (const ev of candidates) {
-    const sent = await sendPost(token!, buildPost(ev));
+    const sent = await sender.send(buildPost(ev), postButtons(ev));
     if (sent.ok) {
       await supabase
         .from('events')
         .update({ research_data: { ...ev.research_data, postedToTelegramAt: new Date().toISOString() } })
         .eq('id', ev.id);
-      results.push({ id: ev.id, title: ev.title, status: 'posted' });
+      results.push({ id: ev.id, title: ev.title, status: 'posted', via: sent.via });
     } else {
       results.push({ id: ev.id, title: ev.title, status: 'failed', error: sent.error });
     }
     await sleep(GAP_MS);
   }
+  await sender.close();
 
   const posted = results.filter((r) => r.status === 'posted').length;
   console.log(`[Broadcast] posted ${posted}/${candidates.length} to ${CHANNEL}`);
