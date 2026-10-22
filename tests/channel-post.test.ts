@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildPost, buildDigest, isPostable, detailsUrl, stripPremiumEmoji } from '../src/lib/channel-post';
+import { buildPost, buildDigest, isPostable, detailsUrl, postButtons, buttonsAsLinks, stripPremiumEmoji } from '../src/lib/channel-post';
 
 const enriched = {
   id: '0f01ae61-ab70-4c8f-825b-bd97aa559a2a',
@@ -47,10 +47,21 @@ describe('detailsUrl', () => {
 describe('buildPost', () => {
   const post = buildPost(enriched);
 
-  it('renders all three language titles', () => {
-    expect(post).toContain('KAIST granti');
-    expect(post).toContain('Грант KAIST');
-    expect(post).toContain('KAIST Scholarships');
+  it('leads with the English title and gives one hook per language', () => {
+    expect(stripPremiumEmoji(post).startsWith('🎓 <b>KAIST Scholarships &lt;2026&gt;</b>\n')).toBe(true);
+    expect(post).toContain('To‘liq o‘qish grantini beradi.');
+    expect(post).toContain('Даёт полное финансирование.');
+  });
+
+  it('boxes the key facts (money, place, deadline) in a quote', () => {
+    const box = stripPremiumEmoji(post).match(/<blockquote>([\s\S]*?)<\/blockquote>/)?.[1] ?? '';
+    expect(box).toContain('💰 Covers full tuition and a $3,000 monthly stipend');
+    expect(box).toContain('📍 South Korea  ·  👤 17–25  ·  🗣 English');
+    expect(box).toContain('⏳ Deadline: <b>22.10.2099</b>');
+  });
+
+  it('carries no links in the text — they go in buttons', () => {
+    expect(post).not.toContain('<a href');
   });
 
   it('escapes HTML-sensitive characters in titles', () => {
@@ -73,10 +84,6 @@ describe('buildPost', () => {
     expect(post).toContain('22.10.2099');
   });
 
-  it('links apply + details URLs', () => {
-    expect(post).toContain('href="https://kaist.ac.kr/apply"');
-    expect(post).toContain('href="https://fursatly.uz/event/kaist-scholarships-2026"');
-  });
 
   it('shows Rolling for missing deadlines', () => {
     expect(buildPost({ ...enriched, deadline: null })).toContain('Rolling');
@@ -97,18 +104,20 @@ describe('buildPost', () => {
     expect(noDetails).toContain('Fully funded');
   });
 
-  it('falls back to the English title when a translation is missing', () => {
-    const noTr = buildPost({
+  it('skips a language with no translation instead of repeating the English', () => {
+    const noTr = stripPremiumEmoji(buildPost({
       ...enriched,
       research_data: { ...enriched.research_data, translations: {} },
-    });
-    expect(stripPremiumEmoji(noTr)).toContain('🇺🇿 <b>KAIST Scholarships &lt;2026&gt;</b>');
+    }));
+    expect(noTr).not.toContain('🇺🇿');
+    expect(noTr).not.toContain('🇷🇺');
+    expect(noTr).toContain('🇬🇧 Provides a full tuition waiver to students.');
   });
 
   it('wraps its emoji as animated premium emoji', () => {
     // Category icon (🎓 from Animated Emoji) and the language flags.
-    expect(post).toContain('<tg-emoji emoji-id="5375163339154399459">🎓</tg-emoji> <b>GRANT');
-    expect(post).toContain('<tg-emoji emoji-id="5449829434334912605">🇺🇿</tg-emoji> <b>KAIST granti</b>');
+    expect(post).toContain('<tg-emoji emoji-id="5375163339154399459">🎓</tg-emoji> <b>KAIST');
+    expect(post).toContain('<tg-emoji emoji-id="5449829434334912605">🇺🇿</tg-emoji> To‘liq');
     expect(post).toContain('<tg-emoji emoji-id="5202196682497859879">🇬🇧</tg-emoji>');
   });
 
@@ -118,12 +127,30 @@ describe('buildPost', () => {
   });
 });
 
+describe('postButtons', () => {
+  it('links apply + details', () => {
+    expect(postButtons(enriched)).toEqual([
+      { text: '📝 Ariza / Apply', url: 'https://kaist.ac.kr/apply' },
+      { text: '🔎 Batafsil / Details', url: 'https://fursatly.uz/event/kaist-scholarships-2026' },
+    ]);
+  });
+
+  it('offers only details when there is no apply link', () => {
+    const noApply = { ...enriched, description: '', research_data: { ...enriched.research_data, officialWebsite: '' } };
+    expect(postButtons(noApply).map((b) => b.text)).toEqual(['🔎 Batafsil / Details']);
+  });
+
+  it('renders as escaped text links for when buttons can\'t be attached', () => {
+    expect(buttonsAsLinks([{ text: 'A & B', url: 'https://x.uz/?a=1&b="2"' }]))
+      .toBe('<a href="https://x.uz/?a=1&amp;b=&quot;2&quot;">A &amp; B</a>');
+  });
+});
+
 describe('stripPremiumEmoji', () => {
   it('turns a premium post back into plain emoji with nothing else changed', () => {
     const plain = stripPremiumEmoji(buildPost(enriched));
     expect(plain).not.toContain('tg-emoji');
-    expect(plain.startsWith('🎓 <b>GRANT / ГРАНТ / SCHOLARSHIP</b>\n💰 ')).toBe(true);
-    expect(plain).toContain('🔗 <a href="https://kaist.ac.kr/apply">');
+    expect(plain.startsWith('🎓 <b>KAIST Scholarships &lt;2026&gt;</b>\n<blockquote>💰 ')).toBe(true);
   });
 
   it('leaves text without premium emoji untouched', () => {
