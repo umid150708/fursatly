@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildPost, buildDigest, isPostable, detailsUrl } from '../src/lib/channel-post';
+import { buildPost, buildDigest, isPostable, detailsUrl, stripPremiumEmoji } from '../src/lib/channel-post';
 
 const enriched = {
   id: '0f01ae61-ab70-4c8f-825b-bd97aa559a2a',
@@ -102,7 +102,32 @@ describe('buildPost', () => {
       ...enriched,
       research_data: { ...enriched.research_data, translations: {} },
     });
-    expect(noTr).toContain('🇺🇿 <b>KAIST Scholarships &lt;2026&gt;</b>');
+    expect(stripPremiumEmoji(noTr)).toContain('🇺🇿 <b>KAIST Scholarships &lt;2026&gt;</b>');
+  });
+
+  it('wraps its emoji as animated premium emoji', () => {
+    // Category icon (🎓 from Animated Emoji) and the language flags.
+    expect(post).toContain('<tg-emoji emoji-id="5375163339154399459">🎓</tg-emoji> <b>GRANT');
+    expect(post).toContain('<tg-emoji emoji-id="5449829434334912605">🇺🇿</tg-emoji> <b>KAIST granti</b>');
+    expect(post).toContain('<tg-emoji emoji-id="5202196682497859879">🇬🇧</tg-emoji>');
+  });
+
+  it('matches emoji written with or without the variation selector', () => {
+    const summer = buildPost({ ...enriched, source: 'Summer Programs' });
+    expect(summer).toContain('<tg-emoji emoji-id="5469947168523558652">☀️</tg-emoji>');
+  });
+});
+
+describe('stripPremiumEmoji', () => {
+  it('turns a premium post back into plain emoji with nothing else changed', () => {
+    const plain = stripPremiumEmoji(buildPost(enriched));
+    expect(plain).not.toContain('tg-emoji');
+    expect(plain.startsWith('🎓 <b>GRANT / ГРАНТ / SCHOLARSHIP</b>\n💰 ')).toBe(true);
+    expect(plain).toContain('🔗 <a href="https://kaist.ac.kr/apply">');
+  });
+
+  it('leaves text without premium emoji untouched', () => {
+    expect(stripPremiumEmoji('<b>hi</b> 🎓')).toBe('<b>hi</b> 🎓');
   });
 });
 
@@ -135,5 +160,9 @@ describe('buildDigest', () => {
   it('ends with the site CTA', () => {
     expect(digest).toContain('fursatly.uz');
     expect(digest).toContain('#deadline');
+  });
+
+  it('uses the animated fire in the header', () => {
+    expect(digest.startsWith('<tg-emoji emoji-id="5420315771991497307">🔥</tg-emoji> <b>')).toBe(true);
   });
 });
