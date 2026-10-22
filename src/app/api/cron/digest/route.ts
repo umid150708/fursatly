@@ -7,6 +7,7 @@
  * drives urgency and gives followers a reason to check back.
  *
  * No LLM calls; formatting lives in src/lib/channel-post.ts (buildDigest).
+ * Sent through ChannelSender (Premium user account, bot fallback).
  * Auth matches the other crons: Bearer <CRON_SECRET> or ?secret=<CRON_SECRET>.
  * Preview without posting: ?dry=1.
  */
@@ -14,6 +15,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { buildDigest, isPostable } from '@/lib/channel-post';
+import { ChannelSender } from '@/lib/channel-sender';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -28,23 +30,6 @@ function db() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { persistSession: false } },
   );
-}
-
-async function send(token: string, text: string): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: CHANNEL,
-      text,
-      parse_mode: 'HTML',
-      link_preview_options: { is_disabled: true },
-    }),
-    signal: AbortSignal.timeout(15_000),
-  });
-  if (res.ok) return { ok: true };
-  const body = await res.json().catch(() => ({}));
-  return { ok: false, error: body.description || `HTTP ${res.status}` };
 }
 
 export async function GET(request: Request) {
@@ -87,10 +72,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: true, dry: true, channel: CHANNEL, count: closing.length, text });
   }
 
-  const sent = await send(token!, text);
+  const sender = new ChannelSender(CHANNEL);
+  const sent = await sender.send(text);
+  await sender.close();
   if (!sent.ok) {
     return NextResponse.json({ ok: false, error: sent.error }, { status: 502 });
   }
   console.log(`[Digest] posted ${closing.length} closing-soon items to ${CHANNEL}`);
-  return NextResponse.json({ ok: true, posted: closing.length, channel: CHANNEL });
+  return NextResponse.json({ ok: true, posted: closing.length, channel: CHANNEL, via: sent.via });
 }

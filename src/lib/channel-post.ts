@@ -6,25 +6,58 @@ import { eventSlug } from './event-path';
  * unit-testable. One trilingual (UZ / RU / EN) card per opportunity, built
  * from already-enriched DB fields (no LLM calls).
  *
- * Written to read like a social post, not a database row: it leads with the
- * concrete benefit (money / funding), gives one tight sentence per language,
- * and strips the title-echo the enrichment LLM tends to open descriptions with.
+ * Written to read like a social post, not a database row: title, then the
+ * facts students scan for (money, place, deadline) boxed in a quote, then one
+ * tight sentence per language with the title-echo the enrichment LLM tends to
+ * open descriptions with stripped. No links in the text — apply/details ride
+ * as inline buttons under the post (`postButtons`).
  */
 
 const SITE = 'https://fursatly.uz';
 
-const CATEGORY: Record<string, { emoji: string; uz: string; ru: string; en: string; tag: string }> = {
-  Scholarships:      { emoji: '🎓', uz: 'GRANT',        ru: 'ГРАНТ',           en: 'SCHOLARSHIP',   tag: 'Scholarship' },
-  Competitions:      { emoji: '🏆', uz: 'MUSOBAQA',     ru: 'КОНКУРС',         en: 'COMPETITION',   tag: 'Competition' },
-  'Summer Programs': { emoji: '☀️', uz: 'YOZGI DASTUR', ru: 'ЛЕТНЯЯ ПРОГРАММА', en: 'SUMMER PROGRAM', tag: 'SummerProgram' },
-  Research:          { emoji: '🔬', uz: 'TADQIQOT',     ru: 'ИССЛЕДОВАНИЕ',    en: 'RESEARCH',      tag: 'Research' },
-  Volunteer:         { emoji: '🤝', uz: 'VOLONTYORLIK', ru: 'ВОЛОНТЁРСТВО',    en: 'VOLUNTEER',     tag: 'Volunteer' },
-  STEM:              { emoji: '💻', uz: 'STEM',         ru: 'STEM',            en: 'STEM',          tag: 'STEM' },
-  Internships:       { emoji: '💼', uz: 'STAJIROVKA',   ru: 'СТАЖИРОВКА',      en: 'INTERNSHIP',    tag: 'Internship' },
-  Workshops:         { emoji: '📚', uz: 'SEMINAR',      ru: 'СЕМИНАР',         en: 'WORKSHOP',      tag: 'Workshop' },
-  Fellowships:       { emoji: '🌍', uz: 'STIPENDIYA',   ru: 'СТИПЕНДИЯ',       en: 'FELLOWSHIP',    tag: 'Fellowship' },
-  Other:             { emoji: '✨', uz: 'IMKONIYAT',    ru: 'ВОЗМОЖНОСТЬ',     en: 'OPPORTUNITY',   tag: 'Opportunity' },
+const CATEGORY: Record<string, { emoji: string; tag: string }> = {
+  Scholarships:      { emoji: '🎓', tag: 'Scholarship' },
+  Competitions:      { emoji: '🏆', tag: 'Competition' },
+  'Summer Programs': { emoji: '☀️', tag: 'SummerProgram' },
+  Research:          { emoji: '🔬', tag: 'Research' },
+  Volunteer:         { emoji: '🤝', tag: 'Volunteer' },
+  STEM:              { emoji: '💻', tag: 'STEM' },
+  Internships:       { emoji: '💼', tag: 'Internship' },
+  Workshops:         { emoji: '📚', tag: 'Workshop' },
+  Fellowships:       { emoji: '🌍', tag: 'Fellowship' },
+  Other:             { emoji: '✨', tag: 'Opportunity' },
 };
+
+/**
+ * Animated premium (custom) emoji for every plain emoji the posts use. Telegram
+ * renders them animated for all readers, Premium or not. Ids come from
+ * Telegram's own packs, which won't be deleted: "Animated Emoji"
+ * (t.me/addemoji/RestrictedEmoji), plus "News Emoji" (t.me/addemoji/NewsEmoji)
+ * for 📍 and 🔴, which the first pack lacks. Keys carry no U+FE0F variation
+ * selector; `emo` strips it before the lookup.
+ *
+ * Only a Premium *user* account can post these to a channel — the bot path
+ * runs `stripPremiumEmoji` first (see channel-sender.ts).
+ */
+const PREMIUM_EMOJI: Record<string, string> = {
+  '🎓': '5375163339154399459', '🏆': '5409008750893734809', '☀': '5469947168523558652',
+  '🔬': '5379679518740978720', '🤝': '5357080225463149588', '💻': '5431376038628171216',
+  '💼': '5359785904535774578', '📚': '5373098009640836781', '🌍': '5399898266265475100',
+  '✨': '5472164874886846699', '💰': '5375296873982604963', '👤': '5373012449597335010',
+  '🗣': '5370765563226236970', '⏳': '5451732530048802485', '👉': '5471978009449731768', '🔥': '5420315771991497307', '🇺🇿': '5449829434334912605',
+  '🇷🇺': '5449408995691341691', '🇬🇧': '5202196682497859879',
+  '📍': '5397782960512444700', '🔴': '5411225014148014586',
+};
+
+/** Wrap a plain emoji as premium emoji; the plain one stays as the fallback glyph. */
+const emo = (e: string): string => {
+  const id = PREMIUM_EMOJI[e.replace(/\uFE0F/g, '')];
+  return id ? `<tg-emoji emoji-id="${id}">${e}</tg-emoji>` : e;
+};
+
+/** Back to plain emoji, for senders that can't post premium emoji (the bot). */
+export const stripPremiumEmoji = (html: string): string =>
+  html.replace(/<tg-emoji emoji-id="\d+">(.*?)<\/tg-emoji>/g, '$1');
 
 const escText = (s = '') => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const escAttr = (s = '') => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
@@ -111,9 +144,9 @@ function highlight(ev: any): string | null {
   if (detail) {
     // Drop the "Prizes:" / "Format:" label the LLM prefixes onto keyDetails.
     const clean = detail.replace(/^[A-Z][A-Za-z ]{1,18}:\s*/, '');
-    return `💰 ${escText(trim(clean, 110))}`;
+    return `${emo('💰')} ${escText(trim(clean, 110))}`;
   }
-  if (rd.funding_type === 'Full') return `💰 To'liq moliyalashtirilgan / Полностью финансируется / Fully funded`;
+  if (rd.funding_type === 'Full') return `${emo('💰')} To'liq moliyalashtirilgan / Полностью финансируется / Fully funded`;
   return null;
 }
 
@@ -137,24 +170,39 @@ export function isPostable(ev: any): boolean {
  */
 export function buildDigest(events: any[]): string {
   const L: string[] = [];
-  L.push(`🔥 <b>Shu hafta tugaydigan imkoniyatlar</b>`);
-  L.push(`🔥 <b>Дедлайны этой недели · Closing this week</b>`);
+  L.push(`${emo('🔥')} <b>Shu hafta tugaydigan imkoniyatlar</b>`);
+  L.push(`${emo('🔥')} <b>Дедлайны этой недели · Closing this week</b>`);
   L.push('');
 
   for (const ev of events) {
     const cat = CATEGORY[ev.source] || CATEGORY.Other;
     const dl = daysLeft(ev.deadline);
-    const dot = dl !== null && dl <= 3 ? '🔴 ' : '';
+    const dot = dl !== null && dl <= 3 ? `${emo('🔴')} ` : '';
     const left = dl === 0 ? 'bugun / today!' : dl === 1 ? '1 kun / day' : `${dl} kun / days`;
-    L.push(`${cat.emoji} <a href="${detailsUrl(ev)}">${escText(ev.title)}</a>`);
-    L.push(`   ${dot}⏳ ${fmtDate(ev.deadline)} · ${left}`);
+    L.push(`${emo(cat.emoji)} <a href="${detailsUrl(ev)}">${escText(ev.title)}</a>`);
+    L.push(`   ${dot}${emo('⏳')} ${fmtDate(ev.deadline)} · ${left}`);
   }
 
   L.push('');
-  L.push(`👉 <a href="${SITE}">Barchasi / Все / All → fursatly.uz</a>`);
+  L.push(`${emo('👉')} <a href="${SITE}">Barchasi / Все / All → fursatly.uz</a>`);
   L.push(`#deadline #Fursatly #imkoniyat`);
   return L.join('\n');
 }
+
+export type PostButton = { text: string; url: string };
+
+/** Apply + details links, attached under the post as inline URL buttons. */
+export function postButtons(ev: any): PostButton[] {
+  const url = applyUrl(ev);
+  return [
+    ...(url ? [{ text: '📝 Ariza / Apply', url }] : []),
+    { text: '🔎 Batafsil / Details', url: detailsUrl(ev) },
+  ];
+}
+
+/** The same links as text, for when buttons can't be attached. */
+export const buttonsAsLinks = (buttons: PostButton[]): string =>
+  buttons.map((b) => `<a href="${escAttr(b.url)}">${escText(b.text)}</a>`).join('\n');
 
 export function buildPost(ev: any): string {
   const rd = ev.research_data || {};
@@ -162,43 +210,38 @@ export function buildPost(ev: any): string {
   const uz = rd.translations?.uz || {};
   const ru = rd.translations?.ru || {};
 
-  const L: string[] = [];
-  L.push(`${cat.emoji} <b>${cat.uz} / ${cat.ru} / ${cat.en}</b>`);
-
+  // Key facts box: money, then the website card's facts (location · age ·
+  // language), then the deadline.
+  const facts: string[] = [];
   const hl = highlight(ev);
-  if (hl) L.push(hl);
-  L.push('');
+  if (hl) facts.push(hl);
 
-  // One flag + bold title + tight one-line hook per language.
-  const block = (flag: string, title: string, h: string) => {
-    L.push(`${flag} <b>${escText(title)}</b>`);
-    if (h) L.push(escText(h));
-  };
-  block('🇺🇿', uz.title || ev.title, hook(uz.extendedDescription || rd.extendedDescription, uz.title, ev.title));
-  L.push('');
-  block('🇷🇺', ru.title || ev.title, hook(ru.extendedDescription || rd.extendedDescription, ru.title, ev.title));
-  L.push('');
-  block('🇬🇧', ev.title, hook(rd.extendedDescription, ev.title, ev.title));
-  L.push('');
-
-  // Facts line mirrors the website card (location · age · language).
   const meta: string[] = [];
-  if (ev.location) meta.push(`📍 ${escText(ev.location)}`);
-  if (!(ev.age_min === 0 && ev.age_max === 100) && (ev.age_min || ev.age_max)) meta.push(`👤 ${ev.age_min}–${ev.age_max}`);
-  if (ev.language) meta.push(`🗣 ${escText(ev.language)}`);
-  if (meta.length) L.push(meta.join('  ·  '));
+  if (ev.location) meta.push(`${emo('📍')} ${escText(ev.location)}`);
+  if (!(ev.age_min === 0 && ev.age_max === 100) && (ev.age_min || ev.age_max)) meta.push(`${emo('👤')} ${ev.age_min}–${ev.age_max}`);
+  if (ev.language) meta.push(`${emo('🗣')} ${escText(ev.language)}`);
+  if (meta.length) facts.push(meta.join('  ·  '));
 
   const dl = daysLeft(ev.deadline);
   const urgent = dl !== null && dl >= 0 && dl <= 7;
-  const clock = urgent ? '🔴' : '⏳';
+  const clock = emo(urgent ? '🔴' : '⏳');
   const soon = urgent ? (dl === 0 ? ' (bugun / сегодня / today!)' : ` (${dl} kun / дн. / days left!)`) : '';
-  L.push(`${clock} Muddat / Дедлайн / Deadline: <b>${fmtDate(ev.deadline)}</b>${soon}`);
-  L.push('');
+  facts.push(`${clock} Deadline: <b>${fmtDate(ev.deadline)}</b>${soon}`);
 
-  const url = applyUrl(ev);
-  if (url) L.push(`🔗 <a href="${escAttr(url)}">Ariza / Заявка / Apply</a>`);
-  L.push(`👉 <a href="${detailsUrl(ev)}">Batafsil / Подробнее / Details</a>`);
-  L.push('');
-  L.push(`#${cat.tag} #Fursatly #imkoniyat`);
+  // One tight hook per language. A missing translation is skipped rather than
+  // repeating the English under another flag.
+  const hooks = [
+    uz.extendedDescription && [emo('🇺🇿'), hook(uz.extendedDescription, uz.title, ev.title)],
+    ru.extendedDescription && [emo('🇷🇺'), hook(ru.extendedDescription, ru.title, ev.title)],
+    [emo('🇬🇧'), hook(rd.extendedDescription, ev.title, ev.title)],
+  ]
+    .filter((h): h is string[] => Boolean(h && h[1]))
+    .map(([flag, h]) => `${flag} ${escText(h)}`);
+
+  const L: string[] = [];
+  L.push(`${emo(cat.emoji)} <b>${escText(ev.title)}</b>`);
+  L.push(`<blockquote>${facts.join('\n')}</blockquote>`);
+  if (hooks.length) L.push(hooks.join('\n\n'), '');
+  L.push(`#${cat.tag} #Fursatly`);
   return L.join('\n');
 }
