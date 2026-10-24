@@ -3,7 +3,7 @@ import { eventSlug } from './event-path';
 /**
  * Pure builder for the public-channel Telegram post (HTML parse mode) —
  * extracted from the broadcast cron so the formatting and escaping are
- * unit-testable. One trilingual (UZ / RU / EN) card per opportunity, built
+ * unit-testable. One bilingual (UZ / EN) card per opportunity, built
  * from already-enriched DB fields (no LLM calls).
  *
  * Written to read like a social post, not a database row: title, then the
@@ -14,6 +14,8 @@ import { eventSlug } from './event-path';
  */
 
 const SITE = 'https://fursatly.uz';
+/** Signs every message, so forwards still point back to the channel. */
+const CHANNEL = '@fursatly';
 
 const CATEGORY: Record<string, { emoji: string; tag: string }> = {
   Scholarships:      { emoji: '🎓', tag: 'Scholarship' },
@@ -45,7 +47,7 @@ const PREMIUM_EMOJI: Record<string, string> = {
   '💼': '5359785904535774578', '📚': '5373098009640836781', '🌍': '5399898266265475100',
   '✨': '5472164874886846699', '💰': '5375296873982604963', '👤': '5373012449597335010',
   '🗣': '5370765563226236970', '⏳': '5451732530048802485', '👉': '5471978009449731768', '🔥': '5420315771991497307', '🇺🇿': '5449829434334912605',
-  '🇷🇺': '5449408995691341691', '🇬🇧': '5202196682497859879',
+  '🇬🇧': '5202196682497859879',
   '📍': '5397782960512444700', '🔴': '5411225014148014586',
 };
 
@@ -67,9 +69,9 @@ const trim = (s = '', n = 150) => {
   return t.length > n ? t.slice(0, n).replace(/\s+\S*$/, '') + '…' : t;
 };
 
-/** Leading article words in the three languages, so title-echo stripping and
+/** Leading article words in both languages, so title-echo stripping and
  *  capitalisation work whichever language the description is in. */
-const LEADING_ARTICLE = /^(the|a|an|ushbu| this|bu|mazkur|этот|эта|это|данн\w+)\s+/i;
+const LEADING_ARTICLE = /^(the|a|an|ushbu| this|bu|mazkur)\s+/i;
 
 const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
@@ -88,7 +90,7 @@ function stripTitleEcho(desc: string, titles: (string | undefined)[]): string {
     if (stripped.toLowerCase().startsWith(t.toLowerCase())) {
       d = stripped.slice(t.length);
       // Drop the connector left behind ("… Scholarships >is a< / >—< / >:< …").
-      d = d.replace(/^[\s.,:;—–-]+/, '').replace(/^(is|are|was|were|will be|—|-|это|—\s)\s*/i, '');
+      d = d.replace(/^[\s.,:;—–-]+/, '').replace(/^(is|are|was|were|will be|—|-|—\s)\s*/i, '');
       return capitalize(d.trim());
     }
   }
@@ -146,7 +148,7 @@ function highlight(ev: any): string | null {
     const clean = detail.replace(/^[A-Z][A-Za-z ]{1,18}:\s*/, '');
     return `${emo('💰')} ${escText(trim(clean, 110))}`;
   }
-  if (rd.funding_type === 'Full') return `${emo('💰')} To'liq moliyalashtirilgan / Полностью финансируется / Fully funded`;
+  if (rd.funding_type === 'Full') return `${emo('💰')} To'liq moliyalashtirilgan / Fully funded`;
   return null;
 }
 
@@ -155,7 +157,7 @@ export const detailsUrl = (ev: any): string => `${SITE}/event/${eventSlug(ev)}`;
 
 /**
  * Only enriched events make good channel posts — a raw scraped row has no
- * extended description and no translations, so the card would be three bare
+ * extended description and no translations, so the card would be two bare
  * title lines. Wait for the enrich cron to finish it first.
  */
 export function isPostable(ev: any): boolean {
@@ -171,7 +173,7 @@ export function isPostable(ev: any): boolean {
 export function buildDigest(events: any[]): string {
   const L: string[] = [];
   L.push(`${emo('🔥')} <b>Shu hafta tugaydigan imkoniyatlar</b>`);
-  L.push(`${emo('🔥')} <b>Дедлайны этой недели · Closing this week</b>`);
+  L.push(`${emo('🔥')} <b>Closing this week</b>`);
   L.push('');
 
   for (const ev of events) {
@@ -184,8 +186,9 @@ export function buildDigest(events: any[]): string {
   }
 
   L.push('');
-  L.push(`${emo('👉')} <a href="${SITE}">Barchasi / Все / All → fursatly.uz</a>`);
+  L.push(`${emo('👉')} <a href="${SITE}">Barchasi / All → fursatly.uz</a>`);
   L.push(`#deadline #Fursatly #imkoniyat`);
+  L.push(CHANNEL);
   return L.join('\n');
 }
 
@@ -208,7 +211,6 @@ export function buildPost(ev: any): string {
   const rd = ev.research_data || {};
   const cat = CATEGORY[ev.source] || CATEGORY.Other;
   const uz = rd.translations?.uz || {};
-  const ru = rd.translations?.ru || {};
 
   // Key facts box: money, then the website card's facts (location · age ·
   // language), then the deadline.
@@ -225,14 +227,13 @@ export function buildPost(ev: any): string {
   const dl = daysLeft(ev.deadline);
   const urgent = dl !== null && dl >= 0 && dl <= 7;
   const clock = emo(urgent ? '🔴' : '⏳');
-  const soon = urgent ? (dl === 0 ? ' (bugun / сегодня / today!)' : ` (${dl} kun / дн. / days left!)`) : '';
+  const soon = urgent ? (dl === 0 ? ' (bugun / today!)' : ` (${dl} kun / days left!)`) : '';
   facts.push(`${clock} Deadline: <b>${fmtDate(ev.deadline)}</b>${soon}`);
 
   // One tight hook per language. A missing translation is skipped rather than
   // repeating the English under another flag.
   const hooks = [
     uz.extendedDescription && [emo('🇺🇿'), hook(uz.extendedDescription, uz.title, ev.title)],
-    ru.extendedDescription && [emo('🇷🇺'), hook(ru.extendedDescription, ru.title, ev.title)],
     [emo('🇬🇧'), hook(rd.extendedDescription, ev.title, ev.title)],
   ]
     .filter((h): h is string[] => Boolean(h && h[1]))
@@ -243,5 +244,6 @@ export function buildPost(ev: any): string {
   L.push(`<blockquote>${facts.join('\n')}</blockquote>`);
   if (hooks.length) L.push(hooks.join('\n\n'), '');
   L.push(`#${cat.tag} #Fursatly`);
+  L.push(CHANNEL);
   return L.join('\n');
 }

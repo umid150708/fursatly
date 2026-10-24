@@ -50,7 +50,12 @@ describe('buildPost', () => {
   it('leads with the English title and gives one hook per language', () => {
     expect(stripPremiumEmoji(post).startsWith('🎓 <b>KAIST Scholarships &lt;2026&gt;</b>\n')).toBe(true);
     expect(post).toContain('To‘liq o‘qish grantini beradi.');
-    expect(post).toContain('Даёт полное финансирование.');
+    expect(post).toContain('Provides a full tuition waiver to students.');
+  });
+
+  it('is Uzbek + English only, even when a Russian translation exists', () => {
+    expect(post).not.toContain('🇷🇺');
+    expect(post).not.toMatch(/[\u0400-\u04FF]/);
   });
 
   it('boxes the key facts (money, place, deadline) in a quote', () => {
@@ -58,6 +63,10 @@ describe('buildPost', () => {
     expect(box).toContain('💰 Covers full tuition and a $3,000 monthly stipend');
     expect(box).toContain('📍 South Korea  ·  👤 17–25  ·  🗣 English');
     expect(box).toContain('⏳ Deadline: <b>22.10.2099</b>');
+  });
+
+  it('ends with the hashtags, then the channel signature', () => {
+    expect(post.endsWith('#Scholarship #Fursatly\n@fursatly')).toBe(true);
   });
 
   it('carries no links in the text — they go in buttons', () => {
@@ -93,7 +102,7 @@ describe('buildPost', () => {
     const soon = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
     const urgentPost = buildPost({ ...enriched, deadline: soon });
     expect(urgentPost).toContain('🔴');
-    expect(urgentPost).toMatch(/days left/);
+    expect(urgentPost).toContain('(3 kun / days left!)');
   });
 
   it('falls back to the "fully funded" badge when no money keyDetail exists', () => {
@@ -101,7 +110,7 @@ describe('buildPost', () => {
       ...enriched,
       research_data: { ...enriched.research_data, keyDetails: [], funding_type: 'Full' },
     });
-    expect(noDetails).toContain('Fully funded');
+    expect(noDetails).toContain("To'liq moliyalashtirilgan / Fully funded");
   });
 
   it('skips a language with no translation instead of repeating the English', () => {
@@ -110,7 +119,6 @@ describe('buildPost', () => {
       research_data: { ...enriched.research_data, translations: {} },
     }));
     expect(noTr).not.toContain('🇺🇿');
-    expect(noTr).not.toContain('🇷🇺');
     expect(noTr).toContain('🇬🇧 Provides a full tuition waiver to students.');
   });
 
@@ -168,10 +176,10 @@ describe('buildDigest', () => {
   ];
   const digest = buildDigest(events);
 
-  it('renders a trilingual header', () => {
+  it('renders an Uzbek + English header and nothing in Russian', () => {
     expect(digest).toContain('Closing this week');
-    expect(digest).toContain('Дедлайны этой недели');
     expect(digest).toContain('Shu hafta');
+    expect(digest).not.toMatch(/[\u0400-\u04FF]/);
   });
 
   it('links each event to its details page and escapes titles', () => {
@@ -184,9 +192,9 @@ describe('buildDigest', () => {
     expect(digest).toMatch(/bugun \/ today/);
   });
 
-  it('ends with the site CTA', () => {
+  it('ends with the site CTA, hashtags and the channel signature', () => {
     expect(digest).toContain('fursatly.uz');
-    expect(digest).toContain('#deadline');
+    expect(digest.endsWith('#deadline #Fursatly #imkoniyat\n@fursatly')).toBe(true);
   });
 
   it('uses the animated fire in the header', () => {
