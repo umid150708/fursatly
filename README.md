@@ -1,6 +1,6 @@
 # Fursatly
 
-AI-curated opportunities for students — scholarships, competitions, summer programs, fellowships and internships. Fursatly started for Uzbek students and is open to everyone, with the interface and every listing in Uzbek, English and Russian.
+AI-curated opportunities for students — scholarships, competitions, summer programs, fellowships and internships. Fursatly started for Uzbek students and is open to everyone. The interface is in Uzbek, English and Russian, and every listing is translated into Uzbek and Russian.
 
 Built with Next.js 15 (App Router), Supabase, Groq and Gemini.
 
