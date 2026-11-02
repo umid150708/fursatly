@@ -62,6 +62,23 @@ export function deadlineMs(iso: string | null | undefined): number {
 }
 
 /**
+ * Whether a listing's deadline has passed. A deadline closes the moment it is
+ * reached; a rolling listing (no deadline) never expires.
+ */
+export function isExpired(iso: string | null | undefined, now = Date.now()): boolean {
+  const ms = deadlineMs(iso);
+  return !Number.isNaN(ms) && ms <= now;
+}
+
+/**
+ * PostgREST `or` filter for the listings still open: rolling, or a deadline
+ * strictly after now. The mirror of `isExpired`, so the database and the UI
+ * cut off at the same instant.
+ */
+export const openDeadlineFilter = (now = new Date()): string =>
+  `deadline.is.null,deadline.gt.${now.toISOString()}`;
+
+/**
  * The deadline to store for a scraped post. Posts often give "25-oktabr" with no
  * year, and the extraction model guesses one; a guess in the past would file a
  * live listing as expired and slip past the duplicate check as another edition.
