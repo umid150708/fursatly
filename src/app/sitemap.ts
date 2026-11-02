@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { eventSlug } from '@/lib/event-path';
+import { openDeadlineFilter } from '@/lib/dates';
 
 /**
  * Sitemap for crawlers: homepage + every active event at its canonical slug
@@ -29,6 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .from('events')
       .select('id, created_at, research_completed_at, research_data')
       .eq('is_active', true)
+      .or(openDeadlineFilter())
       .limit(2000);
 
     const events = (data ?? []).map((ev) => ({
