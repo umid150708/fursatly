@@ -12,7 +12,7 @@ import { MentorPanel, OPEN_MENTOR_EVENT } from '@/components/mentor/MentorPanel'
 import { TelegramRemindHint } from '@/components/TelegramRemindHint';
 import { LEGAL_EMAIL } from '@/lib/legal/types';
 import { isUuid } from '@/lib/event-path';
-import { formatDate, formatAges, daysUntil, daysLeftLabel } from '@/lib/dates';
+import { formatDate, formatAges, daysUntil, daysLeftLabel, openDeadlineFilter } from '@/lib/dates';
 import { SiteFooter } from '@/components/home/SiteFooter';
 import { catHue } from '@/lib/categoryColor';
 import { ArrowLeft, ArrowUpRight, Loader2, MessageCircle, Play } from 'lucide-react';
@@ -155,7 +155,11 @@ export default function EventClient({ initialEvent }: { initialEvent: any | null
 
       // The route param is either a clean slug or a legacy UUID — resolve both.
       const param = String(id);
-      const query = supabase.from('events').select('*').is('research_data->>rejected', null);
+      const query = supabase
+        .from('events')
+        .select('*')
+        .is('research_data->>rejected', null)
+        .or(openDeadlineFilter());
       const { data } = await (
         isUuid(param) ? query.eq('id', param) : query.eq('research_data->>slug', param)
       ).single();

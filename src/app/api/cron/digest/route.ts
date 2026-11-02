@@ -59,7 +59,7 @@ export async function GET(request: Request) {
     .filter(isPostable)
     .filter((e) => {
       const t = new Date(e.deadline).getTime();
-      return !isNaN(t) && t >= now && t <= now + WINDOW_MS;
+      return !isNaN(t) && t > now && t <= now + WINDOW_MS;
     })
     .slice(0, MAX_ITEMS);
 

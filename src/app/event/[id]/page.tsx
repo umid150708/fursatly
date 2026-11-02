@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from 'next/navigation';
 import { fetchEventByParam } from '@/lib/event-server';
 import { metaTitle, metaDescription } from '@/lib/event-meta';
 import { isUuid } from '@/lib/event-path';
+import { isExpired } from '@/lib/dates';
 import EventClient from './EventClient';
 
 /**
@@ -18,7 +19,7 @@ type Props = { params: Promise<{ id: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const { event } = await fetchEventByParam(id);
-  if (!event) return { title: 'Opportunity — Fursatly' };
+  if (!event || isExpired(event.deadline)) return { title: 'Opportunity — Fursatly' };
 
   const path = `/event/${event.research_data?.slug || event.id}`;
   const title = metaTitle(event);
@@ -36,7 +37,9 @@ export default async function Page({ params }: Props) {
   const { id } = await params;
   const { event, failed } = await fetchEventByParam(id);
 
-  if (event) {
+  // A past-deadline listing 404s like a deleted one. The cleanup job removes
+  // it; this covers the minutes before that and the cached page.
+  if (event && !isExpired(event.deadline)) {
     const slug = event.research_data?.slug;
     if (isUuid(id) && slug) permanentRedirect(`/event/${slug}`);
     return <EventClient initialEvent={event} />;

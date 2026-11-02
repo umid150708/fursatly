@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import HomeClient, { type LeadDetail } from './HomeClient';
 import { EVENT_LIST_SELECT, mapEventListRow } from '@/lib/event-list';
 import { pickLead } from '@/lib/front-page';
+import { openDeadlineFilter } from '@/lib/dates';
 import { siteJsonLd, jsonLdScript } from '@/lib/site-schema';
 
 /**
@@ -43,6 +44,7 @@ async function fetchInitialEvents(supabase: Db): Promise<any[] | null> {
       .from('events')
       .select(EVENT_LIST_SELECT)
       .eq('is_active', true)
+      .or(openDeadlineFilter())
       .order('created_at', { ascending: false })
       .limit(300);
     if (error || !data || data.length === 0) return null;

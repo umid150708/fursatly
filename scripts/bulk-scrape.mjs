@@ -201,6 +201,13 @@ async function ingestPost(text, stats) {
     if (!isNaN(d.getTime())) deadlineIso = d.toISOString();
   }
 
+  // Already past its deadline: skip it rather than store a row the cleanup job
+  // would delete straight away.
+  if (deadlineIso && new Date(deadlineIso).getTime() <= Date.now()) {
+    stats.skipped++;
+    return 'skipped_expired';
+  }
+
   // Deduplicate against every stored listing (curly quotes, years, subtitles —
   // see src/pipeline/dedupe.mjs). Re-read each time so rows inserted earlier in
   // this run count too.

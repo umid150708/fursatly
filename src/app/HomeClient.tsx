@@ -13,7 +13,7 @@ import { canonicalSource, rawSourcesFor } from '@/lib/canonicalCategory';
 import { EVENT_LIST_SELECT, mapEventListRow } from '@/lib/event-list';
 import { eventSlug } from '@/lib/event-path';
 import { pickLead, closingThisWeek, inBrief, deadlineForecast } from '@/lib/front-page';
-import { MONTHS, formatDate, deadlineMs, daysUntil, daysLeftLabel } from '@/lib/dates';
+import { MONTHS, formatDate, deadlineMs, daysUntil, daysLeftLabel, isExpired, openDeadlineFilter } from '@/lib/dates';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -79,8 +79,15 @@ export default function HomeClient({
 
   // The browser's clock, once mounted. Until then everything is laid out
   // against the server's render time, so hydration sees identical markup.
+  // Ticks every minute so a listing drops off the page at its deadline, even
+  // in a tab that was left open.
   const [now, setNow] = useState<Date | null>(null);
-  useEffect(() => { setNow(new Date()); }, []);
+  useEffect(() => {
+    const tick = () => setNow(new Date());
+    tick();
+    const timer = setInterval(tick, 60_000);
+    return () => clearInterval(timer);
+  }, []);
   const refNow = useMemo(() => now ?? (renderedAt ? new Date(renderedAt) : null), [now, renderedAt]);
   const nowMs = refNow?.getTime() ?? null;
 
@@ -111,6 +118,7 @@ export default function HomeClient({
       // the nested research_data shape the components expect.
       .select(EVENT_LIST_SELECT)
       .eq('is_active', true)
+      .or(openDeadlineFilter())
       .order('created_at', { ascending: false })
       .limit(300);
     // Match aliases too ("Grants", "Fellowships"… fold into their canonical category)
@@ -128,8 +136,8 @@ export default function HomeClient({
     const ref = nowMs ?? 0;
     return dbEvents.filter((event) => {
       if (event.deadline) {
+        if (isExpired(event.deadline, ref)) return false;
         const dl = deadlineMs(event.deadline);
-        if (dl < ref) return false;
         if (filterDeadline !== 'All') {
           const win = filterDeadline === 'week' ? 7 * DAY : filterDeadline === 'month' ? 30 * DAY : 90 * DAY;
           if (dl > ref + win) return false;

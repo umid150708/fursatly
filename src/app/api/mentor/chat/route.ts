@@ -11,6 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import { createServerSupabase } from '@/supabase/server';
 import { buildMentorPrompt, extractMentorEvent, type ChatMessage } from '@/lib/mentor-prompt';
 import { mentorLLM } from '@/pipeline/mentor-llm';
+import { isExpired } from '@/lib/dates';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
     .eq('id', eventId)
     .single();
   if (!eventRow) return NextResponse.json({ error: 'not_found' }, { status: 404 });
+  if (isExpired(eventRow.deadline)) return NextResponse.json({ error: 'closed' }, { status: 410 });
 
   const { data: profile } = await supabase
     .from('profiles')
