@@ -15,7 +15,7 @@ import { extractEventDetails } from '@/ai/flows/extract-event-details-flow';
 import { createClient } from '@supabase/supabase-js';
 import { findDuplicate, suspectDuplicates, sameListingPrompt, isSameListing } from '@/pipeline/dedupe.mjs';
 import { callLLM } from '@/pipeline/groq';
-import { resolveDeadlineYear } from '@/lib/dates';
+import { resolveDeadlineYear, isExpired } from '@/lib/dates';
 import { paidPromotionMarker } from '@/pipeline/promo.mjs';
 
 function db() {
@@ -109,6 +109,13 @@ export async function ingestEventFromText(rawText: string): Promise<string | nul
   if (extracted.deadline) {
     const d = new Date(resolveDeadlineYear(extracted.deadline, rawText, new Date()));
     if (!isNaN(d.getTime())) deadlineIso = d.toISOString();
+  }
+
+  // A listing whose deadline has already passed is dead on arrival: skip it
+  // rather than store a row the cleanup job would delete straight away.
+  if (isExpired(deadlineIso)) {
+    console.log(`[Ingest] ⏰ Skipping "${extracted.title}" — deadline already passed`);
+    return null;
   }
 
   // ── Step 3: Deduplicate against every stored listing ───────────────────────

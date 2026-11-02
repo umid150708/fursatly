@@ -1,11 +1,13 @@
 /**
  * GET /api/cron/cleanup
  *
- * Deletes events whose deadlines have passed.
- * Runs daily at 03:00 UTC via Vercel cron.
+ * Deletes every event whose deadline has passed, active or not.
+ * Runs daily at 03:00 UTC via Vercel cron. The per-minute pg_cron job in
+ * supabase/migrations/20261102120000_expire_events_every_minute.sql does the
+ * exact-time deletes; this run is the backstop.
  *
- * Works with existing schema — deadline is stored as text ISO string.
- * Supabase casts it for comparison automatically.
+ * Deadline is a zone-less UTC timestamp, so it compares correctly with the ISO
+ * "now" below.
  */
 
 import { NextResponse } from 'next/server';
@@ -40,13 +42,12 @@ export async function GET(request: Request) {
   const supabase = db();
   const now = new Date().toISOString();
 
-  // Hard-delete events where deadline string (ISO) is in the past
+  // Hard-delete every event whose deadline has passed (active or not)
   const { data, error } = await supabase
     .from('events')
     .delete()
-    .eq('is_active', true)
     .not('deadline', 'is', null)
-    .lt('deadline', now)
+    .lte('deadline', now)
     .select('id, title');
 
   if (error) {
