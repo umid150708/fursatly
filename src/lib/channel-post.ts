@@ -1,4 +1,5 @@
 import { eventSlug } from './event-path';
+import { locationBadgeHtml } from './location-badge';
 
 /**
  * Pure builder for the public-channel Telegram post (HTML parse mode) —
@@ -16,6 +17,12 @@ import { eventSlug } from './event-path';
 const SITE = 'https://fursatly.uz';
 /** Signs every message, so forwards still point back to the channel. */
 const CHANNEL = '@fursatly';
+/**
+ * The closing line: our animated cube (t.me/addemoji/fursatly_animated), one
+ * space, then the handle. 🎓 is the pack's fallback glyph, which is what the bot
+ * path shows after `stripPremiumEmoji`.
+ */
+const SIGNATURE = `<tg-emoji emoji-id="5429490749848729290">🎓</tg-emoji> ${CHANNEL}`;
 
 const CATEGORY: Record<string, { emoji: string; tag: string }> = {
   Scholarships:      { emoji: '🎓', tag: 'Scholarship' },
@@ -188,7 +195,7 @@ export function buildDigest(events: any[]): string {
   L.push('');
   L.push(`${emo('👉')} <a href="${SITE}">Barchasi / All → fursatly.uz</a>`);
   L.push(`#deadline #Fursatly #imkoniyat`);
-  L.push(CHANNEL);
+  L.push(SIGNATURE);
   return L.join('\n');
 }
 
@@ -212,17 +219,23 @@ export function buildPost(ev: any): string {
   const cat = CATEGORY[ev.source] || CATEGORY.Other;
   const uz = rd.translations?.uz || {};
 
-  // Key facts box: money, then the website card's facts (location · age ·
-  // language), then the deadline.
+  // Key facts box, one row each: money, then the website card's facts
+  // (location, age, language), then the deadline.
   const facts: string[] = [];
   const hl = highlight(ev);
   if (hl) facts.push(hl);
 
   const meta: string[] = [];
-  if (ev.location) meta.push(`${emo('📍')} ${escText(ev.location)}`);
+  if (ev.location) {
+    // The animated flag (🌐 online, 🌍 global) goes after the place name.
+    const badge = locationBadgeHtml(ev.location);
+    meta.push(`${emo('📍')} ${escText(ev.location)}${badge ? ` ${badge}` : ''}`);
+  }
   if (!(ev.age_min === 0 && ev.age_max === 100) && (ev.age_min || ev.age_max)) meta.push(`${emo('👤')} ${ev.age_min}–${ev.age_max}`);
   if (ev.language) meta.push(`${emo('🗣')} ${escText(ev.language)}`);
-  if (meta.length) facts.push(meta.join('  ·  '));
+  // One fact per row: a long place name used to push the language onto a second
+  // line of its own while short ones shared a row.
+  facts.push(...meta);
 
   const dl = daysLeft(ev.deadline);
   const urgent = dl !== null && dl >= 0 && dl <= 7;
@@ -244,6 +257,6 @@ export function buildPost(ev: any): string {
   L.push(`<blockquote>${facts.join('\n')}</blockquote>`);
   if (hooks.length) L.push(hooks.join('\n\n'), '');
   L.push(`#${cat.tag} #Fursatly`);
-  L.push(CHANNEL);
+  L.push(SIGNATURE);
   return L.join('\n');
 }

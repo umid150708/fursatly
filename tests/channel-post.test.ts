@@ -61,12 +61,29 @@ describe('buildPost', () => {
   it('boxes the key facts (money, place, deadline) in a quote', () => {
     const box = stripPremiumEmoji(post).match(/<blockquote>([\s\S]*?)<\/blockquote>/)?.[1] ?? '';
     expect(box).toContain('💰 Covers full tuition and a $3,000 monthly stipend');
-    expect(box).toContain('📍 South Korea  ·  👤 17–25  ·  🗣 English');
+    expect(box).toContain('📍 South Korea 🇰🇷\n👤 17–25\n🗣 English');
     expect(box).toContain('⏳ Deadline: <b>22.10.2099</b>');
   });
 
+  it('puts every fact on its own row, however long the place name is', () => {
+    const long = stripPremiumEmoji(buildPost({ ...enriched, location: 'Geneva, Switzerland and various UNHCR offices worldwide' }));
+    const box = long.match(/<blockquote>([\s\S]*?)<\/blockquote>/)?.[1] ?? '';
+    expect(box).not.toContain('  ·  ');
+    expect(box.split('\n')).toEqual([
+      '💰 Covers full tuition and a $3,000 monthly stipend for 4 years',
+      '📍 Geneva, Switzerland and various UNHCR offices worldwide 🇨🇭',
+      '👤 17–25',
+      '🗣 English',
+      '⏳ Deadline: <b>22.10.2099</b>',
+    ]);
+  });
+
   it('ends with the hashtags, then the channel signature', () => {
-    expect(post.endsWith('#Scholarship #Fursatly\n@fursatly')).toBe(true);
+    expect(stripPremiumEmoji(post).endsWith('#Scholarship #Fursatly\n🎓 @fursatly')).toBe(true);
+  });
+
+  it('signs with the animated cube emoji, a space, then the handle', () => {
+    expect(post.endsWith('\n<tg-emoji emoji-id="5429490749848729290">🎓</tg-emoji> @fursatly')).toBe(true);
   });
 
   it('carries no links in the text — they go in buttons', () => {
@@ -194,7 +211,8 @@ describe('buildDigest', () => {
 
   it('ends with the site CTA, hashtags and the channel signature', () => {
     expect(digest).toContain('fursatly.uz');
-    expect(digest.endsWith('#deadline #Fursatly #imkoniyat\n@fursatly')).toBe(true);
+    expect(stripPremiumEmoji(digest).endsWith('#deadline #Fursatly #imkoniyat\n🎓 @fursatly')).toBe(true);
+    expect(digest.endsWith('<tg-emoji emoji-id="5429490749848729290">🎓</tg-emoji> @fursatly')).toBe(true);
   });
 
   it('uses the animated fire in the header', () => {
