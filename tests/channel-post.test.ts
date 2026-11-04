@@ -61,7 +61,7 @@ describe('buildPost', () => {
   it('boxes the key facts (money, place, deadline) in a quote', () => {
     const box = stripPremiumEmoji(post).match(/<blockquote>([\s\S]*?)<\/blockquote>/)?.[1] ?? '';
     expect(box).toContain('💰 Covers full tuition and a $3,000 monthly stipend');
-    expect(box).toContain('📍 South Korea  ·  👤 17–25  ·  🗣 English');
+    expect(box).toContain('📍 South Korea 🇰🇷  ·  👤 17–25  ·  🗣 English');
     expect(box).toContain('⏳ Deadline: <b>22.10.2099</b>');
   });
 

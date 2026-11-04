@@ -1,4 +1,5 @@
 import { eventSlug } from './event-path';
+import { locationBadgeHtml } from './location-badge';
 
 /**
  * Pure builder for the public-channel Telegram post (HTML parse mode) —
@@ -225,7 +226,11 @@ export function buildPost(ev: any): string {
   if (hl) facts.push(hl);
 
   const meta: string[] = [];
-  if (ev.location) meta.push(`${emo('📍')} ${escText(ev.location)}`);
+  if (ev.location) {
+    // The animated flag (🌐 online, 🌍 global) goes after the place name.
+    const badge = locationBadgeHtml(ev.location);
+    meta.push(`${emo('📍')} ${escText(ev.location)}${badge ? ` ${badge}` : ''}`);
+  }
   if (!(ev.age_min === 0 && ev.age_max === 100) && (ev.age_min || ev.age_max)) meta.push(`${emo('👤')} ${ev.age_min}–${ev.age_max}`);
   if (ev.language) meta.push(`${emo('🗣')} ${escText(ev.language)}`);
   if (meta.length) facts.push(meta.join('  ·  '));
