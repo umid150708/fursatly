@@ -219,8 +219,8 @@ export function buildPost(ev: any): string {
   const cat = CATEGORY[ev.source] || CATEGORY.Other;
   const uz = rd.translations?.uz || {};
 
-  // Key facts box: money, then the website card's facts (location · age ·
-  // language), then the deadline.
+  // Key facts box, one row each: money, then the website card's facts
+  // (location, age, language), then the deadline.
   const facts: string[] = [];
   const hl = highlight(ev);
   if (hl) facts.push(hl);
@@ -233,7 +233,9 @@ export function buildPost(ev: any): string {
   }
   if (!(ev.age_min === 0 && ev.age_max === 100) && (ev.age_min || ev.age_max)) meta.push(`${emo('👤')} ${ev.age_min}–${ev.age_max}`);
   if (ev.language) meta.push(`${emo('🗣')} ${escText(ev.language)}`);
-  if (meta.length) facts.push(meta.join('  ·  '));
+  // One fact per row: a long place name used to push the language onto a second
+  // line of its own while short ones shared a row.
+  facts.push(...meta);
 
   const dl = daysLeft(ev.deadline);
   const urgent = dl !== null && dl >= 0 && dl <= 7;
