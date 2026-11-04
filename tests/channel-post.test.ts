@@ -66,7 +66,11 @@ describe('buildPost', () => {
   });
 
   it('ends with the hashtags, then the channel signature', () => {
-    expect(post.endsWith('#Scholarship #Fursatly\n@fursatly')).toBe(true);
+    expect(stripPremiumEmoji(post).endsWith('#Scholarship #Fursatly\n🎓 @fursatly')).toBe(true);
+  });
+
+  it('signs with the animated cube emoji, a space, then the handle', () => {
+    expect(post.endsWith('\n<tg-emoji emoji-id="5429490749848729290">🎓</tg-emoji> @fursatly')).toBe(true);
   });
 
   it('carries no links in the text — they go in buttons', () => {
@@ -194,7 +198,8 @@ describe('buildDigest', () => {
 
   it('ends with the site CTA, hashtags and the channel signature', () => {
     expect(digest).toContain('fursatly.uz');
-    expect(digest.endsWith('#deadline #Fursatly #imkoniyat\n@fursatly')).toBe(true);
+    expect(stripPremiumEmoji(digest).endsWith('#deadline #Fursatly #imkoniyat\n🎓 @fursatly')).toBe(true);
+    expect(digest.endsWith('<tg-emoji emoji-id="5429490749848729290">🎓</tg-emoji> @fursatly')).toBe(true);
   });
 
   it('uses the animated fire in the header', () => {

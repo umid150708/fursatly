@@ -16,6 +16,12 @@ import { eventSlug } from './event-path';
 const SITE = 'https://fursatly.uz';
 /** Signs every message, so forwards still point back to the channel. */
 const CHANNEL = '@fursatly';
+/**
+ * The closing line: our animated cube (t.me/addemoji/fursatly_animated), one
+ * space, then the handle. 🎓 is the pack's fallback glyph, which is what the bot
+ * path shows after `stripPremiumEmoji`.
+ */
+const SIGNATURE = `<tg-emoji emoji-id="5429490749848729290">🎓</tg-emoji> ${CHANNEL}`;
 
 const CATEGORY: Record<string, { emoji: string; tag: string }> = {
   Scholarships:      { emoji: '🎓', tag: 'Scholarship' },
@@ -188,7 +194,7 @@ export function buildDigest(events: any[]): string {
   L.push('');
   L.push(`${emo('👉')} <a href="${SITE}">Barchasi / All → fursatly.uz</a>`);
   L.push(`#deadline #Fursatly #imkoniyat`);
-  L.push(CHANNEL);
+  L.push(SIGNATURE);
   return L.join('\n');
 }
 
@@ -244,6 +250,6 @@ export function buildPost(ev: any): string {
   L.push(`<blockquote>${facts.join('\n')}</blockquote>`);
   if (hooks.length) L.push(hooks.join('\n\n'), '');
   L.push(`#${cat.tag} #Fursatly`);
-  L.push(CHANNEL);
+  L.push(SIGNATURE);
   return L.join('\n');
 }
